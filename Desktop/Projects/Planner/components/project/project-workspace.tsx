@@ -90,6 +90,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
               <GraphCanvas />
             )}
           </div>
+          <NodeDetailPanel />
         </div>
       </ReactFlowProvider>
     )

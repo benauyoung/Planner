@@ -3,6 +3,7 @@
 import { useCallback } from 'react'
 import { useChatStore } from '@/stores/chat-store'
 import { useProjectStore } from '@/stores/project-store'
+import { useUIStore } from '@/stores/ui-store'
 import type { AIProgressiveResponse } from '@/types/chat'
 
 export function useAIChat() {
@@ -48,18 +49,33 @@ export function useAIChat() {
       setError(null)
 
       try {
+        // Build enriched message with node context if a node is selected
+        let enrichedContent = content
+        const selectedNodeId = useUIStore.getState().selectedNodeId
+        if (selectedNodeId) {
+          const project = useProjectStore.getState().currentProject
+          const focusedNode = project?.nodes.find((n) => n.id === selectedNodeId)
+          if (focusedNode) {
+            enrichedContent = `[IMPORTANT CONTEXT: The user has selected the ${focusedNode.type} node "${focusedNode.title}" (id: ${focusedNode.id}) in the plan graph. They are asking about THIS SPECIFIC NODE. Tailor your entire response to be about this node and its children. If adding or updating nodes, focus on children/tasks under this node.]\n\n${content}`
+          }
+        }
+
         const allMessages = [
           ...useChatStore.getState().messages,
         ]
+
+        // Replace the last user message content with the enriched version for the API call
+        const apiMessages = allMessages.map((m, i) =>
+          i === allMessages.length - 1 && m.role === 'user'
+            ? { role: m.role, content: enrichedContent }
+            : { role: m.role, content: m.content }
+        )
 
         const res = await fetch('/api/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            messages: allMessages.map((m) => ({
-              role: m.role,
-              content: m.content,
-            })),
+            messages: apiMessages,
           }),
         })
 

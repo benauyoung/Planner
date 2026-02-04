@@ -5,6 +5,7 @@ import { ReactFlowProvider } from '@xyflow/react'
 import { useProjectStore } from '@/stores/project-store'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
+import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 
 function NewProjectContent() {
   const initDraftProject = useProjectStore((s) => s.initDraftProject)
@@ -37,6 +38,7 @@ function NewProjectContent() {
           <GraphCanvas />
         )}
       </div>
+      <NodeDetailPanel />
     </div>
   )
 }

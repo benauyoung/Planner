@@ -24,6 +24,7 @@ import type { NodeType } from '@/types/project'
 export function GraphCanvas() {
   const { flowNodes, flowEdges, setFlowNodes, setFlowEdges } = useProjectStore()
   const selectNode = useUIStore((s) => s.selectNode)
+  const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const { getLayoutedElements } = useAutoLayout()
   const { fitView } = useReactFlow()
   const prevNodeCountRef = useRef(0)
@@ -38,6 +39,31 @@ export function GraphCanvas() {
       setTimeout(() => fitView({ padding: 0.2, duration: 500 }), 50)
     }
   }, [flowNodes.length, flowEdges, getLayoutedElements, setFlowNodes, setFlowEdges, fitView, flowNodes])
+
+  // Zoom to selected node and its direct connections
+  useEffect(() => {
+    if (!selectedNodeId) return
+    const node = flowNodes.find((n) => n.id === selectedNodeId)
+    if (!node) return
+
+    // Collect the selected node + its parent + children
+    const relatedIds = new Set([selectedNodeId])
+    flowEdges.forEach((e) => {
+      if (e.source === selectedNodeId || e.target === selectedNodeId) {
+        relatedIds.add(e.source)
+        relatedIds.add(e.target)
+      }
+    })
+
+    setTimeout(() => {
+      fitView({
+        nodes: flowNodes.filter((n) => relatedIds.has(n.id)),
+        padding: 0.4,
+        duration: 400,
+        maxZoom: 1.2,
+      })
+    }, 50)
+  }, [selectedNodeId, flowNodes, flowEdges, fitView])
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {

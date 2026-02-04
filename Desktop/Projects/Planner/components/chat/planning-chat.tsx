@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Save } from 'lucide-react'
+import { Save, CheckCircle } from 'lucide-react'
 import { useAIChat } from '@/hooks/use-ai-chat'
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
@@ -56,10 +56,20 @@ export function PlanningChat() {
   return (
     <div className="flex flex-col h-full">
       <div className="border-b px-4 py-3">
-        <h2 className="font-semibold">New Project</h2>
-        <p className="text-sm text-muted-foreground">
-          Describe your idea and the AI will help you plan it out
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold">New Project</h2>
+            <p className="text-sm text-muted-foreground">
+              Describe your idea and the AI will help you plan it out
+            </p>
+          </div>
+          {phase === 'done' && currentProject && (
+            <Button onClick={handleSave} size="sm" className="shrink-0 gap-1.5">
+              <CheckCircle className="h-4 w-4" />
+              Save
+            </Button>
+          )}
+        </div>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -73,27 +83,6 @@ export function PlanningChat() {
           </div>
         )}
       </div>
-
-      {phase === 'done' && currentProject && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mx-4 mb-2 p-4 rounded-lg border-2 border-primary/30 bg-primary/5"
-        >
-          <div className="flex items-center gap-3">
-            <Save className="h-5 w-5 text-primary flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm font-medium">Your plan is ready!</p>
-              <p className="text-xs text-muted-foreground">
-                Save your project to start working on it, or keep chatting to refine the plan.
-              </p>
-            </div>
-            <Button onClick={handleSave} size="sm">
-              Save Project
-            </Button>
-          </div>
-        </motion.div>
-      )}
 
       <ChatInput
         onSend={sendMessage}
