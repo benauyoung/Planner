@@ -3,13 +3,19 @@
 import { useEffect, useRef } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useProjectStore } from '@/stores/project-store'
+import { useChatStore } from '@/stores/chat-store'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
+import { ProjectOnboarding } from '@/components/onboarding/project-onboarding'
+import type { OnboardingAnswers } from '@/types/chat'
 
 function NewProjectContent() {
   const initDraftProject = useProjectStore((s) => s.initDraftProject)
   const flowNodes = useProjectStore((s) => s.flowNodes)
+  const phase = useChatStore((s) => s.phase)
+  const setOnboardingAnswers = useChatStore((s) => s.setOnboardingAnswers)
+  const setPhase = useChatStore((s) => s.setPhase)
   const initRef = useRef(false)
 
   useEffect(() => {
@@ -18,6 +24,15 @@ function NewProjectContent() {
       initDraftProject()
     }
   }, [initDraftProject])
+
+  const handleOnboardingComplete = (answers: OnboardingAnswers) => {
+    setOnboardingAnswers(answers)
+    setPhase('greeting')
+  }
+
+  if (phase === 'onboarding') {
+    return <ProjectOnboarding onComplete={handleOnboardingComplete} />
+  }
 
   return (
     <div className="h-full flex">

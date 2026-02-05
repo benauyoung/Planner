@@ -7,6 +7,7 @@ import { Save, CheckCircle } from 'lucide-react'
 import { useAIChat } from '@/hooks/use-ai-chat'
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
+import { useChatStore } from '@/stores/chat-store'
 import { ChatMessage } from './chat-message'
 import { ChatInput } from './chat-input'
 import { TypingIndicator } from './typing-indicator'
@@ -26,13 +27,14 @@ export function PlanningChat() {
   const currentProject = useProjectStore((s) => s.currentProject)
   const scrollRef = useRef<HTMLDivElement>(null)
   const initRef = useRef(false)
+  const chatPhase = useChatStore((s) => s.phase)
 
   useEffect(() => {
-    if (!initRef.current) {
+    if (!initRef.current && chatPhase !== 'onboarding') {
       initRef.current = true
       initChat()
     }
-  }, [initChat])
+  }, [initChat, chatPhase])
 
   useEffect(() => {
     if (scrollRef.current) {

@@ -5,6 +5,7 @@ import { useChatStore } from '@/stores/chat-store'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import type { AIProgressiveResponse } from '@/types/chat'
+import { formatOnboardingMessage } from '@/lib/onboarding-message'
 
 export function useAIChat() {
   const {
@@ -95,13 +96,22 @@ export function useAIChat() {
   const initChat = useCallback(async () => {
     if (messages.length > 0) return
 
+    const onboardingAnswers = useChatStore.getState().onboardingAnswers
+    const initialMessage = onboardingAnswers
+      ? formatOnboardingMessage(onboardingAnswers)
+      : 'Hi, I want to plan a new project.'
+
+    if (onboardingAnswers) {
+      addMessage('user', initialMessage)
+    }
+
     setLoading(true)
     try {
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [{ role: 'user', content: 'Hi, I want to plan a new project.' }],
+          messages: [{ role: 'user', content: initialMessage }],
         }),
       })
 

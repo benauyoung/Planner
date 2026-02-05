@@ -1,4 +1,13 @@
-export type ChatPhase = 'greeting' | 'planning' | 'done'
+export type ChatPhase = 'onboarding' | 'greeting' | 'planning' | 'done'
+
+export interface OnboardingAnswers {
+  description: string
+  projectType: string
+  audience: string
+  timeline: string
+  teamSize: string
+  priorities: string[]
+}
 
 export interface ChatMessage {
   id: string

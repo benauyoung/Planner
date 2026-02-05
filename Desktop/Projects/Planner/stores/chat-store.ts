@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ChatMessage, ChatPhase } from '@/types/chat'
+import type { ChatMessage, ChatPhase, OnboardingAnswers } from '@/types/chat'
 import { generateId } from '@/lib/id'
 
 interface ChatState {
@@ -7,18 +7,21 @@ interface ChatState {
   phase: ChatPhase
   isLoading: boolean
   error: string | null
+  onboardingAnswers: OnboardingAnswers | null
   addMessage: (role: 'user' | 'assistant', content: string) => void
   setPhase: (phase: ChatPhase) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
+  setOnboardingAnswers: (answers: OnboardingAnswers) => void
   reset: () => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
   messages: [],
-  phase: 'greeting',
+  phase: 'onboarding',
   isLoading: false,
   error: null,
+  onboardingAnswers: null,
   addMessage: (role, content) =>
     set((state) => ({
       messages: [
@@ -29,11 +32,13 @@ export const useChatStore = create<ChatState>((set) => ({
   setPhase: (phase) => set({ phase }),
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
+  setOnboardingAnswers: (answers) => set({ onboardingAnswers: answers }),
   reset: () =>
     set({
       messages: [],
-      phase: 'greeting',
+      phase: 'onboarding',
       isLoading: false,
       error: null,
+      onboardingAnswers: null,
     }),
 }))

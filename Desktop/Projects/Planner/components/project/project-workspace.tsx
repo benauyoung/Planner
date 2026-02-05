@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, PanelLeftClose } from 'lucide-react'
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
+import { useChatStore } from '@/stores/chat-store'
 import { useUIStore } from '@/stores/ui-store'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
@@ -27,6 +28,13 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     if (currentProject) setLoading(false)
     const timer = setTimeout(() => setLoading(false), 3000)
     return () => clearTimeout(timer)
+  }, [currentProject])
+
+  // Ensure chat phase is 'greeting' (not 'onboarding') for saved projects
+  useEffect(() => {
+    if (currentProject && useChatStore.getState().phase === 'onboarding') {
+      useChatStore.getState().setPhase('greeting')
+    }
   }, [currentProject])
 
   // Keyboard shortcuts
