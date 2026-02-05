@@ -51,6 +51,7 @@ export const BasePlanNode = memo(function BasePlanNode({
         borderColor: config.color,
       }}
       onClick={() => selectNode(id)}
+      onContextMenu={(e) => e.preventDefault()}
     >
       {data.parentId && (
         <Handle

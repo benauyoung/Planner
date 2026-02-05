@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -18,8 +18,10 @@ import { useUIStore } from '@/stores/ui-store'
 import { useAutoLayout } from '@/hooks/use-auto-layout'
 import { nodeTypes } from './nodes/node-types'
 import { CanvasToolbar } from './canvas-toolbar'
+import { NodeContextMenu } from './context-menu/node-context-menu'
 import { NODE_CONFIG } from '@/lib/constants'
 import type { NodeType } from '@/types/project'
+import type { Node } from '@xyflow/react'
 
 export function GraphCanvas() {
   const { flowNodes, flowEdges, setFlowNodes, setFlowEdges } = useProjectStore()
@@ -28,6 +30,10 @@ export function GraphCanvas() {
   const { getLayoutedElements } = useAutoLayout()
   const { fitView } = useReactFlow()
   const prevNodeCountRef = useRef(0)
+  const [contextMenu, setContextMenu] = useState<{
+    nodeId: string
+    position: { x: number; y: number }
+  } | null>(null)
 
   // Auto-layout when node count changes (progressive building)
   useEffect(() => {
@@ -90,7 +96,23 @@ export function GraphCanvas() {
 
   const handlePaneClick = useCallback(() => {
     selectNode(null)
+    setContextMenu(null)
   }, [selectNode])
+
+  const handleNodeContextMenu = useCallback(
+    (event: React.MouseEvent, node: Node) => {
+      event.preventDefault()
+      setContextMenu({
+        nodeId: node.id,
+        position: { x: event.clientX, y: event.clientY },
+      })
+    },
+    []
+  )
+
+  const handleCloseContextMenu = useCallback(() => {
+    setContextMenu(null)
+  }, [])
 
   return (
     <div className="relative w-full h-full">
@@ -100,6 +122,7 @@ export function GraphCanvas() {
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onPaneClick={handlePaneClick}
+        onNodeContextMenu={handleNodeContextMenu}
         nodeTypes={nodeTypes}
         defaultEdgeOptions={{
           type: 'smoothstep',
@@ -124,6 +147,13 @@ export function GraphCanvas() {
         />
       </ReactFlow>
       <CanvasToolbar onReLayout={handleReLayout} />
+      {contextMenu && (
+        <NodeContextMenu
+          nodeId={contextMenu.nodeId}
+          position={contextMenu.position}
+          onClose={handleCloseContextMenu}
+        />
+      )}
     </div>
   )
 }
