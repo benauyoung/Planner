@@ -1,9 +1,9 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
-import { NODE_CONFIG } from '@/lib/constants'
+import { NODE_CONFIG, NODE_CHILD_TYPE } from '@/lib/constants'
 
 interface ProjectState {
   currentProject: Project | null
@@ -21,6 +21,9 @@ interface ProjectState {
   updateNodeContent: (nodeId: string, title: string, description: string) => void
   toggleNodeCollapse: (nodeId: string) => void
   deleteNode: (nodeId: string) => void
+  addChildNode: (parentId: string, title: string) => string | null
+  duplicateNode: (nodeId: string, includeChildren: boolean) => string | null
+  changeNodeType: (nodeId: string, newType: NodeType) => void
   addProject: (project: Project) => void
   removeProject: (projectId: string) => void
 }
@@ -239,6 +242,87 @@ export const useProjectStore = create<ProjectState>((set, get) => ({
     collectDescendants(nodeId)
 
     const updatedNodes = project.nodes.filter((n) => !descendantIds.has(n.id))
+    const updatedProject = { ...project, nodes: updatedNodes, updatedAt: Date.now() }
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedNodes)
+    set({ currentProject: updatedProject, flowNodes, flowEdges })
+  },
+
+  addChildNode: (parentId, title) => {
+    const project = get().currentProject
+    if (!project) return null
+
+    const parent = project.nodes.find((n) => n.id === parentId)
+    if (!parent) return null
+
+    const childType = NODE_CHILD_TYPE[parent.type]
+    if (!childType) return null
+
+    const newNode: PlanNode = {
+      id: generateId(),
+      type: childType,
+      title,
+      description: '',
+      status: 'not_started',
+      parentId,
+      collapsed: false,
+    }
+
+    const updatedNodes = [...project.nodes, newNode]
+    const updatedProject = { ...project, nodes: updatedNodes, updatedAt: Date.now() }
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedNodes)
+    set({ currentProject: updatedProject, flowNodes, flowEdges })
+    return newNode.id
+  },
+
+  duplicateNode: (nodeId, includeChildren) => {
+    const project = get().currentProject
+    if (!project) return null
+
+    const node = project.nodes.find((n) => n.id === nodeId)
+    if (!node) return null
+
+    const idMap = new Map<string, string>()
+    const clonedNodes: PlanNode[] = []
+
+    const rootCloneId = generateId()
+    idMap.set(node.id, rootCloneId)
+    clonedNodes.push({
+      ...node,
+      id: rootCloneId,
+      title: `${node.title} (Copy)`,
+    })
+
+    if (includeChildren) {
+      function cloneDescendants(originalParentId: string) {
+        const kids = project!.nodes.filter((n) => n.parentId === originalParentId)
+        for (const kid of kids) {
+          const newId = generateId()
+          idMap.set(kid.id, newId)
+          clonedNodes.push({
+            ...kid,
+            id: newId,
+            parentId: idMap.get(kid.parentId!)!,
+          })
+          cloneDescendants(kid.id)
+        }
+      }
+      cloneDescendants(node.id)
+    }
+
+    const updatedNodes = [...project.nodes, ...clonedNodes]
+    const updatedProject = { ...project, nodes: updatedNodes, updatedAt: Date.now() }
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedNodes)
+    set({ currentProject: updatedProject, flowNodes, flowEdges })
+    return rootCloneId
+  },
+
+  changeNodeType: (nodeId, newType) => {
+    const project = get().currentProject
+    if (!project) return
+
+    const updatedNodes = project.nodes.map((n) =>
+      n.id === nodeId ? { ...n, type: newType } : n
+    )
     const updatedProject = { ...project, nodes: updatedNodes, updatedAt: Date.now() }
     const { flowNodes, flowEdges } = planNodesToFlow(updatedNodes)
     set({ currentProject: updatedProject, flowNodes, flowEdges })

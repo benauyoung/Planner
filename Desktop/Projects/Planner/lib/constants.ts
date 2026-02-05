@@ -57,6 +57,13 @@ export const NODE_CONFIG: Record<NodeType, {
   },
 }
 
+export const NODE_CHILD_TYPE: Record<NodeType, NodeType | null> = {
+  goal: 'subgoal',
+  subgoal: 'feature',
+  feature: 'task',
+  task: null,
+}
+
 export const DAGRE_CONFIG = {
   rankdir: 'TB' as const,
   nodesep: 60,
