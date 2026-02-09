@@ -12,6 +12,12 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'VisionPath - AI Project Planner',
   description: 'Transform your project ideas into visual, actionable plans with AI',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon.svg', type: 'image/svg+xml' },
+    ],
+  },
 }
 
 export default function RootLayout({
