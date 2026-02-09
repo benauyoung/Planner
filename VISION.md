@@ -110,24 +110,19 @@ Nodes float freely with spring physics. No forced grids. Projects grow like orga
 
 ---
 
-## Future Vision (12-Month Horizon)
+## Current State (February 2026)
 
-### Phase 1: Core Canvas (Months 1-3)
-- Infinite canvas with node types
-- Dependency cables with validation
-- Basic file sync
+### Delivered ✅
+- Infinite canvas with 7 node types (goal, subgoal, feature, task, moodboard, notes, connector)
+- AI-powered plan generation via Gemini 2.0 Flash
+- Rich content: images, PRDs, IDE prompts on any node
+- Smart mapping: auto-suggest parent nodes by hierarchy + proximity
+- Manual edge connections between nodes
+- Guided onboarding questionnaire
 
-### Phase 2: AI Integration (Months 3-6)
-- Per-node AI chat
-- Task decomposition
-- Plan generation
-
-### Phase 3: Collaboration (Months 6-9)
-- Real-time multi-user editing
-- Presence indicators
-- Conflict resolution
-
-### Phase 4: Ecosystem (Months 9-12)
+### Next Up
+- Persistent storage (Firebase/localStorage)
+- Real-time collaboration
 - VS Code extension (sync active file to node)
 - GitHub integration (issues as nodes)
 - Template library (starter project canvases)

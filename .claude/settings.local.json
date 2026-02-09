@@ -42,7 +42,13 @@
       "Bash(cmd //c \"taskkill /PID 16056 /F\")",
       "Bash(cmd //c \"start http://localhost:3000/project/new\")",
       "Bash(find:*)",
-      "Bash(npx next dev:*)"
+      "Bash(npx next dev:*)",
+      "Bash(vercel link:*)",
+      "Bash(vercel env:*)",
+      "Bash(vercel git connect:*)",
+      "Bash(vercel:*)",
+      "Bash(npm view:*)",
+      "Bash(npm audit:*)"
     ]
   }
 }

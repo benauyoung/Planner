@@ -1,239 +1,151 @@
 # VisionPath Roadmap
 
-> Milestone tracking with dependencies. Only the Roadmap Gatekeeper can edit which features block others.
-
----
-
-## Timeline Overview
-
-```
-Q1 2025                    Q2 2025                    Q3 2025
-├─────────────────────────┼─────────────────────────┼─────────────────────────┤
-│  Phase 1: Foundation    │  Phase 3-4: Panels + AI │  Phase 7: Collaboration │
-│  Phase 2: Canvas        │  Phase 5-6: Sync + Adv  │  Phase 8: Polish        │
-└─────────────────────────┴─────────────────────────┴─────────────────────────┘
-```
+> Milestone tracking. Updated February 2026 to reflect actual progress.
 
 ---
 
 ## Milestones
 
-### M1: Working Canvas (Week 2)
-**Status**: 🔴 Not Started
+### M1: Working Canvas ✅
+**Status**: � Complete
 
-**Deliverables**:
-- React Flow canvas with dark theme
-- All 4 node types rendering
-- Dependency edges connecting nodes
-- Basic pan/zoom navigation
-
-**Dependencies**: None (starting point)
-
-**Exit Criteria**:
-- Can create Goal → Subgoal → Feature → Task chain
-- Nodes draggable
-- Edges connect correctly
+**Delivered**:
+- React Flow canvas with dark theme, dot grid, minimap, controls
+- 7 custom node types (goal, subgoal, feature, task, moodboard, notes, connector)
+- Dashed bezier curve edges from `parentId` relationships
+- Pan/zoom, drag to reposition, fitView
+- Node toolbar (hover: edit, status, collapse, add child)
 
 ---
 
-### M2: Spring Physics (Week 3)
-**Status**: 🔴 Not Started
+### M2: Auto-Layout ✅
+**Status**: � Complete
 
-**Deliverables**:
-- d3-force simulation integrated
-- Nodes repel to prevent overlap
-- Connected nodes cluster together
-- Manual drag overrides physics
-
-**Dependencies**: M1 (Working Canvas)
-
-**Exit Criteria**:
-- Release a node, it settles into stable position
-- Adding nodes causes organic repositioning
-- No jittery behavior at rest
+**Delivered**:
+- Dagre hierarchical auto-layout (`hooks/use-auto-layout.ts`)
+- Re-layout button in canvas toolbar
+- Auto-layout triggers on node count change
 
 ---
 
-### M3: Drill-Down Panels (Week 4)
-**Status**: 🔴 Not Started
+### M3: Detail Panel ✅
+**Status**: � Complete
 
-**Deliverables**:
-- Slide-out panel on node selection
-- Plan tab with Markdown editing
-- Chat tab (UI only, no AI yet)
-- Details tab with metadata
-
-**Dependencies**: M1 (Working Canvas)
-
-**Exit Criteria**:
-- Double-click node opens panel
-- Can edit plan checkboxes
-- Panel closes cleanly
+**Delivered**:
+- Slide-out panel on node click
+- Title/description editing
+- Type and status changing
+- Parent/children navigation
+- Add child, duplicate, delete actions
+- Question answering from AI onboarding
 
 ---
 
-### M4: AI Chat (Week 5)
-**Status**: 🔴 Not Started
+### M4: AI Integration ✅
+**Status**: � Complete
 
-**Deliverables**:
-- Gemini API integration
-- Context building from upstream nodes
-- Streaming responses in chat
-- Decompose/Plan/Review actions
-
-**Dependencies**: M3 (Drill-Down Panels)
-
-**Exit Criteria**:
-- Can chat with AI about any node
-- AI understands project context
-- Actions create child nodes or update plans
+**Delivered**:
+- Gemini 2.0 Flash via `/api/ai/chat`
+- Project onboarding questionnaire (7 steps)
+- AI feature suggestions via `/api/ai/suggest-features`
+- Chat interface with streaming responses
+- Structured JSON → `mergeNodes()` adds nodes to canvas
 
 ---
 
-### M5: Territory Sync (Week 6)
-**Status**: 🔴 Not Started
+### M5: Rich Content ✅
+**Status**: � Complete
 
-**Deliverables**:
-- Markdown serialization with YAML frontmatter
-- File watcher for external edits
-- Bidirectional sync working
-- Conflict detection UI
-
-**Dependencies**: M3 (Drill-Down Panels)
-
-**Exit Criteria**:
-- Edit node → file updates
-- Edit file → canvas updates
-- Conflict modal appears on simultaneous edit
+**Delivered**:
+- Moodboard image upload (drag-drop, file picker, clipboard paste, URL)
+- Rich text editor (Tiptap) for notes nodes
+- PRD attachments on any node (add, edit, remove, copy-to-clipboard)
+- IDE prompt attachments on any node (add, edit, remove, copy-to-clipboard)
 
 ---
 
-### M6: Dependency Validation (Week 7)
-**Status**: 🔴 Not Started
+### M6: Connections & Smart Mapping ✅
+**Status**: � Complete
 
-**Deliverables**:
-- Cycle detection algorithm
-- Block invalid edge creation
-- Blocked status propagation
-- Visual indicators
-
-**Dependencies**: M1 (Working Canvas)
-
-**Exit Criteria**:
-- Cannot create circular dependency
-- Blocked nodes show red indicator
-- Completing parent unblocks children
+**Delivered**:
+- Manual edge creation: drag source → target handle
+- `connectNodes()` and `setNodeParent()` store methods
+- Pane context menu (right-click empty canvas → add node)
+- Smart parent suggestion by hierarchy rules + proximity
+- Node context menu (right-click node → full action menu)
 
 ---
 
-### M7: Real-Time Collaboration (Week 8-9)
-**Status**: 🔴 Not Started
+### M7: Infrastructure ✅
+**Status**: � Complete
 
-**Deliverables**:
+**Delivered**:
+- Firebase auth/firestore (null-guarded, works without keys)
+- Git repo on GitHub (`benauyoung/Planner`)
+- Vercel deployment ready
+- Favicon, metadata, .gitignore
+
+---
+
+### M8: Persistence 🔴
+**Status**: Not Started
+
+**Planned**:
+- Firebase Firestore save/load
+- LocalStorage fallback
+- Export/import as JSON
+
+---
+
+### M9: Real-Time Collaboration 🔴
+**Status**: Not Started
+
+**Planned**:
 - Yjs CRDT integration
-- PartyKit WebSocket server
-- Multi-user sync
+- WebSocket sync
 - Presence cursors
-
-**Dependencies**: M5 (Territory Sync)
-
-**Exit Criteria**:
-- Two browsers see same canvas
-- Changes sync in < 500ms
-- User cursors visible
+- Conflict resolution
 
 ---
 
-### M8: Polish & Launch (Week 10)
-**Status**: 🔴 Not Started
+### M10: Advanced Polish 🔴
+**Status**: Not Started
 
-**Deliverables**:
+**Planned**:
 - Keyboard shortcuts
-- Animations
-- Onboarding flow
-- Documentation complete
-
-**Dependencies**: All previous milestones
-
-**Exit Criteria**:
-- All keyboard shortcuts working
-- Smooth animations
-- New user can start in < 1 minute
-
----
-
-## Dependency Graph
-
-```
-         ┌─────────────────────────────────────────────┐
-         │                                             │
-         ▼                                             │
-┌─────────────┐                                        │
-│ M1: Canvas  │◄─────────────────────────────┐         │
-└──────┬──────┘                              │         │
-       │                                     │         │
-       ├──────────────┬──────────────┐       │         │
-       │              │              │       │         │
-       ▼              ▼              ▼       │         │
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐        │
-│ M2: Physics │ │ M3: Panels  │ │ M6: Deps    │        │
-└─────────────┘ └──────┬──────┘ └─────────────┘        │
-                       │                               │
-                       ├──────────────┐                │
-                       │              │                │
-                       ▼              ▼                │
-                ┌─────────────┐ ┌─────────────┐        │
-                │ M4: AI Chat │ │ M5: Sync    │        │
-                └─────────────┘ └──────┬──────┘        │
-                                       │               │
-                                       ▼               │
-                                ┌─────────────┐        │
-                                │ M7: Collab  │        │
-                                └──────┬──────┘        │
-                                       │               │
-                                       ▼               │
-                                ┌─────────────┐        │
-                                │ M8: Polish  │◄───────┘
-                                └─────────────┘
-```
-
----
-
-## Risk Register
-
-| Risk | Impact | Likelihood | Mitigation |
-|------|--------|------------|------------|
-| Physics performance with many nodes | High | Medium | Throttle simulation, virtualize off-screen |
-| Yjs learning curve | Medium | High | Start with simple Y.Map, add complexity |
-| Gemini rate limits | Medium | Low | Implement retry with backoff, cache responses |
-| File sync race conditions | High | Medium | Debounce, use file locks, conflict UI |
-| PartyKit costs at scale | Low | Low | Migrate to self-hosted if needed |
+- Multi-select
+- Undo/redo
+- Spring physics (d3-force)
+- Territory file sync
 
 ---
 
 ## Version Targets
 
-### v0.1.0 - Alpha (M1-M3)
-- Basic canvas and panels
-- No AI, no sync, no collaboration
-- For internal testing only
+### v0.1.0 - Alpha ✅ (Current)
+- Full canvas with 7 node types
+- AI onboarding + chat planning
+- Rich content: images, PRDs, prompts, notes
+- Smart mapping + manual connections
+- Single-user, in-memory
 
-### v0.5.0 - Beta (M1-M6)
-- Full single-user experience
-- AI chat working
-- File sync working
-- Public beta
+### v0.5.0 - Beta (Planned)
+- Firebase persistence
+- Export/import
+- Keyboard shortcuts
+- Undo/redo
 
-### v1.0.0 - Launch (M1-M8)
+### v1.0.0 - Launch (Planned)
 - Real-time collaboration
+- Territory file sync
 - Full polish
-- Documentation complete
 - Production ready
 
 ---
 
 ## Change Log
 
-| Date | Change | Author |
-|------|--------|--------|
-| 2025-01-15 | Initial roadmap created | System |
+| Date | Change |
+|------|--------|
+| 2025-01 | Initial roadmap created |
+| 2026-02-09 | Updated to reflect actual progress: M1–M7 complete, added PRDs/prompts/smart mapping |

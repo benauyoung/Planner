@@ -1,533 +1,324 @@
 # VisionPath Architecture
 
-> The source of truth for "how we build." AI agents must follow the patterns defined here.
+> Source of truth for how VisionPath is built. Reflects the **actual implemented codebase** as of February 2026.
 
 ---
 
 ## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              Browser (Client)                                │
-├─────────────────┬─────────────────┬─────────────────┬───────────────────────┤
-│   React Flow    │     Zustand     │      Yjs        │     Gemini API        │
-│   (Canvas)      │     (State)     │    (CRDT)       │     (AI Chat)         │
-├─────────────────┴────────┬────────┴─────────────────┴───────────────────────┤
-│                          │                                                   │
-│  ┌───────────────────────▼───────────────────────┐                          │
-│  │              Physics Engine                    │                          │
-│  │           (d3-force simulation)               │                          │
-│  └───────────────────────────────────────────────┘                          │
-└──────────────────────────┬──────────────────────────────────────────────────┘
-                           │
-              ┌────────────▼────────────┐
-              │       PartyKit          │
-              │   (WebSocket Server)    │
-              │   Real-time Sync        │
-              └────────────┬────────────┘
-                           │
-              ┌────────────▼────────────┐
-              │       Chokidar          │
-              │    (File Watcher)       │
-              └────────────┬────────────┘
-                           │
-              ┌────────────▼────────────┐
-              │    /territory/*.md      │
-              │    (File System)        │
-              └─────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                        Browser (Client)                       │
+├──────────────┬───────────────┬───────────────┬───────────────┤
+│  React Flow  │    Zustand    │  Framer Motion│  Gemini API   │
+│  (Canvas)    │    (State)    │  (Animation)  │  (AI Chat)    │
+├──────────────┴───────┬───────┴───────────────┴───────────────┤
+│                      │                                        │
+│  ┌───────────────────▼──────────────────┐                    │
+│  │         Dagre Auto-Layout            │                    │
+│  │    (Hierarchical node positioning)   │                    │
+│  └──────────────────────────────────────┘                    │
+├──────────────────────────────────────────────────────────────┤
+│                    Next.js App Router                         │
+│              API Routes: /api/ai/chat                         │
+│              API Routes: /api/ai/suggest-features             │
+├──────────────────────────────────────────────────────────────┤
+│              Firebase (Optional, guarded)                     │
+│              Auth + Firestore                                 │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Core Technology Stack
+## Actual Technology Stack
 
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
-| Framework | Next.js | 15.1.3 | App Router, API routes, SSR |
-| Language | TypeScript | 5.x | Type safety, interfaces |
+| Framework | Next.js | 15.1.3 | App Router, API routes |
+| Language | TypeScript | 5.x | Type safety |
+| React | React | 19.0.0 | UI rendering |
 | Canvas | @xyflow/react | 12.3.2 | Infinite canvas, node/edge rendering |
-| Physics | d3-force | 3.x | Spring simulation for node positioning |
-| State | Zustand | 5.x | Local reactive state |
-| CRDT | Yjs | 13.x | Conflict-free replicated data types |
-| Real-time | PartyKit | latest | Managed WebSocket infrastructure |
-| AI | @google/generative-ai | 0.21.0 | Gemini 2.0 Flash integration |
-| File Watch | Chokidar | 3.x | Cross-platform file system watcher |
-| Layout | Dagre | 0.8.5 | Directed graph auto-layout |
-| Styling | Tailwind CSS | 3.4.x | Utility-first CSS |
+| Layout | dagre | 0.8.5 | Hierarchical auto-layout |
+| State | Zustand | 5.0.2 | Client-side reactive state |
+| AI | @google/generative-ai | 0.21.0 | Gemini 2.0 Flash |
+| Database | Firebase Firestore | 12.8.0 | Optional persistence (guarded) |
+| Styling | Tailwind CSS | 3.4.1 | Utility-first CSS |
 | Icons | Lucide React | 0.462.0 | Icon library |
-| Animation | Framer Motion | 11.x | Smooth transitions |
+| Animation | Framer Motion | 11.x | Transitions, context menus |
+| Markdown | react-markdown | 9.0.1 | Rendering markdown in chat |
+
+### Not Installed (Referenced in older docs but NOT in package.json)
+- d3-force (spring physics) — using dagre for layout instead
+- yjs / y-partykit (real-time collaboration) — not yet needed
+- chokidar (file watcher) — territory sync not implemented
+- partykit (WebSocket) — no real-time collab yet
 
 ---
 
-## Data Models
-
-### Node Types
+## Data Models (Actual — from `types/project.ts`)
 
 ```typescript
-// types/node.ts
+type NodeType = 'goal' | 'subgoal' | 'feature' | 'task' | 'moodboard' | 'notes' | 'connector'
 
-type NodeType = 'goal' | 'subgoal' | 'feature' | 'task';
+type NodeStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked'
 
-type NodeStatus = 'pending' | 'in_progress' | 'completed' | 'blocked';
-
-interface VisionNode {
-  id: string;
-  type: NodeType;
-  
-  // Content
-  title: string;
-  description?: string;
-  plan?: PlanItem[];
-  
-  // Position (managed by physics engine)
-  position: { x: number; y: number };
-  
-  // Metadata
-  status: NodeStatus;
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy?: string;
-  
-  // File sync
-  filePath?: string;  // e.g., "SPEC_DEFS/authentication.md"
-  
-  // Chat history (per-node AI context)
-  chatHistory?: ChatMessage[];
+interface NodeQuestion {
+  id: string
+  question: string
+  answer: string
 }
 
-interface PlanItem {
-  id: string;
-  text: string;
-  completed: boolean;
-  indent: number;  // For nested items
+interface NodePRD {
+  id: string
+  title: string
+  content: string
+  updatedAt: number
 }
 
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: Date;
+interface NodePrompt {
+  id: string
+  title: string
+  content: string
+  updatedAt: number
+}
+
+interface PlanNode {
+  id: string
+  type: NodeType
+  title: string
+  description: string
+  status: NodeStatus
+  parentId: string | null
+  collapsed: boolean
+  questions: NodeQuestion[]
+  content?: string        // Rich text (notes nodes)
+  images?: string[]       // Base64 data URLs (moodboard nodes)
+  prds?: NodePRD[]        // Attached PRD documents
+  prompts?: NodePrompt[]  // Attached IDE prompts
+}
+
+interface Project {
+  id: string
+  userId: string
+  title: string
+  description: string
+  phase: 'planning' | 'active'
+  nodes: PlanNode[]
+  edges: ProjectEdge[]
+  createdAt: number
+  updatedAt: number
 }
 ```
 
-### Edge Types
+### Canvas Types (from `types/canvas.ts`)
 
 ```typescript
-// types/edge.ts
-
-type EdgeStatus = 'pending' | 'active' | 'completed' | 'blocked';
-
-interface VisionEdge {
-  id: string;
-  source: string;      // Parent node ID
-  target: string;      // Child node ID
-  
-  // Visual
-  animated: boolean;
-  status: EdgeStatus;
-  
-  // Validation
-  isValid: boolean;    // False if creates cycle
+interface PlanNodeData {
+  label: string
+  description: string
+  nodeType: NodeType
+  status: NodeStatus
+  collapsed: boolean
+  parentId: string | null
+  questionsTotal: number
+  questionsAnswered: number
+  content?: string
+  images?: string[]
+  prds?: NodePRD[]
+  prompts?: NodePrompt[]
 }
-```
 
-### Canvas State
-
-```typescript
-// types/canvas.ts
-
-interface CanvasState {
-  nodes: VisionNode[];
-  edges: VisionEdge[];
-  
-  // Viewport
-  viewport: {
-    x: number;
-    y: number;
-    zoom: number;
-  };
-  
-  // Selection
-  selectedNodeIds: string[];
-  
-  // UI State
-  activePanelNodeId?: string;  // Which node's panel is open
-  isPhysicsEnabled: boolean;
-}
+type FlowNode = Node<PlanNodeData>
+type FlowEdge = Edge
 ```
 
 ---
 
-## State Management Architecture
+## State Management (Zustand)
 
-### Zustand Store Structure
+### Three Stores
+
+| Store | File | Purpose |
+|-------|------|---------|
+| `useProjectStore` | `stores/project-store.ts` | Project data, nodes, edges, flow state |
+| `useChatStore` | `stores/chat-store.ts` | AI chat message history |
+| `useUIStore` | `stores/ui-store.ts` | Selected node, panel open state |
+
+### Key ProjectStore Methods
 
 ```typescript
-// stores/canvasStore.ts
+interface ProjectState {
+  currentProject: Project | null
+  flowNodes: FlowNode[]
+  flowEdges: FlowEdge[]
 
-interface CanvasStore {
-  // State
-  nodes: VisionNode[];
-  edges: VisionEdge[];
-  selectedNodeIds: string[];
-  
-  // Actions
-  addNode: (type: NodeType, position: Position) => void;
-  updateNode: (id: string, updates: Partial<VisionNode>) => void;
-  deleteNode: (id: string) => void;
-  
-  addEdge: (source: string, target: string) => boolean;  // Returns false if cycle
-  deleteEdge: (id: string) => void;
-  
-  setSelection: (nodeIds: string[]) => void;
-  
-  // Physics
-  setNodePosition: (id: string, position: Position) => void;
+  // Project lifecycle
+  setCurrentProject: (project: Project | null) => void
+  initDraftProject: (userId: string) => void
+  ingestPlan: (plan, userId) => Project
+  mergeNodes: (newNodes: AIPlanNode[]) => void
+
+  // Node CRUD
+  updateNodeStatus: (nodeId, status) => void
+  updateNodeContent: (nodeId, title, description) => void
+  toggleNodeCollapse: (nodeId) => void
+  deleteNode: (nodeId) => void
+  addChildNode: (parentId, title) => string | null
+  duplicateNode: (nodeId, includeChildren) => string | null
+  changeNodeType: (nodeId, newType) => void
+  addFreeNode: (type, title, parentId?) => string
+
+  // Rich content
+  updateNodeRichContent: (nodeId, content) => void
+  addNodeImage: (nodeId, imageUrl) => void
+  removeNodeImage: (nodeId, imageUrl) => void
+
+  // PRDs & Prompts
+  addNodePRD: (nodeId, title, content) => string | null
+  updateNodePRD: (nodeId, prdId, title, content) => void
+  removeNodePRD: (nodeId, prdId) => void
+  addNodePrompt: (nodeId, title, content) => string | null
+  updateNodePrompt: (nodeId, promptId, title, content) => void
+  removeNodePrompt: (nodeId, promptId) => void
+
+  // Connections
+  connectNodes: (sourceId, targetId) => void
+  setNodeParent: (nodeId, parentId) => void
 }
 ```
 
-### Yjs Integration (Collaboration)
+### planNodesToFlow Conversion
 
-```typescript
-// lib/collaboration.ts
-
-import * as Y from 'yjs';
-import { WebsocketProvider } from 'y-partykit/provider';
-
-const ydoc = new Y.Doc();
-const yNodes = ydoc.getMap<VisionNode>('nodes');
-const yEdges = ydoc.getMap<VisionEdge>('edges');
-
-// Sync Zustand ↔ Yjs
-yNodes.observe((event) => {
-  // Update Zustand store when Yjs changes
-});
-
-// Connect to PartyKit
-const provider = new WebsocketProvider(
-  'wss://visionpath.partykit.dev',
-  'project-room',
-  ydoc
-);
-```
+The `planNodesToFlow()` function converts `PlanNode[]` → `{ FlowNode[], FlowEdge[] }`:
+- Filters out children of collapsed nodes
+- Generates edges from `parentId` relationships
+- Passes all data (content, images, prds, prompts) to flow node data
 
 ---
 
-## Physics Engine
-
-### d3-force Integration
-
-```typescript
-// lib/physics.ts
-
-import { forceSimulation, forceLink, forceManyBody, forceCenter } from 'd3-force';
-
-interface PhysicsConfig {
-  repulsion: number;      // -300 default, negative = repel
-  linkDistance: number;   // 150 default
-  linkStrength: number;   // 0.5 default
-  damping: number;        // 0.9 default (velocity decay)
-}
-
-function createSimulation(nodes: VisionNode[], edges: VisionEdge[]) {
-  return forceSimulation(nodes)
-    .force('charge', forceManyBody().strength(-300))
-    .force('link', forceLink(edges).distance(150))
-    .force('center', forceCenter(0, 0))
-    .velocityDecay(0.9)
-    .on('tick', () => {
-      // Update node positions in Zustand
-    });
-}
-```
-
-### Physics Rules
-
-1. **Node Repulsion**: All nodes repel each other to prevent overlap
-2. **Edge Attraction**: Connected nodes attract (spring force)
-3. **Damping**: Velocity decays to reach stable positions
-4. **Drag Override**: User drag pauses physics for that node
-5. **Resume**: Physics resumes on mouse release
-
----
-
-## File System Sync (Territory)
-
-### Directory Structure
-
-```
-territory/
-├── README.md                 # Project overview (root Goal node)
-├── VISION.md                 # Vision document
-├── ARCHITECTURE.md           # This file
-├── PLAN.md                   # Master checklist
-├── CONTRIBUTING.md           # Dev guidelines
-├── ROADMAP.md               # Milestone tracking
-├── SPEC_DEFS/
-│   ├── canvas-core.md       # Feature: Canvas
-│   ├── node-system.md       # Feature: Nodes
-│   ├── file-sync.md         # Feature: Territory sync
-│   └── ai-integration.md    # Feature: Gemini
-└── LOGS/
-    └── 2025-01-15-session.md
-```
-
-### File Format
-
-Each node serializes to Markdown with YAML frontmatter:
-
-```markdown
----
-id: "abc123"
-type: "feature"
-status: "in_progress"
-created: "2025-01-15T10:30:00Z"
-updated: "2025-01-15T14:45:00Z"
-parent: "def456"
----
-
-# Canvas Core
-
-The infinite canvas component using React Flow.
-
-## Plan
-
-- [x] Set up React Flow provider
-- [x] Configure dark theme
-- [ ] Add minimap
-- [ ] Implement zoom controls
-
-## Notes
-
-This uses @xyflow/react v12 which has breaking changes from v11.
-```
-
-### Sync Engine
-
-```typescript
-// lib/territory.ts
-
-async function writeNodeToFile(node: VisionNode): Promise<void> {
-  const frontmatter = yaml.stringify({
-    id: node.id,
-    type: node.type,
-    status: node.status,
-    created: node.createdAt.toISOString(),
-    updated: new Date().toISOString(),
-  });
-  
-  const content = `---\n${frontmatter}---\n\n# ${node.title}\n\n${node.description || ''}\n\n## Plan\n\n${formatPlan(node.plan)}`;
-  
-  await fs.writeFile(node.filePath, content, 'utf-8');
-}
-
-async function readFileToNode(filePath: string): Promise<VisionNode> {
-  const content = await fs.readFile(filePath, 'utf-8');
-  const { data, content: body } = matter(content);  // gray-matter
-  
-  return {
-    id: data.id,
-    type: data.type,
-    status: data.status,
-    title: extractTitle(body),
-    description: extractDescription(body),
-    plan: extractPlan(body),
-    filePath,
-    // ... other fields
-  };
-}
-```
-
-### Conflict Resolution
-
-When external file edit detected:
-
-1. **Compare timestamps** - File vs. node `updatedAt`
-2. **If file newer** - Update node from file
-3. **If node newer** - Prompt user: "External change detected. Keep canvas version or file version?"
-4. **Merge if possible** - Plan checkboxes can merge (union of completed items)
-
----
-
-## AI Integration
-
-### Context Building
-
-```typescript
-// lib/ai-context.ts
-
-function buildNodeContext(node: VisionNode, allNodes: VisionNode[], allEdges: VisionEdge[]): string {
-  // Get upstream nodes (parents, grandparents, etc.)
-  const upstream = getUpstreamNodes(node.id, allNodes, allEdges);
-  
-  // Build context string
-  let context = `# Project Context\n\n`;
-  
-  for (const upNode of upstream) {
-    context += `## ${upNode.type}: ${upNode.title}\n`;
-    context += `Status: ${upNode.status}\n`;
-    if (upNode.description) context += `${upNode.description}\n`;
-    context += `\n`;
-  }
-  
-  context += `# Current Node\n\n`;
-  context += `Type: ${node.type}\n`;
-  context += `Title: ${node.title}\n`;
-  context += `Status: ${node.status}\n`;
-  
-  return context;
-}
-```
-
-### System Instructions
-
-```typescript
-// lib/ai-prompts.ts
-
-const SYSTEM_PROMPTS: Record<NodeType, string> = {
-  goal: `You are helping plan a high-level project goal. Focus on breaking it into subgoals and identifying key milestones.`,
-  
-  subgoal: `You are helping plan a project subgoal. Focus on identifying the features needed to achieve this milestone.`,
-  
-  feature: `You are helping implement a specific feature. Focus on breaking it into concrete tasks and identifying technical requirements.`,
-  
-  task: `You are helping with a specific implementation task. Be precise, provide code snippets when helpful, and focus on actionable steps.`,
-};
-```
-
-### API Route
-
-```typescript
-// app/api/ai/route.ts
-
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-export async function POST(request: Request) {
-  const { nodeId, message, context, nodeType } = await request.json();
-  
-  const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-  
-  const chat = model.startChat({
-    history: [],
-    systemInstruction: SYSTEM_PROMPTS[nodeType] + '\n\n' + context,
-  });
-  
-  const result = await chat.sendMessageStream(message);
-  
-  // Return streaming response
-  return new Response(result.stream, {
-    headers: { 'Content-Type': 'text/event-stream' },
-  });
-}
-```
-
----
-
-## Dependency Validation
-
-### Cycle Detection
-
-```typescript
-// lib/validation.ts
-
-function wouldCreateCycle(
-  source: string,
-  target: string,
-  edges: VisionEdge[]
-): boolean {
-  // DFS from target to see if we can reach source
-  const visited = new Set<string>();
-  const stack = [target];
-  
-  while (stack.length > 0) {
-    const current = stack.pop()!;
-    if (current === source) return true;  // Cycle detected
-    
-    if (visited.has(current)) continue;
-    visited.add(current);
-    
-    // Find all nodes that current points to
-    const outgoing = edges
-      .filter(e => e.source === current)
-      .map(e => e.target);
-    
-    stack.push(...outgoing);
-  }
-  
-  return false;
-}
-```
-
-### Blocked Status Propagation
-
-```typescript
-function updateBlockedStatus(nodes: VisionNode[], edges: VisionEdge[]): VisionNode[] {
-  return nodes.map(node => {
-    // Get all parent nodes
-    const parentIds = edges
-      .filter(e => e.target === node.id)
-      .map(e => e.source);
-    
-    const parents = nodes.filter(n => parentIds.includes(n.id));
-    
-    // If any parent is not completed, this node is blocked
-    const isBlocked = parents.some(p => p.status !== 'completed');
-    
-    return {
-      ...node,
-      status: isBlocked && node.status !== 'completed' ? 'blocked' : node.status,
-    };
-  });
-}
-```
-
----
-
-## Component Architecture
+## Component Architecture (Actual)
 
 ```
 components/
 ├── canvas/
-│   ├── Canvas.tsx           # Main React Flow wrapper
-│   ├── CanvasControls.tsx   # Zoom, fit, lock buttons
-│   └── Minimap.tsx          # Navigation minimap
-├── nodes/
-│   ├── BaseNode.tsx         # Shared node wrapper
-│   ├── GoalNode.tsx         # Goal-specific styling
-│   ├── SubgoalNode.tsx      
-│   ├── FeatureNode.tsx      
-│   └── TaskNode.tsx         
-├── edges/
-│   ├── DependencyEdge.tsx   # Animated cable
-│   └── EdgeLabel.tsx        # Optional edge labels
+│   ├── graph-canvas.tsx              # Main ReactFlow wrapper
+│   ├── canvas-toolbar.tsx            # Re-layout button
+│   ├── context-menu/
+│   │   ├── node-context-menu.tsx     # Right-click on node
+│   │   ├── pane-context-menu.tsx     # Right-click on empty canvas (smart mapping)
+│   │   └── context-submenu.tsx       # Submenu helper
+│   └── nodes/
+│       ├── node-types.ts             # nodeTypes registry (7 types)
+│       ├── base-plan-node.tsx        # Shared node layout (goal/subgoal/feature/task)
+│       ├── goal-node.tsx             # Goal wrapper
+│       ├── subgoal-node.tsx          # Subgoal wrapper
+│       ├── feature-node.tsx          # Feature wrapper
+│       ├── task-node.tsx             # Task wrapper
+│       ├── moodboard-node.tsx        # Image grid node
+│       ├── notes-node.tsx            # Rich text node
+│       ├── connector-node.tsx        # Compact status waypoint
+│       └── node-toolbar.tsx          # Hover toolbar (edit, status, collapse, add child)
+├── chat/
+│   ├── planning-chat.tsx             # AI chat panel
+│   ├── chat-input.tsx                # Message input
+│   ├── chat-message.tsx              # Message bubble
+│   └── typing-indicator.tsx          # AI typing dots
 ├── panels/
-│   ├── PlanPanel.tsx        # Plan view/edit
-│   ├── ChatPanel.tsx        # AI chat interface
-│   └── DetailsPanel.tsx     # Metadata view
-└── ui/
-    ├── Button.tsx           
-    ├── Input.tsx            
-    └── ContextMenu.tsx      
+│   ├── node-detail-panel.tsx         # Full detail panel (edit, PRDs, prompts, images)
+│   ├── node-edit-form.tsx            # Title/description edit form
+│   └── rich-text-editor.tsx          # Tiptap rich text editor
+├── onboarding/
+│   └── project-onboarding.tsx        # Multi-step questionnaire
+├── dashboard/
+│   ├── project-list.tsx              # Project cards grid
+│   ├── project-card.tsx              # Single project card
+│   ├── create-project-button.tsx     # New project button
+│   └── empty-state.tsx               # No projects state
+├── layout/
+│   ├── header.tsx                    # Top navigation bar
+│   ├── theme-toggle.tsx              # Dark/light toggle
+│   └── user-menu.tsx                 # User avatar/menu
+└── ui/                               # Reusable primitives
+    ├── button.tsx
+    ├── badge.tsx
+    ├── card.tsx
+    ├── dialog.tsx
+    ├── input.tsx
+    ├── skeleton.tsx
+    └── textarea.tsx
 ```
 
 ---
 
-## Security Considerations
+## Key Flows
 
-1. **API Keys**: Gemini API key stored in `.env.local`, never committed
-2. **File Access**: Chokidar limited to `/territory` directory only
-3. **WebSocket Auth**: PartyKit rooms require authentication token
-4. **Input Sanitization**: All user input sanitized before rendering
+### 1. Project Creation
+```
+User → /project/new → Onboarding questionnaire (7 steps)
+  → AI suggests features → User confirms
+  → ingestPlan() → creates Project with nodes
+  → Redirect to /project/[id] → Canvas renders
+```
+
+### 2. AI Chat Planning
+```
+User types message → POST /api/ai/chat
+  → Gemini processes with system prompt + project context
+  → Returns structured JSON with new nodes
+  → mergeNodes() adds to project → Canvas updates
+```
+
+### 3. Node Connection (Manual)
+```
+User drags from source handle → drops on target handle
+  → onConnect callback → connectNodes(source, target)
+  → Sets target.parentId = source → Re-runs planNodesToFlow
+  → Edge appears on canvas
+```
+
+### 4. Smart Mapping (Pane Context Menu)
+```
+User right-clicks empty canvas → PaneContextMenu appears
+  → Shows node types with → arrow for auto-connect
+  → suggestParent() finds nearest valid parent by hierarchy + distance
+  → addFreeNode(type, title, parentId) → Node placed at click position
+```
 
 ---
 
-## Performance Guidelines
+## Node Configuration (from `lib/constants.ts`)
 
-1. **Node Limit**: Warn at 500 nodes, hard limit at 1000
-2. **Physics Tick**: 60fps target, throttle if > 16ms per tick
-3. **File Sync**: Debounce writes (500ms) to prevent thrashing
-4. **AI Context**: Max 8000 tokens per request
-5. **Virtualization**: React Flow handles off-screen node virtualization
+```typescript
+const NODE_CONFIG = {
+  goal:      { label: 'Goal',      color: '#6366f1', width: 280, height: 80 },
+  subgoal:   { label: 'Subgoal',   color: '#8b5cf6', width: 260, height: 70 },
+  feature:   { label: 'Feature',   color: '#3b82f6', width: 240, height: 65 },
+  task:      { label: 'Task',      color: '#22c55e', width: 220, height: 60 },
+  moodboard: { label: 'Moodboard', color: '#f59e0b', width: 280, height: 200 },
+  notes:     { label: 'Notes',     color: '#ec4899', width: 260, height: 150 },
+  connector: { label: 'Connector', color: '#64748b', width: 120, height: 40 },
+}
+```
+
+---
+
+## Firebase (Optional, Guarded)
+
+All Firebase usage is null-guarded so the app works without credentials:
+- `services/firebase.ts` — Initializes only if env vars present
+- `services/firestore.ts` — Returns early if `db` is null
+- `services/auth.ts` — Returns early if `auth` is null
+
+Without Firebase, the app runs entirely in-memory (Zustand state resets on refresh).
+
+---
+
+## Security
+
+1. **API Keys**: Stored in `.env.local`, never committed (`.gitignore`)
+2. **Firebase guarded**: App doesn't crash without Firebase keys
+3. **No `dangerouslySetInnerHTML`**: All content rendered through React components
+4. **Gemini key**: `NEXT_PUBLIC_` prefix means client-exposed — acceptable for this use case
 
 ---
 
@@ -535,8 +326,10 @@ components/
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2025-01-15 | React Flow over D3.js | Better React integration, built-in interactions |
-| 2025-01-15 | Zustand over Redux | Simpler API, perfect for this scale |
-| 2025-01-15 | PartyKit over self-hosted | Managed infrastructure, faster iteration |
-| 2025-01-15 | d3-force for physics | Battle-tested, integrates with React Flow |
-| 2025-01-15 | Yjs for CRDT | Most mature JS CRDT library |
+| 2025-01 | React Flow over D3.js | Built-in interactions, better React integration |
+| 2025-01 | Zustand over Redux | Simpler API, sufficient for project scale |
+| 2025-01 | Dagre over d3-force | Deterministic hierarchy layout vs physics jitter |
+| 2026-02 | 7 node types over 4 | Moodboard/notes/connector needed for rich canvas vision |
+| 2026-02 | PRDs + Prompts on nodes | Users need to attach IDE-ready content to plan nodes |
+| 2026-02 | Smart mapping | Auto-suggest parent by hierarchy rules + proximity |
+| 2026-02 | Firebase guarded | App must work without database for local dev |

@@ -1,36 +1,33 @@
 # VisionPath
 
-> **End spatial blindness in project planning.** A visual, infinite canvas where nodes represent your thoughts and connector cables represent your dependencies.
+> **Visual, AI-powered project planning on an infinite canvas.** Describe your idea, get a DAG of goals, features, and tasks — then refine, connect, and execute.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.1-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://typescriptlang.org/)
 [![React Flow](https://img.shields.io/badge/React%20Flow-12.3-purple)](https://reactflow.dev/)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
 ---
 
 ## What is VisionPath?
 
-VisionPath is a **visual DAG-based project planning tool** that combines:
+VisionPath is a **visual DAG-based project planning tool** where you:
 
-- **Infinite Canvas** - Free-floating nodes with spring physics for organic clustering
-- **AI-Powered Planning** - Gemini integration for task decomposition and implementation guidance
-- **Bidirectional File Sync** - Changes on the canvas mirror to Markdown files and vice versa
-- **Real-Time Collaboration** - Multiple users can plan together with CRDT-based conflict resolution
+1. **Describe** your project idea through a guided onboarding questionnaire
+2. **Generate** a hierarchical plan via AI (Gemini 2.0 Flash)
+3. **Visualize** the plan as an interactive node graph on an infinite canvas
+4. **Refine** by chatting with AI, adding nodes, connecting edges, attaching PRDs & prompts
+5. **Execute** by tracking status, managing images/mood boards, and copying prompts into your IDE
 
-### The Problem
+### Key Features
 
-Developers suffer from "spatial blindness" - losing the big picture while staring at small details. Existing tools fail because:
-
-1. **Isolation**: Planning happens in browsers, coding in IDEs - they never truly connect
-2. **Rigidity**: Kanban columns and list views don't match organic, branching thought
-
-### The Solution
-
-VisionPath treats your project architecture as a visual map where:
-- **Nodes** = Goals, Features, Tasks
-- **Cables** = Dependencies between them
-- **Drill-Down** = Click any node to reveal its plan and chat with an AI that knows exactly where it sits in the project
+- **7 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector
+- **AI Planning** — Gemini decomposes your idea into a structured hierarchy
+- **Rich Nodes** — Attach images, rich text, PRDs, and IDE prompts to any node
+- **Smart Mapping** — Auto-suggest parent nodes when creating new nodes on canvas
+- **Manual Connections** — Drag edges between handles to set parent-child relationships
+- **Context Menus** — Right-click nodes or empty canvas for quick actions
+- **Dark Theme** — Near-black canvas with dashed bezier curve edges
+- **Auto-Layout** — Dagre-powered hierarchical arrangement
 
 ---
 
@@ -39,18 +36,18 @@ VisionPath treats your project architecture as a visual map where:
 ### Prerequisites
 
 - Node.js 18+
-- pnpm (recommended) or npm
+- npm
 - Gemini API key ([get one here](https://aistudio.google.com/apikey))
 
 ### Installation
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-org/visionpath.git
-cd visionpath
+git clone https://github.com/benauyoung/Planner.git
+cd Planner
 
 # Install dependencies
-pnpm install
+npm install
 
 # Copy environment variables
 cp .env.example .env.local
@@ -59,66 +56,115 @@ cp .env.example .env.local
 # NEXT_PUBLIC_GEMINI_API_KEY=your_key_here
 
 # Start development server
-pnpm dev
+npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the canvas.
+Open [http://localhost:3000](http://localhost:3000) to start planning.
 
 ---
 
 ## Project Structure
 
 ```
-visionpath/
-├── app/                    # Next.js App Router pages
-│   ├── api/               # API routes (AI, file sync)
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx           # Main canvas page
+Planner/
+├── app/                          # Next.js App Router pages
+│   ├── api/ai/                   # AI routes (chat, suggest-features)
+│   ├── project/[id]/page.tsx     # Project workspace (canvas + chat)
+│   ├── project/new/page.tsx      # Onboarding questionnaire
+│   ├── login/page.tsx            # Auth page
+│   ├── layout.tsx                # Root layout
+│   └── page.tsx                  # Dashboard
 ├── components/
-│   ├── canvas/            # React Flow canvas components
-│   ├── nodes/             # Custom node types (Goal, Feature, Task)
-│   ├── edges/             # Custom edge/cable components
-│   └── panels/            # Drill-down panels (Plan, Chat, Details)
-├── stores/                # Zustand state management
-├── lib/                   # Utilities (AI, file sync, physics)
-├── types/                 # TypeScript interfaces
-├── territory/             # Mirrored Markdown documentation
-│   ├── README.md
-│   ├── VISION.md
-│   ├── ARCHITECTURE.md
-│   ├── SPEC_DEFS/
-│   ├── PLAN.md
-│   ├── CONTRIBUTING.md
-│   ├── ROADMAP.md
-│   └── LOGS/
-└── docs/                  # Additional documentation
+│   ├── canvas/                   # React Flow canvas
+│   │   ├── graph-canvas.tsx      # Main canvas component
+│   │   ├── canvas-toolbar.tsx    # Re-layout button
+│   │   ├── context-menu/         # Node + pane context menus
+│   │   └── nodes/                # 7 custom node components
+│   ├── chat/                     # AI planning chat
+│   ├── panels/                   # Detail panel, edit form, rich text editor
+│   ├── onboarding/               # Project onboarding questionnaire
+│   ├── dashboard/                # Project list, cards, empty state
+│   ├── layout/                   # Header, theme toggle, user menu
+│   └── ui/                       # Reusable UI primitives
+├── stores/                       # Zustand state management
+│   ├── project-store.ts          # Core project/node/edge state
+│   ├── chat-store.ts             # AI chat history
+│   └── ui-store.ts               # UI selections, panel state
+├── services/                     # Firebase auth/firestore (guarded)
+├── hooks/                        # Auto-layout, AI chat, project loading
+├── lib/                          # Constants, utils, ID generation
+├── prompts/                      # AI system prompts
+├── types/                        # TypeScript interfaces
+│   ├── project.ts                # PlanNode, NodePRD, NodePrompt, Project
+│   ├── canvas.ts                 # FlowNode, FlowEdge, PlanNodeData
+│   └── chat.ts                   # Chat message types
+└── public/                       # Static assets (favicon)
 ```
 
 ---
 
-## Core Concepts
+## Node Types
 
-### Node Types
+| Type | Purpose | Icon |
+|------|---------|------|
+| **Goal** | Top-level project objective | Target |
+| **Subgoal** | Major milestone | GitBranch |
+| **Feature** | Specific capability to build | Puzzle |
+| **Task** | Atomic work item | CheckSquare |
+| **Moodboard** | Image collection for visual reference | ImagePlus |
+| **Notes** | Rich text content block | FileText |
+| **Connector** | Compact status waypoint | Circle |
 
-| Type | Purpose | Visual |
-|------|---------|--------|
-| **Goal** | Top-level objective | Large, primary color |
-| **Subgoal** | Major milestone | Medium, secondary color |
-| **Feature** | Specific capability | Standard, accent color |
-| **Task** | Atomic work item | Small, muted color |
+## Node Attachments
 
-### Dependency Cables
+Every node can have:
+- **PRDs** — Product requirement documents (title + monospaced content, copy-to-clipboard)
+- **Prompts** — IDE prompts (title + content, one-click copy for pasting into Cursor/VS Code)
+- **Images** — Drag-drop, file picker, clipboard paste, or URL (moodboard nodes)
+- **Rich Text** — Tiptap editor content (notes nodes)
 
-Cables connect nodes to show dependencies. The system:
-- Prevents circular dependencies
-- Blocks downstream nodes until upstream completes
-- Animates flow direction (left → right)
+---
 
-### Territory Sync
+## Tech Stack
 
-Every node maps to a Markdown file in `/territory`. Changes sync bidirectionally:
-- Edit on canvas → File updates
-- Edit file externally → Canvas updates
+| Layer | Technology | Version |
+|-------|------------|---------|
+| Framework | Next.js (App Router) | 15.1.3 |
+| Language | TypeScript | 5.x |
+| Canvas | @xyflow/react | 12.3.2 |
+| Layout | dagre | 0.8.5 |
+| State | Zustand | 5.0.2 |
+| AI | @google/generative-ai (Gemini) | 0.21.0 |
+| Database | Firebase Firestore (optional) | 12.8.0 |
+| Styling | Tailwind CSS | 3.4.1 |
+| Animation | Framer Motion | 11.x |
+| Icons | Lucide React | 0.462.0 |
+
+---
+
+## Deployment
+
+### Vercel (Recommended)
+
+1. Push to GitHub
+2. Import repo at [vercel.com](https://vercel.com)
+3. Add `NEXT_PUBLIC_GEMINI_API_KEY` env var
+4. Deploy — auto-deploys on every push to `main`
+
+### Environment Variables
+
+```env
+# Required
+NEXT_PUBLIC_GEMINI_API_KEY=<your-gemini-key>
+
+# Optional (Firebase — app works without these)
+NEXT_PUBLIC_FIREBASE_API_KEY=<key>
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=<project>.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=<project-id>
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=<project>.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<id>
+NEXT_PUBLIC_FIREBASE_APP_ID=<id>
+```
 
 ---
 
@@ -127,26 +173,14 @@ Every node maps to a Markdown file in `/territory`. Changes sync bidirectionally
 | Document | Purpose |
 |----------|---------|
 | [VISION.md](./VISION.md) | North Star goals and target audience |
-| [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical decisions and data flow |
-| [PLAN.md](./PLAN.md) | Implementation checklist |
-| [CONTRIBUTING.md](./CONTRIBUTING.md) | Coding standards and Git workflow |
+| [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical decisions and data models |
+| [PLAN.md](./PLAN.md) | Implementation status checklist |
 | [ROADMAP.md](./ROADMAP.md) | Milestone tracking |
-
----
-
-## Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Canvas**: React Flow (@xyflow/react)
-- **Physics**: d3-force for spring simulation
-- **State**: Zustand + Yjs (CRDT)
-- **AI**: Google Gemini 2.0 Flash
-- **Styling**: Tailwind CSS
-- **Real-time**: PartyKit (WebSocket)
-- **File Sync**: Chokidar
+| [CONTRIBUTING.md](./CONTRIBUTING.md) | Coding standards |
+| [HANDOFF.md](./HANDOFF.md) | Detailed codebase walkthrough |
 
 ---
 
 ## License
 
-MIT © 2025 VisionPath
+MIT © 2026 VisionPath

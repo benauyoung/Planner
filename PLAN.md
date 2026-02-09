@@ -1,6 +1,6 @@
 # VisionPath Implementation Plan
 
-> The living checklist. Only place where task status is tracked. Update immediately on completion.
+> Living checklist reflecting actual implementation status as of February 2026.
 
 ---
 
@@ -9,307 +9,169 @@
 - `[ ]` Pending
 - `[~]` In Progress
 - `[x]` Completed
-- `[!]` Blocked
 
 ---
 
-## Phase 1: Foundation
+## Phase 1: Foundation ✅
 
 ### 1.1 Project Structure
-- [ ] Create `app/` directory with layout.tsx and page.tsx
-- [ ] Create `app/globals.css` with Tailwind imports and CSS variables
-- [ ] Create `components/` directory structure
-- [ ] Create `lib/` directory for utilities
-- [ ] Create `stores/` directory for Zustand
-- [ ] Create `types/` directory for TypeScript interfaces
-- [ ] Create `territory/` output folder
+- [x] Next.js App Router with `app/`, `components/`, `stores/`, `types/`, `lib/`, `hooks/`, `services/`, `prompts/`
+- [x] `app/globals.css` with Tailwind, CSS variables, dark theme, node colors
+- [x] `tailwind.config.ts` with custom node-type color tokens
+- [x] TypeScript strict mode, path aliases (`@/*`)
 
 ### 1.2 Type Definitions
-- [ ] `types/node.ts` - VisionNode, NodeType, NodeStatus, PlanItem
-- [ ] `types/edge.ts` - VisionEdge, EdgeStatus
-- [ ] `types/canvas.ts` - CanvasState, Viewport
-- [ ] `types/index.ts` - Re-export all types
+- [x] `types/project.ts` — NodeType (7 types), NodeStatus, PlanNode, NodePRD, NodePrompt, Project
+- [x] `types/canvas.ts` — PlanNodeData, FlowNode, FlowEdge
+- [x] `types/chat.ts` — ChatMessage, AIPlanNode
 
 ### 1.3 Zustand Stores
-- [ ] `stores/canvasStore.ts` - Nodes, edges, selection, viewport
-- [ ] `stores/panelStore.ts` - Active panel, edit mode
-- [ ] `stores/chatStore.ts` - Per-node chat history
-- [ ] `stores/syncStore.ts` - File watcher state, sync status
-
-### 1.4 Dependencies
-- [ ] Install d3-force and @types/d3-force
-- [ ] Install chokidar
-- [ ] Install yjs and y-partykit
-- [ ] Install gray-matter (YAML frontmatter parsing)
-- [ ] Verify existing deps work (react-flow, zustand, etc.)
+- [x] `stores/project-store.ts` — Full project/node/edge CRUD, PRD/prompt methods
+- [x] `stores/chat-store.ts` — AI chat message history
+- [x] `stores/ui-store.ts` — Selected node, panel state
 
 ---
 
-## Phase 2: Visual Canvas
+## Phase 2: Visual Canvas ✅
 
-### 2.1 Canvas Component
-- [ ] `components/canvas/Canvas.tsx` - React Flow wrapper
-- [ ] Configure dark theme (background, node colors)
-- [ ] Add grid background with dots
-- [ ] Add pan/zoom controls
-- [ ] Add minimap component
+### 2.1 Canvas
+- [x] `components/canvas/graph-canvas.tsx` — React Flow wrapper with dark theme
+- [x] Dot grid background, minimap, controls
+- [x] Pan/zoom (0.1x–2x range)
+- [x] `fitView` on load and layout changes
 
-### 2.2 Custom Nodes
-- [ ] `components/nodes/BaseNode.tsx` - Shared wrapper with status indicator
-- [ ] `components/nodes/GoalNode.tsx` - Large, primary color
-- [ ] `components/nodes/SubgoalNode.tsx` - Medium, secondary color
-- [ ] `components/nodes/FeatureNode.tsx` - Standard, accent color
-- [ ] `components/nodes/TaskNode.tsx` - Small, muted color
-- [ ] `components/nodes/index.ts` - Export nodeTypes object
+### 2.2 Custom Nodes (7 types)
+- [x] `base-plan-node.tsx` — Shared layout for goal/subgoal/feature/task
+- [x] `goal-node.tsx`, `subgoal-node.tsx`, `feature-node.tsx`, `task-node.tsx`
+- [x] `moodboard-node.tsx` — Image grid with empty state
+- [x] `notes-node.tsx` — Rich text content display
+- [x] `connector-node.tsx` — Compact status waypoint
+- [x] `node-types.ts` — Registry mapping type strings → components
+- [x] `node-toolbar.tsx` — Hover toolbar (edit, status cycle, collapse, add child)
 
-### 2.3 Custom Edges
-- [ ] `components/edges/DependencyEdge.tsx` - Animated cable
-- [ ] Visual states: pending (gray), active (blue), complete (green), blocked (red)
-- [ ] Arrow markers for direction
+### 2.3 Edges
+- [x] Dashed bezier curves (`strokeDasharray: '6 4'`)
+- [x] Edges auto-generated from `parentId` relationships
+- [x] Manual edge creation via drag between handles (`onConnect`)
 
-### 2.4 Spring Physics
-- [ ] `lib/physics.ts` - d3-force simulation setup
-- [ ] Node repulsion force (prevent overlap)
-- [ ] Edge spring attraction (connected nodes cluster)
-- [ ] Damping for stable positions
-- [ ] Integration with React Flow onNodesChange
-- [ ] Pause physics during manual drag
-- [ ] Resume physics on drag end
+### 2.4 Auto-Layout
+- [x] `hooks/use-auto-layout.ts` — Dagre integration
+- [x] Re-layout button in `canvas-toolbar.tsx`
+- [x] Auto-layout on node count change
 
-### 2.5 Node Interactions
-- [ ] Click to select (update canvasStore)
-- [ ] Shift+click for multi-select
-- [ ] Double-click to open panel
-- [ ] Right-click context menu
-- [ ] Drag to reposition
+### 2.5 Context Menus
+- [x] `node-context-menu.tsx` — Right-click node: edit, type, status, add child/sibling, duplicate, delete
+- [x] `pane-context-menu.tsx` — Right-click canvas: add any node type with smart parent suggestion
+- [x] Smart mapping: nearest valid parent by hierarchy rules + proximity
 
 ---
 
-## Phase 3: Drill-Down Panels
+## Phase 3: Detail Panel ✅
 
-### 3.1 Panel Container
-- [ ] `components/panels/PanelContainer.tsx` - Slide-out wrapper
-- [ ] Tab navigation: Plan | Chat | Details
-- [ ] Close button
-- [ ] Resize handle
-
-### 3.2 Plan Panel
-- [ ] `components/panels/PlanPanel.tsx` - Main component
-- [ ] Markdown renderer (react-markdown)
-- [ ] Interactive checkboxes (click to toggle)
-- [ ] Edit mode toggle
-- [ ] Live preview while editing
-- [ ] Save button (updates node and syncs to file)
-
-### 3.3 Chat Panel
-- [ ] `components/panels/ChatPanel.tsx` - Chat interface
-- [ ] Message list with user/assistant bubbles
-- [ ] Input field with send button
-- [ ] Streaming response display
-- [ ] Context indicator (shows upstream nodes used)
-
-### 3.4 Details Panel
-- [ ] `components/panels/DetailsPanel.tsx` - Metadata view
-- [ ] Node type, status, created/updated dates
-- [ ] File path (linked to territory)
-- [ ] Upstream/downstream dependency list
-- [ ] Delete node button (with confirmation)
+- [x] `node-detail-panel.tsx` — Slide-out panel on node selection
+- [x] Title/description editing via `node-edit-form.tsx`
+- [x] Type changing, status changing
+- [x] Parent/children navigation
+- [x] Add child node inline
+- [x] Duplicate and delete actions
+- [x] Question answering (from AI onboarding)
+- [x] Collapse/expand children
 
 ---
 
-## Phase 4: AI Integration
+## Phase 4: Rich Content ✅
 
-### 4.1 Context Management
-- [ ] `lib/ai-context.ts` - buildNodeContext function
-- [ ] Traverse upstream nodes via edges
-- [ ] Format context as structured Markdown
-- [ ] Token counting (estimate)
-- [ ] Truncation if exceeds limit
+### 4.1 Images (Moodboard)
+- [x] Drag-and-drop image upload
+- [x] File picker upload
+- [x] Clipboard paste (`Ctrl+V`)
+- [x] URL input fallback
+- [x] Base64 data URL storage
+- [x] Image grid display with remove buttons
 
-### 4.2 System Prompts
-- [ ] `lib/ai-prompts.ts` - Per-node-type prompts
-- [ ] Goal prompt (break into subgoals)
-- [ ] Subgoal prompt (identify features)
-- [ ] Feature prompt (list tasks, technical reqs)
-- [ ] Task prompt (implementation details)
+### 4.2 Rich Text (Notes)
+- [x] `rich-text-editor.tsx` — Tiptap editor with formatting toolbar
+- [x] Bold, italic, strike, bullet list, ordered list, code block
 
-### 4.3 API Route
-- [ ] `app/api/ai/route.ts` - Gemini integration
-- [ ] POST handler with streaming
-- [ ] Error handling (rate limits, API errors)
-- [ ] Request validation
+### 4.3 PRDs
+- [x] Add/edit/remove PRDs on any node
+- [x] Title + monospaced content textarea
+- [x] One-click copy to clipboard
+- [x] Content preview (first 200 chars)
 
-### 4.4 AI Actions
-- [ ] "Decompose" action - Break node into children
-- [ ] "Plan" action - Generate checklist for node
-- [ ] "Review" action - Check plan completeness
-- [ ] UI buttons for each action in ChatPanel
+### 4.4 IDE Prompts
+- [x] Add/edit/remove prompts on any node
+- [x] Title + monospaced content textarea
+- [x] One-click copy to clipboard for pasting into IDE
+- [x] Content preview (first 150 chars)
 
 ---
 
-## Phase 5: Territory Sync
+## Phase 5: AI Integration ✅
 
-### 5.1 File Structure
-- [ ] Create initial territory/ folder structure
-- [ ] README.md, VISION.md, ARCHITECTURE.md templates
-- [ ] SPEC_DEFS/ folder
-- [ ] LOGS/ folder
+### 5.1 Onboarding
+- [x] `project-onboarding.tsx` — 7-step questionnaire
+- [x] AI feature suggestions via `/api/ai/suggest-features`
+- [x] Summary page with "Start Planning" button
 
-### 5.2 Serialization
-- [ ] `lib/territory.ts` - Core sync functions
-- [ ] `nodeToMarkdown(node)` - Serialize with YAML frontmatter
-- [ ] `markdownToNode(content, filePath)` - Parse back to node
-- [ ] `formatPlan(items)` - Convert PlanItem[] to Markdown checkboxes
-- [ ] `parsePlan(markdown)` - Extract PlanItem[] from Markdown
-
-### 5.3 File Watcher
-- [ ] `lib/file-watcher.ts` - Chokidar setup
-- [ ] Watch territory/ directory
-- [ ] On file change: read, parse, update store
-- [ ] Debounce rapid changes (500ms)
-- [ ] Ignore changes from our own writes
-
-### 5.4 Write Sync
-- [ ] On node update: serialize and write to file
-- [ ] Debounce writes (500ms)
-- [ ] Handle new nodes (create file)
-- [ ] Handle deleted nodes (optionally delete file or mark)
-
-### 5.5 Conflict Resolution
-- [ ] Compare timestamps (file mtime vs node.updatedAt)
-- [ ] If conflict: show modal with options
-- [ ] "Keep Canvas" / "Keep File" / "Merge (if possible)"
-- [ ] Merge logic for plan checkboxes (union)
+### 5.2 Chat Planning
+- [x] `planning-chat.tsx` — Full chat interface
+- [x] `/api/ai/chat` — Gemini 2.0 Flash integration
+- [x] System prompts in `prompts/planning-system.ts`
+- [x] Structured JSON response → `mergeNodes()` adds to canvas
+- [x] Streaming responses with typing indicator
 
 ---
 
-## Phase 6: Advanced Features
+## Phase 6: Connections & Smart Mapping ✅
 
-### 6.1 Dependency Validation
-- [ ] `lib/validation.ts` - Cycle detection
-- [ ] `wouldCreateCycle(source, target, edges)` function
-- [ ] Block edge creation if cycle detected
-- [ ] Visual feedback (red highlight on invalid drop)
-
-### 6.2 Blocked Status
-- [ ] `updateBlockedStatus(nodes, edges)` function
-- [ ] Propagate blocked status when parent incomplete
-- [ ] Visual indicator on blocked nodes (red border or icon)
-
-### 6.3 Auto-Layout
-- [ ] `lib/layout.ts` - Dagre integration
-- [ ] "Organize" button in toolbar
-- [ ] Horizontal left-to-right flow
-- [ ] Preserve manual positions as override option
-
-### 6.4 Level of Detail (LOD)
-- [ ] Zoom threshold for hiding task nodes
-- [ ] Collapse/expand clusters
-- [ ] Focus mode (dim unrelated nodes)
+- [x] Manual edge creation: drag source handle → target handle
+- [x] `connectNodes()` / `setNodeParent()` store methods
+- [x] Smart mapping in pane context menu
+- [x] Hierarchy rules: subgoal→goal, feature→subgoal/goal, task→feature/subgoal
+- [x] Nearest parent by flow position distance
 
 ---
 
-## Phase 7: Real-Time Collaboration
+## Phase 7: Infrastructure ✅
 
-### 7.1 Yjs Setup
-- [ ] `lib/collaboration.ts` - Y.Doc initialization
-- [ ] Y.Map for nodes
-- [ ] Y.Map for edges
-- [ ] IndexedDB persistence (offline support)
-
-### 7.2 PartyKit Integration
-- [ ] Create PartyKit project (`npx partykit init`)
-- [ ] `party/index.ts` - Server code
-- [ ] WebSocket connection from client
-- [ ] Room-based sync (one room per project)
-
-### 7.3 Zustand-Yjs Bridge
-- [ ] Sync canvasStore changes to Y.Maps
-- [ ] Observe Y.Map changes, update canvasStore
-- [ ] Handle initial state reconciliation
-
-### 7.4 Presence & Awareness
-- [ ] User cursor positions
-- [ ] "User X is viewing Node Y" tooltip
-- [ ] Color-coded user indicators
-- [ ] User list in header
-
-### 7.5 Conflict UI
-- [ ] "External change detected" toast
-- [ ] Highlight nodes changed by others
-- [ ] Merge indicator for simultaneous edits
+- [x] Firebase auth/firestore services (null-guarded, optional)
+- [x] App works fully without Firebase (in-memory Zustand)
+- [x] Git repo initialized and pushed to GitHub
+- [x] Vercel deployment ready
+- [x] `public/favicon.svg` added
 
 ---
 
-## Phase 8: Polish & UX
+## Future Work (Not Started)
 
-### 8.1 Keyboard Shortcuts
-- [ ] `Space` - Toggle pan mode
-- [ ] `Tab` - Add child node to selected
-- [ ] `Enter` - Open panel for selected
-- [ ] `Backspace/Delete` - Delete selected
-- [ ] `Cmd/Ctrl + S` - Force sync
-- [ ] `Escape` - Close panel, deselect
-- [ ] `Cmd/Ctrl + Z` - Undo
-- [ ] `Cmd/Ctrl + Shift + Z` - Redo
+### Persistence
+- [ ] Firebase Firestore save/load projects
+- [ ] LocalStorage fallback for offline
+- [ ] Export/import as JSON
 
-### 8.2 Animations
-- [ ] Panel slide-in/out (Framer Motion)
-- [ ] Node expand/collapse
-- [ ] Edge connection animation
-- [ ] Status change pulse
+### Real-Time Collaboration
+- [ ] Yjs CRDT integration
+- [ ] WebSocket sync (PartyKit or similar)
+- [ ] Presence cursors
 
-### 8.3 Toolbar
-- [ ] Add Goal button
-- [ ] Add Feature button
-- [ ] Add Task button
-- [ ] Organize (auto-layout) button
-- [ ] Zoom controls
-- [ ] Sync status indicator
+### Advanced Canvas
+- [ ] Spring physics (d3-force)
+- [ ] Keyboard shortcuts
+- [ ] Multi-select
+- [ ] Undo/redo
+- [ ] Level of detail (LOD) zoom
 
-### 8.4 Persistence
-- [ ] LocalStorage for viewport position
-- [ ] Export canvas as JSON
-- [ ] Import canvas from JSON
-- [ ] Session recovery on crash
-
-### 8.5 Onboarding
-- [ ] Empty state with "Create your first Goal"
-- [ ] Tooltip hints for new users
-- [ ] Sample project template
-
----
-
-## Testing Checklist
-
-### Unit Tests
-- [ ] `lib/validation.test.ts` - Cycle detection
-- [ ] `lib/physics.test.ts` - Force calculations
-- [ ] `lib/territory.test.ts` - Serialization round-trip
-- [ ] `stores/canvasStore.test.ts` - State mutations
-
-### Component Tests
-- [ ] Node components render correctly
-- [ ] Panel interactions work
-- [ ] Context menu actions fire
-
-### Integration Tests
-- [ ] End-to-end: Create node → Edit plan → Save → Check file
-- [ ] Collaboration: Two clients sync correctly
-- [ ] AI: Chat produces valid response
-
----
-
-## Deployment Checklist
-
-- [ ] Environment variables configured
-- [ ] PartyKit deployed
-- [ ] Vercel project created
-- [ ] Domain configured
-- [ ] Analytics added (optional)
+### Territory Sync
+- [ ] Bidirectional file sync (canvas ↔ Markdown)
+- [ ] Chokidar file watcher
+- [ ] YAML frontmatter serialization
 
 ---
 
 ## Notes
 
-*Add implementation notes, blockers, or decisions here as work progresses.*
+- Firebase is optional — all env vars guarded at init
+- Images stored as base64 data URLs (no external storage needed)
+- PRDs and prompts designed for copy-paste into IDE workflows
+- Smart mapping uses `PARENT_TYPE_MAP` hierarchy + Euclidean distance
