@@ -10,12 +10,12 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 
 - Chat with AI to refine the plan
 - Click nodes to inspect/edit them
-- Attach PRDs and IDE prompts to nodes (copy-to-clipboard)
+- Attach PRDs and IDE prompts to nodes (copy-to-clipboard), or AI-generate them
 - Upload images for mood boards
 - Right-click to create nodes anywhere on canvas with smart parent suggestion
 - Drag edges between nodes to set relationships
 
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Copy prompts into your IDE.
+**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Generate PRDs & prompts → Copy into your IDE.
 
 ---
 
@@ -78,7 +78,9 @@ Planner/
 │   ├── login/page.tsx                # Auth page (Firebase)
 │   └── api/ai/
 │       ├── chat/route.ts             # POST - Gemini chat (progressive plan building)
-│       └── suggest-features/route.ts # POST - AI feature suggestions for onboarding
+│       ├── suggest-features/route.ts # POST - AI feature suggestions for onboarding
+│       ├── generate-prd/route.ts     # POST - AI PRD generation from node context
+│       └── generate-prompt/route.ts  # POST - AI implementation prompt generation
 ├── components/
 │   ├── canvas/
 │   │   ├── graph-canvas.tsx          # React Flow canvas (onConnect, context menus, layout)
@@ -112,7 +114,7 @@ Planner/
 │   ├── onboarding/
 │   │   └── project-onboarding.tsx    # Multi-step questionnaire (7 steps + summary)
 │   ├── panels/
-│   │   ├── node-detail-panel.tsx     # Full panel: edit, PRDs, prompts, images, children
+│   │   ├── node-detail-panel.tsx     # Full panel: edit, PRDs, prompts, images, AI generate
 │   │   ├── node-edit-form.tsx        # Title + description inline edit
 │   │   └── rich-text-editor.tsx      # Tiptap rich text editor
 │   ├── project/
@@ -134,12 +136,15 @@ Planner/
 │   ├── firebase.ts                  # Firebase init (null-guarded)
 │   ├── firestore.ts                 # CRUD (null-guarded)
 │   ├── auth.ts                      # Auth functions (null-guarded)
-│   └── gemini.ts                    # Gemini client + response schema
+│   └── gemini.ts                    # Gemini client + response schemas (chat, PRD, prompt)
 ├── prompts/
 │   ├── planning-system.ts           # Main AI system prompt
+│   ├── prd-generation.ts            # PRD generation system prompt
+│   ├── prompt-generation.ts         # Implementation prompt generation system prompt
 │   └── refinement-system.ts         # Refinement prompt (unused)
 ├── lib/
 │   ├── constants.ts                 # NODE_CONFIG (7 types), NODE_CHILD_TYPE, DAGRE_CONFIG
+│   ├── node-context.ts              # buildNodeContext() — hierarchy context for AI generation
 │   ├── feature-suggestions.ts       # AI feature suggestion schema
 │   ├── onboarding-config.ts         # Onboarding step definitions
 │   ├── onboarding-message.ts        # Formats answers into AI prompt
@@ -236,7 +241,7 @@ interface NodePrompt {
 ```
 
 ### Canvas Interactions
-- **Click node** → Detail panel opens (edit, PRDs, prompts, images, children)
+- **Click node** → Detail panel opens (edit, PRDs, prompts, images, children, AI generate)
 - **Right-click node** → Context menu (edit, type, status, add child/sibling, duplicate, delete)
 - **Right-click empty canvas** → Pane context menu (add any node type, smart parent suggestion)
 - **Drag source→target handle** → Creates edge (sets parentId)
@@ -258,9 +263,10 @@ The nearest valid parent is found by Euclidean distance between flow positions.
 2. **`planNodesToFlow()`** — always called after node mutations to sync React Flow
 3. **Dagre for layout** — `useAutoLayout` hook, TB direction, triggered on node count change
 4. **AI responses are structured JSON** — Gemini uses `responseSchema` for typed output
-5. **Merge by ID** — `mergeNodes()` upserts; same ID = update, new ID = add
-6. **Firebase null-guarded** — all services return early if Firebase not initialized
-7. **Images as base64** — stored directly in PlanNode, no external storage needed
+5. **AI generation uses full context** — `buildNodeContext()` gathers parent chain, Q&A, siblings, children
+6. **Merge by ID** — `mergeNodes()` upserts; same ID = update, new ID = add
+7. **Firebase null-guarded** — all services return early if Firebase not initialized
+8. **Images as base64** — stored directly in PlanNode, no external storage needed
 
 ---
 

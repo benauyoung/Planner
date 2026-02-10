@@ -77,13 +77,27 @@
 ---
 
 ### M7: Infrastructure ✅
-**Status**: � Complete
+**Status**: Complete
 
 **Delivered**:
 - Firebase auth/firestore (null-guarded, works without keys)
 - Git repo on GitHub (`benauyoung/Planner`)
 - Vercel deployment ready
 - Favicon, metadata, .gitignore
+
+---
+
+### M7.5: AI PRD & Prompt Generation ✅
+**Status**: Complete
+
+**Delivered**:
+- One-click PRD generation for feature/subgoal nodes via Gemini
+- One-click implementation prompt generation for feature/subgoal nodes
+- Full hierarchy context gathering (parent chain, Q&A, siblings, children)
+- Non-destructive: each generation adds a new entry
+- Loading spinner and dismissible error banner
+- Two new API routes (`/api/ai/generate-prd`, `/api/ai/generate-prompt`)
+- Context utility (`lib/node-context.ts`) and system prompts
 
 ---
 
@@ -126,6 +140,7 @@
 - Full canvas with 7 node types
 - AI onboarding + chat planning
 - Rich content: images, PRDs, prompts, notes
+- AI-powered PRD and prompt generation
 - Smart mapping + manual connections
 - Single-user, in-memory
 
@@ -149,3 +164,4 @@
 |------|--------|
 | 2025-01 | Initial roadmap created |
 | 2026-02-09 | Updated to reflect actual progress: M1–M7 complete, added PRDs/prompts/smart mapping |
+| 2026-02-10 | Added M7.5: AI-powered PRD and prompt generation from node hierarchy context |

@@ -16,12 +16,14 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 2. **Generate** a hierarchical plan via AI (Gemini 2.0 Flash)
 3. **Visualize** the plan as an interactive node graph on an infinite canvas
 4. **Refine** by chatting with AI, adding nodes, connecting edges, attaching PRDs & prompts
-5. **Execute** by tracking status, managing images/mood boards, and copying prompts into your IDE
+5. **Generate** PRDs and implementation prompts from node context with one click
+6. **Execute** by tracking status, managing images/mood boards, and copying prompts into your IDE
 
 ### Key Features
 
 - **7 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
+- **AI Generation** — One-click PRD and implementation prompt generation for feature/subgoal nodes
 - **Rich Nodes** — Attach images, rich text, PRDs, and IDE prompts to any node
 - **Smart Mapping** — Auto-suggest parent nodes when creating new nodes on canvas
 - **Manual Connections** — Drag edges between handles to set parent-child relationships
@@ -68,7 +70,7 @@ Open [http://localhost:3000](http://localhost:3000) to start planning.
 ```
 Planner/
 ├── app/                          # Next.js App Router pages
-│   ├── api/ai/                   # AI routes (chat, suggest-features)
+│   ├── api/ai/                   # AI routes (chat, suggest-features, generate-prd, generate-prompt)
 │   ├── project/[id]/page.tsx     # Project workspace (canvas + chat)
 │   ├── project/new/page.tsx      # Onboarding questionnaire
 │   ├── login/page.tsx            # Auth page
@@ -92,8 +94,8 @@ Planner/
 │   └── ui-store.ts               # UI selections, panel state
 ├── services/                     # Firebase auth/firestore (guarded)
 ├── hooks/                        # Auto-layout, AI chat, project loading
-├── lib/                          # Constants, utils, ID generation
-├── prompts/                      # AI system prompts
+├── lib/                          # Constants, utils, ID generation, context builder
+├── prompts/                      # AI system prompts (planning, PRD, prompt generation)
 ├── types/                        # TypeScript interfaces
 │   ├── project.ts                # PlanNode, NodePRD, NodePrompt, Project
 │   ├── canvas.ts                 # FlowNode, FlowEdge, PlanNodeData
@@ -118,8 +120,8 @@ Planner/
 ## Node Attachments
 
 Every node can have:
-- **PRDs** — Product requirement documents (title + monospaced content, copy-to-clipboard)
-- **Prompts** — IDE prompts (title + content, one-click copy for pasting into Cursor/VS Code)
+- **PRDs** — Product requirement documents (title + monospaced content, copy-to-clipboard, AI-generated or manual)
+- **Prompts** — IDE prompts (title + content, one-click copy for Cursor/VS Code, AI-generated or manual)
 - **Images** — Drag-drop, file picker, clipboard paste, or URL (moodboard nodes)
 - **Rich Text** — Tiptap editor content (notes nodes)
 

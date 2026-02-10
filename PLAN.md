@@ -98,12 +98,14 @@
 - [x] Title + monospaced content textarea
 - [x] One-click copy to clipboard
 - [x] Content preview (first 200 chars)
+- [x] AI-powered PRD generation for feature/subgoal nodes
 
 ### 4.4 IDE Prompts
 - [x] Add/edit/remove prompts on any node
 - [x] Title + monospaced content textarea
 - [x] One-click copy to clipboard for pasting into IDE
 - [x] Content preview (first 150 chars)
+- [x] AI-powered prompt generation for feature/subgoal nodes
 
 ---
 
@@ -120,6 +122,17 @@
 - [x] System prompts in `prompts/planning-system.ts`
 - [x] Structured JSON response → `mergeNodes()` adds to canvas
 - [x] Streaming responses with typing indicator
+
+### 5.3 AI PRD & Prompt Generation
+- [x] `lib/node-context.ts` — `buildNodeContext()` gathers full hierarchy context
+- [x] `prompts/prd-generation.ts` — PRD system prompt (9 sections)
+- [x] `prompts/prompt-generation.ts` — Implementation prompt system prompt (8 sections)
+- [x] `services/gemini.ts` — `prdGenerationSchema` and `promptGenerationSchema`
+- [x] `/api/ai/generate-prd` — POST endpoint for PRD generation
+- [x] `/api/ai/generate-prompt` — POST endpoint for prompt generation
+- [x] Generate buttons in detail panel for feature/subgoal nodes
+- [x] Loading state (spinner), error handling (dismissible banner)
+- [x] Non-destructive: each generation adds a new entry to the array
 
 ---
 

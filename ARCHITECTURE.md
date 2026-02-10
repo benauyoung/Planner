@@ -22,6 +22,8 @@
 │                    Next.js App Router                         │
 │              API Routes: /api/ai/chat                         │
 │              API Routes: /api/ai/suggest-features             │
+│              API Routes: /api/ai/generate-prd                 │
+│              API Routes: /api/ai/generate-prompt              │
 ├──────────────────────────────────────────────────────────────┤
 │              Firebase (Optional, guarded)                     │
 │              Auth + Firestore                                 │
@@ -276,7 +278,16 @@ User drags from source handle → drops on target handle
   → Edge appears on canvas
 ```
 
-### 4. Smart Mapping (Pane Context Menu)
+### 4. AI PRD/Prompt Generation
+```
+User clicks "Generate" on feature/subgoal node → detail panel
+  → buildNodeContext() gathers full hierarchy (parent chain, Q&A, siblings, children)
+  → POST /api/ai/generate-prd or /api/ai/generate-prompt
+  → Gemini generates structured {title, content} JSON
+  → addNodePRD() / addNodePrompt() adds to node → appears in list
+```
+
+### 5. Smart Mapping (Pane Context Menu)
 ```
 User right-clicks empty canvas → PaneContextMenu appears
   → Shows node types with → arrow for auto-connect
@@ -333,3 +344,4 @@ Without Firebase, the app runs entirely in-memory (Zustand state resets on refre
 | 2026-02 | PRDs + Prompts on nodes | Users need to attach IDE-ready content to plan nodes |
 | 2026-02 | Smart mapping | Auto-suggest parent by hierarchy rules + proximity |
 | 2026-02 | Firebase guarded | App must work without database for local dev |
+| 2026-02 | AI PRD/prompt generation | One-click generation using full hierarchy context via Gemini |
