@@ -60,7 +60,7 @@ function planNodesToFlow(nodes: PlanNode[]): { flowNodes: FlowNode[]; flowEdges:
         collapsed: node.collapsed,
         parentId: node.parentId,
         questionsTotal: node.questions?.length ?? 0,
-        questionsAnswered: node.questions?.filter((q) => q.answer.trim() !== '').length ?? 0,
+        questionsAnswered: node.questions?.filter((q) => (q.answer ?? '').trim() !== '').length ?? 0,
         content: node.content,
         images: node.images,
         prds: node.prds,

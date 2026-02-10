@@ -1,0 +1,108 @@
+import type { Project, PlanNode } from '@/types/project'
+
+/**
+ * Builds a structured markdown context string for a node,
+ * including its full hierarchy, Q&A, siblings, and children.
+ * Used as input for AI generation of PRDs and prompts.
+ */
+export function buildNodeContext(nodeId: string, project: Project): string {
+  const node = project.nodes.find((n) => n.id === nodeId)
+  if (!node) return ''
+
+  const sections: string[] = []
+
+  // Project info
+  sections.push(`# Project: ${project.title}`)
+  if (project.description) {
+    sections.push(project.description)
+  }
+
+  // Parent chain (from root down to parent)
+  const parentChain = getParentChain(node, project.nodes)
+  if (parentChain.length > 0) {
+    sections.push('## Hierarchy Context')
+    for (const ancestor of parentChain) {
+      const indent = '  '.repeat(parentChain.indexOf(ancestor))
+      sections.push(`${indent}- **${ancestor.type}**: ${ancestor.title}`)
+      if (ancestor.description) {
+        sections.push(`${indent}  ${ancestor.description}`)
+      }
+      const answeredQs = getAnsweredQuestions(ancestor)
+      if (answeredQs.length > 0) {
+        for (const q of answeredQs) {
+          sections.push(`${indent}  - Q: ${q.question}`)
+          sections.push(`${indent}    A: ${q.answer}`)
+        }
+      }
+    }
+  }
+
+  // Target node
+  sections.push(`## Target Node (${node.type}): ${node.title}`)
+  if (node.description) {
+    sections.push(node.description)
+  }
+  const nodeQs = getAnsweredQuestions(node)
+  if (nodeQs.length > 0) {
+    sections.push('### Decisions (Answered Questions)')
+    for (const q of nodeQs) {
+      sections.push(`- **Q:** ${q.question}`)
+      sections.push(`  **A:** ${q.answer}`)
+    }
+  }
+
+  // Siblings
+  if (node.parentId) {
+    const siblings = project.nodes.filter(
+      (n) => n.parentId === node.parentId && n.id !== node.id
+    )
+    if (siblings.length > 0) {
+      sections.push('### Sibling Nodes')
+      for (const sib of siblings) {
+        sections.push(`- **${sib.type}**: ${sib.title} — ${sib.description || '(no description)'}`)
+      }
+    }
+  }
+
+  // Children and grandchildren
+  const children = project.nodes.filter((n) => n.parentId === nodeId)
+  if (children.length > 0) {
+    sections.push('### Children (Planned Breakdown)')
+    for (const child of children) {
+      sections.push(`- **${child.type}**: ${child.title}`)
+      if (child.description) {
+        sections.push(`  ${child.description}`)
+      }
+      const childQs = getAnsweredQuestions(child)
+      if (childQs.length > 0) {
+        for (const q of childQs) {
+          sections.push(`  - Q: ${q.question}`)
+          sections.push(`    A: ${q.answer}`)
+        }
+      }
+      // Grandchildren (titles only)
+      const grandchildren = project.nodes.filter((n) => n.parentId === child.id)
+      if (grandchildren.length > 0) {
+        for (const gc of grandchildren) {
+          sections.push(`  - ${gc.type}: ${gc.title}`)
+        }
+      }
+    }
+  }
+
+  return sections.join('\n')
+}
+
+function getParentChain(node: PlanNode, nodes: PlanNode[]): PlanNode[] {
+  const chain: PlanNode[] = []
+  let current = node.parentId ? nodes.find((n) => n.id === node.parentId) : null
+  while (current) {
+    chain.unshift(current)
+    current = current.parentId ? nodes.find((n) => n.id === current!.parentId) : null
+  }
+  return chain
+}
+
+function getAnsweredQuestions(node: PlanNode) {
+  return (node.questions || []).filter((q) => (q.answer ?? '').trim() !== '')
+}

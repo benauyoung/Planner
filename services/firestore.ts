@@ -36,7 +36,10 @@ export async function getProject(id: string): Promise<Project | null> {
   // Ensure backward compat: nodes without questions get empty array
   data.nodes = data.nodes.map((n) => ({
     ...n,
-    questions: n.questions ?? [],
+    questions: (n.questions ?? []).map((q) => ({
+      ...q,
+      answer: q.answer ?? '',
+    })),
   }))
   return data
 }

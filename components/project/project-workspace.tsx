@@ -26,7 +26,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (currentProject) setLoading(false)
+    if (currentProject) {
+      setLoading(false)
+      return
+    }
     const timer = setTimeout(() => setLoading(false), 3000)
     return () => clearTimeout(timer)
   }, [currentProject])
@@ -60,11 +63,110 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
 
   if (loading) {
     return (
-      <div className="h-full flex items-center justify-center">
-        <div className="space-y-4 w-64">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+      <div className="h-full flex flex-col">
+        {/* Timeline bar skeleton */}
+        <div className="border-b bg-background/80 px-4 py-2">
+          <div className="flex items-center gap-1">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center shrink-0">
+                <div className="flex items-center gap-2 px-3 py-1.5">
+                  <Skeleton
+                    className="w-7 h-7 rounded-full"
+                    style={{ animationDelay: `${i * 150}ms` }}
+                  />
+                  <Skeleton
+                    className="h-3 rounded"
+                    style={{
+                      width: [80, 100, 64][i],
+                      animationDelay: `${i * 150 + 75}ms`,
+                    }}
+                  />
+                </div>
+                {i < 2 && <div className="w-8 h-px bg-border shrink-0" />}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Canvas area skeleton */}
+        <div className="flex-1 relative bg-canvas overflow-hidden">
+          {/* Dot grid background */}
+          <div
+            className="absolute inset-0 opacity-30"
+            style={{
+              backgroundImage:
+                'radial-gradient(circle, hsl(var(--muted-foreground) / 0.3) 1px, transparent 1px)',
+              backgroundSize: '24px 24px',
+            }}
+          />
+
+          {/* Chat toggle button skeleton */}
+          <div className="absolute top-4 left-4 z-10">
+            <Skeleton
+              className="w-9 h-9 rounded-md"
+              style={{ animationDelay: '600ms' }}
+            />
+          </div>
+
+          {/* Skeleton node cards */}
+          {[
+            { top: '18%', left: '22%', w: 180, delay: 200 },
+            { top: '40%', left: '50%', w: 160, delay: 400 },
+            { top: '28%', left: '70%', w: 140, delay: 600 },
+            { top: '62%', left: '35%', w: 170, delay: 800 },
+          ].map((node, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{ top: node.top, left: node.left }}
+            >
+              <div
+                className="rounded-xl border bg-background/80 backdrop-blur-sm p-4 space-y-2.5 shadow-sm"
+                style={{ width: node.w }}
+              >
+                <div className="flex items-center gap-2">
+                  <Skeleton
+                    className="w-3 h-3 rounded-full shrink-0"
+                    style={{ animationDelay: `${node.delay}ms` }}
+                  />
+                  <Skeleton
+                    className="h-3.5 flex-1 rounded"
+                    style={{ animationDelay: `${node.delay + 100}ms` }}
+                  />
+                </div>
+                <Skeleton
+                  className="h-2.5 w-4/5 rounded"
+                  style={{ animationDelay: `${node.delay + 200}ms` }}
+                />
+                <Skeleton
+                  className="h-2.5 w-3/5 rounded"
+                  style={{ animationDelay: `${node.delay + 300}ms` }}
+                />
+              </div>
+            </div>
+          ))}
+
+          {/* Dashed connector lines between nodes */}
+          <svg className="absolute inset-0 w-full h-full pointer-events-none">
+            <line
+              x1="30%" y1="24%" x2="54%" y2="44%"
+              stroke="hsl(var(--muted-foreground) / 0.15)"
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+            />
+            <line
+              x1="58%" y1="44%" x2="74%" y2="34%"
+              stroke="hsl(var(--muted-foreground) / 0.15)"
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+            />
+            <line
+              x1="54%" y1="48%" x2="42%" y2="66%"
+              stroke="hsl(var(--muted-foreground) / 0.15)"
+              strokeWidth="1.5"
+              strokeDasharray="6 4"
+            />
+          </svg>
         </div>
       </div>
     )

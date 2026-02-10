@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil } from 'lucide-react'
+import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle } from 'lucide-react'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
 import { Button } from '@/components/ui/button'
@@ -12,6 +12,7 @@ import { RichTextEditor } from './rich-text-editor'
 import { NODE_CONFIG, STATUS_COLORS, NODE_CHILD_TYPE } from '@/lib/constants'
 import type { NodeStatus, NodeType } from '@/types/project'
 import { cn } from '@/lib/utils'
+import { buildNodeContext } from '@/lib/node-context'
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
   { value: 'not_started', label: 'Not Started' },
@@ -55,6 +56,9 @@ export function NodeDetailPanel() {
   const [promptTitle, setPromptTitle] = useState('')
   const [promptContent, setPromptContent] = useState('')
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [generatingPRD, setGeneratingPRD] = useState(false)
+  const [generatingPrompt, setGeneratingPrompt] = useState(false)
+  const [generateError, setGenerateError] = useState<string | null>(null)
 
   const node = currentProject?.nodes.find((n) => n.id === selectedNodeId)
   const parent = node?.parentId
@@ -113,6 +117,52 @@ export function NodeDetailPanel() {
     const newId = duplicateNode(node.id, true)
     if (newId) {
       useUIStore.getState().selectNode(newId)
+    }
+  }
+
+  const canGenerate = node?.type === 'feature' || node?.type === 'subgoal'
+
+  async function handleGeneratePRD() {
+    if (!node || !currentProject || generatingPRD) return
+    setGeneratingPRD(true)
+    setGenerateError(null)
+    try {
+      const context = buildNodeContext(node.id, currentProject)
+      const res = await fetch('/api/ai/generate-prd', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context }),
+      })
+      if (!res.ok) throw new Error('Failed to generate PRD')
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      addNodePRD(node.id, data.title, data.content)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate PRD')
+    } finally {
+      setGeneratingPRD(false)
+    }
+  }
+
+  async function handleGeneratePrompt() {
+    if (!node || !currentProject || generatingPrompt) return
+    setGeneratingPrompt(true)
+    setGenerateError(null)
+    try {
+      const context = buildNodeContext(node.id, currentProject)
+      const res = await fetch('/api/ai/generate-prompt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context }),
+      })
+      if (!res.ok) throw new Error('Failed to generate prompt')
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      addNodePrompt(node.id, data.title, data.content)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate prompt')
+    } finally {
+      setGeneratingPrompt(false)
     }
   }
 
@@ -200,7 +250,7 @@ export function NodeDetailPanel() {
               <div className="mt-4">
                 <label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
                   <HelpCircle className="h-3.5 w-3.5" />
-                  Questions ({node.questions.filter((q) => q.answer.trim()).length}/{node.questions.length})
+                  Questions ({node.questions.filter((q) => (q.answer ?? '').trim()).length}/{node.questions.length})
                 </label>
                 <div className="space-y-3">
                   {node.questions.map((q) => (
@@ -208,11 +258,11 @@ export function NodeDetailPanel() {
                       <div className="flex items-start gap-1.5">
                         <div className={cn(
                           'w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-                          q.answer.trim()
+                          (q.answer ?? '').trim()
                             ? 'bg-green-500/20 text-green-600 dark:text-green-400'
                             : 'bg-muted text-muted-foreground'
                         )}>
-                          {q.answer.trim() ? (
+                          {(q.answer ?? '').trim() ? (
                             <Check className="h-2.5 w-2.5" />
                           ) : (
                             <span className="text-[8px] font-bold">?</span>
@@ -319,7 +369,7 @@ export function NodeDetailPanel() {
                         }
                       }}
                       placeholder="Or paste image URL..."
-                      className="w-full text-sm pl-7 pr-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                      className="w-full text-sm pl-7 pr-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                     />
                   </div>
                   <Button
@@ -340,6 +390,20 @@ export function NodeDetailPanel() {
               </div>
             )}
 
+            {/* Generate Error */}
+            {generateError && (
+              <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2">
+                <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive flex-1">{generateError}</p>
+                <button
+                  onClick={() => setGenerateError(null)}
+                  className="text-destructive hover:text-destructive/80 shrink-0"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+
             {/* PRDs */}
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
@@ -347,17 +411,33 @@ export function NodeDetailPanel() {
                   <FileText className="h-3.5 w-3.5" />
                   PRDs ({(node.prds || []).length})
                 </label>
-                <button
-                  onClick={() => {
-                    setEditingPRD('new')
-                    setPrdTitle('')
-                    setPrdContent('')
-                  }}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add
-                </button>
+                <div className="flex items-center gap-2">
+                  {canGenerate && (
+                    <button
+                      onClick={handleGeneratePRD}
+                      disabled={generatingPRD}
+                      className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-400 transition-colors disabled:opacity-50"
+                    >
+                      {generatingPRD ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5" />
+                      )}
+                      Generate
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setEditingPRD('new')
+                      setPrdTitle('')
+                      setPrdContent('')
+                    }}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add
+                  </button>
+                </div>
               </div>
               {(node.prds || []).map((prd) => (
                 <div key={prd.id} className="mb-2 rounded-lg border bg-card">
@@ -406,14 +486,14 @@ export function NodeDetailPanel() {
                         value={prdTitle}
                         onChange={(e) => setPrdTitle(e.target.value)}
                         placeholder="PRD title..."
-                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       <textarea
                         value={prdContent}
                         onChange={(e) => setPrdContent(e.target.value)}
                         placeholder="Write your PRD content here..."
                         rows={8}
-                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
+                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                       />
                       <div className="flex gap-1.5 justify-end">
                         <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPRD(null)}>
@@ -449,14 +529,14 @@ export function NodeDetailPanel() {
                     value={prdTitle}
                     onChange={(e) => setPrdTitle(e.target.value)}
                     placeholder="PRD title..."
-                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <textarea
                     value={prdContent}
                     onChange={(e) => setPrdContent(e.target.value)}
                     placeholder="Write your PRD content here..."
                     rows={8}
-                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
+                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                   />
                   <div className="flex gap-1.5 justify-end">
                     <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPRD(null)}>
@@ -487,17 +567,33 @@ export function NodeDetailPanel() {
                   <Terminal className="h-3.5 w-3.5" />
                   Prompts ({(node.prompts || []).length})
                 </label>
-                <button
-                  onClick={() => {
-                    setEditingPrompt('new')
-                    setPromptTitle('')
-                    setPromptContent('')
-                  }}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add
-                </button>
+                <div className="flex items-center gap-2">
+                  {canGenerate && (
+                    <button
+                      onClick={handleGeneratePrompt}
+                      disabled={generatingPrompt}
+                      className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-400 transition-colors disabled:opacity-50"
+                    >
+                      {generatingPrompt ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Sparkles className="h-3.5 w-3.5" />
+                      )}
+                      Generate
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setEditingPrompt('new')
+                      setPromptTitle('')
+                      setPromptContent('')
+                    }}
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Add
+                  </button>
+                </div>
               </div>
               {(node.prompts || []).map((prompt) => (
                 <div key={prompt.id} className="mb-2 rounded-lg border bg-card">
@@ -546,14 +642,14 @@ export function NodeDetailPanel() {
                         value={promptTitle}
                         onChange={(e) => setPromptTitle(e.target.value)}
                         placeholder="Prompt title..."
-                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       <textarea
                         value={promptContent}
                         onChange={(e) => setPromptContent(e.target.value)}
                         placeholder="Write your prompt here..."
                         rows={6}
-                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
+                        className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                       />
                       <div className="flex gap-1.5 justify-end">
                         <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPrompt(null)}>
@@ -589,14 +685,14 @@ export function NodeDetailPanel() {
                     value={promptTitle}
                     onChange={(e) => setPromptTitle(e.target.value)}
                     placeholder="Prompt title..."
-                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
                   <textarea
                     value={promptContent}
                     onChange={(e) => setPromptContent(e.target.value)}
                     placeholder="Write your prompt here..."
                     rows={6}
-                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
+                    className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                   />
                   <div className="flex gap-1.5 justify-end">
                     <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPrompt(null)}>
@@ -677,7 +773,7 @@ export function NodeDetailPanel() {
                           if (e.key === 'Escape') { setAddingChild(false); setChildTitle('') }
                         }}
                         placeholder={`${NODE_CONFIG[childType].label} title...`}
-                        className="flex-1 text-sm px-2 py-1 rounded-md border bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        className="flex-1 text-sm px-2 py-1 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                       />
                       <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAddChild}>
                         <Plus className="h-3.5 w-3.5" />

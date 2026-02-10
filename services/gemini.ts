@@ -62,3 +62,21 @@ export const progressiveChatSchema: Schema = {
   },
   required: ['message', 'nodes', 'done'],
 }
+
+export const prdGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    title: { type: SchemaType.STRING, description: 'Short descriptive title for the PRD' },
+    content: { type: SchemaType.STRING, description: 'Full PRD content in markdown format' },
+  },
+  required: ['title', 'content'],
+}
+
+export const promptGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    title: { type: SchemaType.STRING, description: 'Short descriptive title for the prompt' },
+    content: { type: SchemaType.STRING, description: 'Full implementation prompt in markdown format' },
+  },
+  required: ['title', 'content'],
+}
