@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
@@ -10,7 +10,12 @@ import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 import { ProjectOnboarding } from '@/components/onboarding/project-onboarding'
 import { TimelineBar } from '@/components/canvas/timeline-bar'
+import { NewProjectChooser } from '@/components/onboarding/new-project-chooser'
+import { TemplateGallery } from '@/components/onboarding/template-gallery'
+import { ImportMarkdownModal } from '@/components/dashboard/import-markdown-modal'
 import type { OnboardingAnswers } from '@/types/chat'
+
+type NewProjectMode = 'chooser' | 'ai' | 'template' | 'import'
 
 function NewProjectContent() {
   const initDraftProject = useProjectStore((s) => s.initDraftProject)
@@ -20,6 +25,7 @@ function NewProjectContent() {
   const setPhase = useChatStore((s) => s.setPhase)
   const userId = useEffectiveUserId()
   const initRef = useRef(false)
+  const [mode, setMode] = useState<NewProjectMode>('chooser')
 
   useEffect(() => {
     if (!initRef.current) {
@@ -33,6 +39,41 @@ function NewProjectContent() {
     setPhase('greeting')
   }
 
+  const handleChooseAI = () => {
+    setMode('ai')
+  }
+
+  // Chooser screen
+  if (mode === 'chooser') {
+    return (
+      <NewProjectChooser
+        onChooseAI={handleChooseAI}
+        onChooseTemplate={() => setMode('template')}
+        onChooseImport={() => setMode('import')}
+      />
+    )
+  }
+
+  // Template gallery
+  if (mode === 'template') {
+    return <TemplateGallery onBack={() => setMode('chooser')} />
+  }
+
+  // Import modal (rendered over chooser)
+  if (mode === 'import') {
+    return (
+      <>
+        <NewProjectChooser
+          onChooseAI={handleChooseAI}
+          onChooseTemplate={() => setMode('template')}
+          onChooseImport={() => setMode('import')}
+        />
+        <ImportMarkdownModal open onClose={() => setMode('chooser')} />
+      </>
+    )
+  }
+
+  // AI onboarding flow
   if (phase === 'onboarding') {
     return <ProjectOnboarding onComplete={handleOnboardingComplete} />
   }

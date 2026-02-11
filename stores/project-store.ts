@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -38,6 +38,8 @@ interface ProjectState {
   removeNodeImage: (nodeId: string, imageUrl: string) => void
   addFreeNode: (type: NodeType, title: string, parentId?: string | null) => string
   connectNodes: (sourceId: string, targetId: string) => void
+  addDependencyEdge: (sourceId: string, targetId: string, edgeType: EdgeType) => void
+  removeDependencyEdge: (edgeId: string) => void
   setNodeParent: (nodeId: string, parentId: string | null) => void
   addNodePRD: (nodeId: string, title: string, content: string) => string | null
   updateNodePRD: (nodeId: string, prdId: string, title: string, content: string) => void
@@ -47,11 +49,18 @@ interface ProjectState {
   removeNodePrompt: (nodeId: string, promptId: string) => void
   addProject: (project: Project) => void
   removeProject: (projectId: string) => void
+  toggleShareProject: () => string | null
   undo: () => void
   redo: () => void
 }
 
-function planNodesToFlow(nodes: PlanNode[]): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
+const EDGE_STYLES: Record<EdgeType, { strokeDasharray?: string; stroke: string; animated: boolean }> = {
+  hierarchy: { stroke: 'hsl(var(--border))', animated: false },
+  blocks: { strokeDasharray: '8 4', stroke: 'hsl(0 84% 60%)', animated: true },
+  depends_on: { strokeDasharray: '8 4', stroke: 'hsl(217 91% 60%)', animated: false },
+}
+
+function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
   const flowNodes: FlowNode[] = nodes
     .filter((node) => {
       if (!node.parentId) return true
@@ -81,17 +90,41 @@ function planNodesToFlow(nodes: PlanNode[]): { flowNodes: FlowNode[]; flowEdges:
     }))
 
   const visibleIds = new Set(flowNodes.map((n) => n.id))
-  const flowEdges: FlowEdge[] = nodes
+
+  // Hierarchy edges from parentId
+  const hierarchyEdges: FlowEdge[] = nodes
     .filter((node) => node.parentId && visibleIds.has(node.id) && visibleIds.has(node.parentId!))
     .map((node) => ({
-      id: `${node.parentId}-${node.id}`,
+      id: `hierarchy-${node.parentId}-${node.id}`,
       source: node.parentId!,
       target: node.id,
       type: 'bezier',
       animated: false,
+      style: { strokeDasharray: '6 4', strokeWidth: 1.5 },
     }))
 
-  return { flowNodes, flowEdges }
+  // Typed dependency edges from project.edges[]
+  const depEdges: FlowEdge[] = (projectEdges || [])
+    .filter((e) => visibleIds.has(e.source) && visibleIds.has(e.target))
+    .map((e) => {
+      const edgeType = e.edgeType || 'hierarchy'
+      const style = EDGE_STYLES[edgeType]
+      return {
+        id: e.id,
+        source: e.source,
+        target: e.target,
+        type: 'bezier',
+        animated: style.animated,
+        label: e.label || (edgeType === 'blocks' ? 'blocks' : edgeType === 'depends_on' ? 'depends on' : undefined),
+        style: {
+          stroke: style.stroke,
+          strokeWidth: 2,
+          ...(style.strokeDasharray ? { strokeDasharray: style.strokeDasharray } : {}),
+        },
+      }
+    })
+
+  return { flowNodes, flowEdges: [...hierarchyEdges, ...depEdges] }
 }
 
 export const useProjectStore = create<ProjectState>((set, get) => {
@@ -101,7 +134,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     const undoStack = prev
       ? [...get()._undoStack, prev].slice(-MAX_UNDO_STACK)
       : get()._undoStack
-    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes)
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes, updatedProject.edges)
     set({
       currentProject: updatedProject,
       flowNodes,
@@ -115,7 +148,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   /** Apply project without pushing to undo (for view-only changes like collapse) */
   function applyWithoutUndo(updatedProject: Project) {
-    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes)
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes, updatedProject.edges)
     set({ currentProject: updatedProject, flowNodes, flowEdges })
   }
 
@@ -131,7 +164,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
     setCurrentProject: (project) => {
       if (project) {
-        const { flowNodes, flowEdges } = planNodesToFlow(project.nodes)
+        const { flowNodes, flowEdges } = planNodesToFlow(project.nodes, project.edges)
         set({
           currentProject: project,
           flowNodes,
@@ -286,7 +319,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         updatedAt: Date.now(),
       }
 
-      const { flowNodes, flowEdges } = planNodesToFlow(nodes)
+      const { flowNodes, flowEdges } = planNodesToFlow(nodes, edges)
       set({
         currentProject: project,
         flowNodes,
@@ -541,6 +574,38 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
     },
 
+    addDependencyEdge: (sourceId, targetId, edgeType) => {
+      const project = get().currentProject
+      if (!project) return
+      // Prevent duplicate edges
+      const exists = project.edges.some(
+        (e) => e.source === sourceId && e.target === targetId && e.edgeType === edgeType
+      )
+      if (exists) return
+      const newEdge: ProjectEdge = {
+        id: generateId(),
+        source: sourceId,
+        target: targetId,
+        edgeType,
+        label: edgeType === 'blocks' ? 'blocks' : edgeType === 'depends_on' ? 'depends on' : undefined,
+      }
+      commitProjectUpdate({
+        ...project,
+        edges: [...project.edges, newEdge],
+        updatedAt: Date.now(),
+      })
+    },
+
+    removeDependencyEdge: (edgeId) => {
+      const project = get().currentProject
+      if (!project) return
+      commitProjectUpdate({
+        ...project,
+        edges: project.edges.filter((e) => e.id !== edgeId),
+        updatedAt: Date.now(),
+      })
+    },
+
     setNodeParent: (nodeId, parentId) => {
       const project = get().currentProject
       if (!project) return
@@ -624,6 +689,16 @@ export const useProjectStore = create<ProjectState>((set, get) => {
           state.currentProject?.id === projectId ? null : state.currentProject,
       })),
 
+    toggleShareProject: () => {
+      const project = get().currentProject
+      if (!project) return null
+      const isPublic = !project.isPublic
+      const shareId = isPublic ? (project.shareId || project.id) : project.shareId
+      const updated = { ...project, isPublic, shareId, updatedAt: Date.now() }
+      commitProjectUpdate(updated)
+      return isPublic ? shareId! : null
+    },
+
     undo: () => {
       const { _undoStack, _redoStack, currentProject } = get()
       if (_undoStack.length === 0) return
@@ -634,7 +709,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         ? [..._redoStack, currentProject]
         : _redoStack
 
-      const { flowNodes, flowEdges } = planNodesToFlow(previous.nodes)
+      const { flowNodes, flowEdges } = planNodesToFlow(previous.nodes, previous.edges)
       set({
         currentProject: previous,
         flowNodes,
@@ -656,7 +731,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         ? [..._undoStack, currentProject]
         : _undoStack
 
-      const { flowNodes, flowEdges } = planNodesToFlow(next.nodes)
+      const { flowNodes, flowEdges } = planNodesToFlow(next.nodes, next.edges)
       set({
         currentProject: next,
         flowNodes,

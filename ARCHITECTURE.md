@@ -102,6 +102,16 @@ interface PlanNode {
   prompts?: NodePrompt[]  // Attached IDE prompts
 }
 
+type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
+
+interface ProjectEdge {
+  id: string
+  source: string
+  target: string
+  edgeType?: EdgeType
+  label?: string
+}
+
 interface Project {
   id: string
   userId: string
@@ -112,6 +122,8 @@ interface Project {
   edges: ProjectEdge[]
   createdAt: number
   updatedAt: number
+  isPublic?: boolean
+  shareId?: string
 }
 ```
 
@@ -147,7 +159,7 @@ type FlowEdge = Edge
 |-------|------|---------|
 | `useProjectStore` | `stores/project-store.ts` | Project data, nodes, edges, flow state |
 | `useChatStore` | `stores/chat-store.ts` | AI chat message history |
-| `useUIStore` | `stores/ui-store.ts` | Selected node, panel open state |
+| `useUIStore` | `stores/ui-store.ts` | Selected node, panel state, blast radius, edge creation |
 
 ### Key ProjectStore Methods
 
@@ -203,7 +215,12 @@ interface ProjectState {
 
   // Connections
   connectNodes: (sourceId, targetId) => void
+  addDependencyEdge: (sourceId, targetId, edgeType) => void
+  removeDependencyEdge: (edgeId) => void
   setNodeParent: (nodeId, parentId) => void
+
+  // Sharing
+  toggleShareProject: () => string | null
 
   // Undo/Redo
   undo: () => void
@@ -213,9 +230,10 @@ interface ProjectState {
 
 ### planNodesToFlow Conversion
 
-The `planNodesToFlow()` function converts `PlanNode[]` → `{ FlowNode[], FlowEdge[] }`:
+The `planNodesToFlow(nodes, projectEdges)` function converts `PlanNode[]` + `ProjectEdge[]` → `{ FlowNode[], FlowEdge[] }`:
 - Filters out children of collapsed nodes
-- Generates edges from `parentId` relationships
+- Generates hierarchy edges from `parentId` relationships
+- Generates typed dependency edges from `project.edges[]` with visual styles (red dashed for `blocks`, blue dashed for `depends_on`)
 - Passes all data (content, images, prds, prompts) to flow node data
 
 ---
@@ -225,10 +243,11 @@ The `planNodesToFlow()` function converts `PlanNode[]` → `{ FlowNode[], FlowEd
 ```
 components/
 ├── canvas/
-│   ├── graph-canvas.tsx              # Main ReactFlow wrapper
-│   ├── canvas-toolbar.tsx            # Re-layout button
+│   ├── graph-canvas.tsx              # Main ReactFlow wrapper (blast radius, typed edges)
+│   ├── canvas-toolbar.tsx            # Export dropdown, blast radius toggle, undo/redo
+│   ├── timeline-bar.tsx              # Goal progress circles
 │   ├── context-menu/
-│   │   ├── node-context-menu.tsx     # Right-click on node
+│   │   ├── node-context-menu.tsx     # Right-click on node (+ dependency edge actions)
 │   │   ├── pane-context-menu.tsx     # Right-click on empty canvas (smart mapping)
 │   │   └── context-submenu.tsx       # Submenu helper
 │   └── nodes/
@@ -252,12 +271,19 @@ components/
 │   ├── node-edit-form.tsx            # Title/description edit form
 │   └── rich-text-editor.tsx          # Tiptap rich text editor
 ├── onboarding/
-│   └── project-onboarding.tsx        # Multi-step questionnaire
+│   ├── project-onboarding.tsx        # Multi-step questionnaire (7 steps + summary)
+│   ├── new-project-chooser.tsx       # 3-option entry: AI Chat / Template / Import
+│   └── template-gallery.tsx          # Template cards with use button
 ├── dashboard/
 │   ├── project-list.tsx              # Project cards grid
 │   ├── project-card.tsx              # Single project card
 │   ├── create-project-button.tsx     # New project button
+│   ├── import-project-button.tsx     # JSON import button
+│   ├── import-markdown-modal.tsx     # Markdown import modal with preview
 │   └── empty-state.tsx               # No projects state
+├── share/
+│   ├── share-button.tsx              # Share popover (public/private toggle, copy link)
+│   └── shared-plan-view.tsx          # Read-only canvas for shared plans
 ├── layout/
 │   ├── header.tsx                    # Top navigation bar
 │   ├── theme-toggle.tsx              # Dark/light toggle
@@ -317,6 +343,44 @@ User right-clicks empty canvas → PaneContextMenu appears
   → addFreeNode(type, title, parentId) → Node placed at click position
 ```
 
+### 6. Dependency Edge Creation
+```
+User right-clicks node → "Add Blocks Edge" or "Add Depends On Edge"
+  → startEdgeCreation(sourceId, edgeType) sets pendingEdge in UIStore
+  → User drags to target node → onConnect checks for pendingEdge
+  → addDependencyEdge(source, target, edgeType) → Typed edge appears
+```
+
+### 7. Blast Radius Preview
+```
+User clicks Radar icon in toolbar → blastRadiusMode = true
+  → Select a node → getBlastRadius() traverses children + dependency edges
+  → Unaffected nodes dimmed to 0.25 opacity, affected nodes stay at full opacity
+```
+
+### 8. Export Flow
+```
+User clicks Export dropdown in toolbar → chooses format
+  → JSON: exportProjectAsJSON() → downloadFile()
+  → Markdown: exportFullPlanAsMarkdown() → downloadFile()
+  → Project files: generateCursorRules() / generateClaudeMD() etc.
+  → Clipboard: navigator.clipboard.writeText()
+```
+
+### 9. Share Flow
+```
+User clicks Share button → popover with public/private toggle
+  → toggleShareProject() sets isPublic + shareId on project
+  → Copy link: /share/[shareId] → Read-only SharedPlanView
+```
+
+### 10. Template Flow
+```
+User clicks "Create New" → NewProjectChooser (3 options)
+  → "Start from Template" → TemplateGallery shows 3 templates
+  → Click template → ingestPlan() creates project → redirect to /project/[id]
+```
+
 ---
 
 ## Node Configuration (from `lib/constants.ts`)
@@ -370,3 +434,9 @@ Without Firebase, the app persists state to localStorage as a fallback. If neith
 | 2026-02 | Smart mapping | Auto-suggest parent by hierarchy rules + proximity |
 | 2026-02 | Firebase guarded | App must work without database for local dev |
 | 2026-02 | AI PRD/prompt generation | One-click generation using full hierarchy context via Gemini |
+| 2026-02 | Typed edges | blocks/depends_on edges for dependency tracking between non-parent nodes |
+| 2026-02 | Blast radius | Visual downstream impact analysis when node is selected |
+| 2026-02 | Export system | Multi-format export: JSON, Markdown, .cursorrules, CLAUDE.md |
+| 2026-02 | Markdown import | Parse structured markdown into plan DAG with heading hierarchy |
+| 2026-02 | Shareable plans | Public toggle with read-only share URL |
+| 2026-02 | Template library | Pre-built seed plans for common project patterns |

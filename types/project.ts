@@ -41,10 +41,14 @@ export interface PlanNode {
   prompts?: NodePrompt[]
 }
 
+export type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
+
 export interface ProjectEdge {
   id: string
   source: string
   target: string
+  edgeType?: EdgeType
+  label?: string
 }
 
 export interface Project {
@@ -57,4 +61,6 @@ export interface Project {
   edges: ProjectEdge[]
   createdAt: number
   updatedAt: number
+  isPublic?: boolean
+  shareId?: string
 }

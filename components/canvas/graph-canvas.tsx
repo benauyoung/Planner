@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ReactFlow,
   Background,
@@ -22,6 +22,7 @@ import { CanvasToolbar } from './canvas-toolbar'
 import { NodeContextMenu } from './context-menu/node-context-menu'
 import { PaneContextMenu } from './context-menu/pane-context-menu'
 import { NODE_CONFIG } from '@/lib/constants'
+import { getBlastRadius } from '@/lib/blast-radius'
 import type { NodeType } from '@/types/project'
 import type { Node } from '@xyflow/react'
 
@@ -41,7 +42,35 @@ export function GraphCanvas() {
     canvasPosition: { x: number; y: number }
   } | null>(null)
   const connectNodes = useProjectStore((s) => s.connectNodes)
+  const addDependencyEdge = useProjectStore((s) => s.addDependencyEdge)
+  const currentProject = useProjectStore((s) => s.currentProject)
   const reactFlowInstance = useReactFlow()
+  const blastRadiusMode = useUIStore((s) => s.blastRadiusMode)
+  const pendingEdge = useUIStore((s) => s.pendingEdge)
+
+  // Compute blast radius affected node IDs
+  const blastRadiusIds = useCallback(() => {
+    if (!blastRadiusMode || !selectedNodeId || !currentProject) return new Set<string>()
+    return getBlastRadius(selectedNodeId, currentProject)
+  }, [blastRadiusMode, selectedNodeId, currentProject])
+
+  // Apply blast radius dimming to flow nodes
+  const displayNodes = useMemo(() => {
+    if (!blastRadiusMode || !selectedNodeId) return flowNodes
+    const affected = blastRadiusIds()
+    if (affected.size === 0) return flowNodes
+    return flowNodes.map((node) => {
+      const isAffected = affected.has(node.id) || node.id === selectedNodeId
+      return {
+        ...node,
+        style: {
+          ...node.style,
+          opacity: isAffected ? 1 : 0.25,
+          transition: 'opacity 0.3s ease',
+        },
+      }
+    })
+  }, [flowNodes, blastRadiusMode, selectedNodeId, blastRadiusIds])
 
   // Auto-layout when node count changes (progressive building)
   useEffect(() => {
@@ -105,10 +134,15 @@ export function GraphCanvas() {
   const onConnect: OnConnect = useCallback(
     (connection) => {
       if (connection.source && connection.target) {
-        connectNodes(connection.source, connection.target)
+        if (pendingEdge && pendingEdge.sourceId === connection.source) {
+          addDependencyEdge(connection.source, connection.target, pendingEdge.edgeType)
+          useUIStore.getState().cancelEdgeCreation()
+        } else {
+          connectNodes(connection.source, connection.target)
+        }
       }
     },
-    [connectNodes]
+    [connectNodes, addDependencyEdge, pendingEdge]
   )
 
   const handlePaneClick = useCallback(() => {
@@ -151,7 +185,7 @@ export function GraphCanvas() {
   return (
     <div className="relative w-full h-full">
       <ReactFlow
-        nodes={flowNodes}
+        nodes={displayNodes}
         edges={flowEdges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}

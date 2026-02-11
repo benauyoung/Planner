@@ -71,6 +71,29 @@ export const progressiveChatSchema: Schema = {
   required: ['message', 'nodes', 'done'],
 }
 
+export const questionGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    questions: {
+      type: SchemaType.ARRAY,
+      description: 'Multiple-choice questions to refine scope and requirements',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          question: { type: SchemaType.STRING, description: 'A decision-oriented question' },
+          options: {
+            type: SchemaType.ARRAY,
+            description: '3-5 concrete answer options',
+            items: { type: SchemaType.STRING },
+          },
+        },
+        required: ['question', 'options'],
+      },
+    },
+  },
+  required: ['questions'],
+}
+
 export const prdGenerationSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {

@@ -16,12 +16,18 @@ import {
   ImagePlus,
   FileText,
   Circle,
+  Clipboard,
+  Download,
+  Ban,
+  ArrowRight,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG, NODE_CHILD_TYPE, STATUS_COLORS } from '@/lib/constants'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import { ContextSubmenu } from './context-submenu'
+import { exportSubtreeAsMarkdown } from '@/lib/export-markdown'
+import { downloadFile } from '@/lib/export-import'
 import type { NodeType, NodeStatus, PlanNode } from '@/types/project'
 
 interface NodeContextMenuProps {
@@ -197,6 +203,33 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
     onClose()
   }
 
+  const handleAddBlocksEdge = () => {
+    useUIStore.getState().startEdgeCreation(nodeId, 'blocks')
+    onClose()
+  }
+
+  const handleAddDependsOnEdge = () => {
+    useUIStore.getState().startEdgeCreation(nodeId, 'depends_on')
+    onClose()
+  }
+
+  const handleCopyContext = () => {
+    const project = useProjectStore.getState().currentProject
+    if (!project) return
+    const md = exportSubtreeAsMarkdown(nodeId, project)
+    navigator.clipboard.writeText(md)
+    onClose()
+  }
+
+  const handleDownloadMarkdown = () => {
+    const project = useProjectStore.getState().currentProject
+    if (!project) return
+    const md = exportSubtreeAsMarkdown(nodeId, project)
+    const safeName = node.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()
+    downloadFile(md, `${safeName}.md`, 'text/markdown')
+    onClose()
+  }
+
   const typeSubmenuItems = NODE_TYPES.map((t) => ({
     label: NODE_CONFIG[t].label,
     value: t,
@@ -304,6 +337,50 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
       >
         <Circle className="h-4 w-4" />
         <span>Add Connector</span>
+      </button>
+
+      <div className="h-px bg-border mx-2 my-1" />
+
+      {/* Add Blocks Edge */}
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={handleAddBlocksEdge}
+        onMouseEnter={handleItemHover}
+      >
+        <Ban className="h-4 w-4 text-red-500" />
+        <span>Add &quot;Blocks&quot; Edge</span>
+      </button>
+
+      {/* Add Depends On Edge */}
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={handleAddDependsOnEdge}
+        onMouseEnter={handleItemHover}
+      >
+        <ArrowRight className="h-4 w-4 text-blue-500" />
+        <span>Add &quot;Depends On&quot; Edge</span>
+      </button>
+
+      <div className="h-px bg-border mx-2 my-1" />
+
+      {/* Copy Context for AI */}
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={handleCopyContext}
+        onMouseEnter={handleItemHover}
+      >
+        <Clipboard className="h-4 w-4" />
+        <span>Copy Context for AI</span>
+      </button>
+
+      {/* Download as Markdown */}
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={handleDownloadMarkdown}
+        onMouseEnter={handleItemHover}
+      >
+        <Download className="h-4 w-4" />
+        <span>Export as Markdown</span>
       </button>
 
       {/* Duplicate */}

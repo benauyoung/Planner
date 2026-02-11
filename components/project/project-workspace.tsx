@@ -14,6 +14,7 @@ import { PlanningChat } from '@/components/chat/planning-chat'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TimelineBar } from '@/components/canvas/timeline-bar'
+import { ShareButton } from '@/components/share/share-button'
 
 interface ProjectWorkspaceProps {
   projectId: string
@@ -245,7 +246,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           <TimelineBar />
           <div className="flex-1 relative">
             <GraphCanvas />
-            <div className="absolute top-4 left-4 z-10">
+            <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
               <Button
                 variant="outline"
                 size="icon"
@@ -258,6 +259,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                   <MessageSquare className="h-4 w-4" />
                 )}
               </Button>
+              <ShareButton />
             </div>
           </div>
         </div>

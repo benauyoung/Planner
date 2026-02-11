@@ -56,7 +56,9 @@
       "Bash(node -e:*)",
       "WebFetch(domain:planner-ruby-seven.vercel.app)",
       "Bash(npm config:*)",
-      "Bash(printf:*)"
+      "Bash(printf:*)",
+      "Bash(npx vercel:*)",
+      "Bash(git status:*)"
     ]
   }
 }

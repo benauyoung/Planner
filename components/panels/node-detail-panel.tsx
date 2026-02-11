@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle } from 'lucide-react'
+import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, Send, PenLine } from 'lucide-react'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
 import { Button } from '@/components/ui/button'
@@ -49,6 +49,9 @@ export function NodeDetailPanel() {
   const updateNodePrompt = useProjectStore((s) => s.updateNodePrompt)
   const removeNodePrompt = useProjectStore((s) => s.removeNodePrompt)
 
+  const addNodeQuestions = useProjectStore((s) => s.addNodeQuestions)
+  const addCustomNodeQuestion = useProjectStore((s) => s.addCustomNodeQuestion)
+
   const [editingPRD, setEditingPRD] = useState<string | null>(null)
   const [prdTitle, setPrdTitle] = useState('')
   const [prdContent, setPrdContent] = useState('')
@@ -59,6 +62,10 @@ export function NodeDetailPanel() {
   const [generatingPRD, setGeneratingPRD] = useState(false)
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
+  const [generatingQuestions, setGeneratingQuestions] = useState(false)
+  const [submittingAnswers, setSubmittingAnswers] = useState(false)
+  const [showCustomInput, setShowCustomInput] = useState(false)
+  const [customQuestion, setCustomQuestion] = useState('')
 
   const node = currentProject?.nodes.find((n) => n.id === selectedNodeId)
   const parent = node?.parentId
@@ -166,6 +173,80 @@ export function NodeDetailPanel() {
     }
   }
 
+  async function handleGenerateQuestions() {
+    if (!node || !currentProject || generatingQuestions) return
+    setGeneratingQuestions(true)
+    setGenerateError(null)
+    try {
+      const context = buildNodeContext(node.id, currentProject)
+      const res = await fetch('/api/ai/generate-questions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context }),
+      })
+      if (!res.ok) throw new Error('Failed to generate questions')
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (data.questions && data.questions.length > 0) {
+        addNodeQuestions(node.id, data.questions)
+      }
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate questions')
+    } finally {
+      setGeneratingQuestions(false)
+    }
+  }
+
+  async function handleSubmitAnswers() {
+    if (!node || !currentProject || submittingAnswers) return
+    const answered = node.questions.filter((q) => (q.answer ?? '').trim())
+    if (answered.length === 0) return
+
+    setSubmittingAnswers(true)
+    setGenerateError(null)
+    try {
+      const context = buildNodeContext(node.id, currentProject)
+      const [prdRes, promptRes] = await Promise.all([
+        fetch('/api/ai/generate-prd', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context }),
+        }),
+        fetch('/api/ai/generate-prompt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ context }),
+        }),
+      ])
+
+      if (!prdRes.ok) throw new Error('Failed to generate PRD')
+      if (!promptRes.ok) throw new Error('Failed to generate prompt')
+
+      const prdData = await prdRes.json()
+      const promptData = await promptRes.json()
+
+      if (prdData.error) throw new Error(prdData.error)
+      if (promptData.error) throw new Error(promptData.error)
+
+      addNodePRD(node.id, prdData.title, prdData.content)
+      addNodePrompt(node.id, promptData.title, promptData.content)
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate from answers')
+    } finally {
+      setSubmittingAnswers(false)
+    }
+  }
+
+  function handleAddCustomQuestion() {
+    if (!node || !customQuestion.trim()) return
+    addCustomNodeQuestion(node.id, customQuestion.trim())
+    setCustomQuestion('')
+    setShowCustomInput(false)
+  }
+
+  const answeredCount = node?.questions.filter((q) => (q.answer ?? '').trim()).length ?? 0
+  const totalCount = node?.questions.length ?? 0
+
   return (
     <AnimatePresence>
       {detailPanelOpen && node && (
@@ -246,15 +327,30 @@ export function NodeDetailPanel() {
             </div>
 
             {/* Questions */}
-            {node.questions && node.questions.length > 0 && (
-              <div className="mt-4">
-                <label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+            <div className="mt-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <HelpCircle className="h-3.5 w-3.5" />
-                  Questions ({node.questions.filter((q) => (q.answer ?? '').trim()).length}/{node.questions.length})
+                  Questions ({answeredCount}/{totalCount})
                 </label>
+                <button
+                  onClick={handleGenerateQuestions}
+                  disabled={generatingQuestions}
+                  className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-400 transition-colors disabled:opacity-50"
+                >
+                  {generatingQuestions ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <MessageSquarePlus className="h-3.5 w-3.5" />
+                  )}
+                  {totalCount > 0 ? 'Ask More' : 'Generate'}
+                </button>
+              </div>
+
+              {totalCount > 0 && (
                 <div className="space-y-3">
                   {node.questions.map((q) => (
-                    <div key={q.id} className="space-y-1">
+                    <div key={q.id} className="rounded-lg border bg-card p-3 space-y-2">
                       <div className="flex items-start gap-1.5">
                         <div className={cn(
                           'w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5',
@@ -268,20 +364,117 @@ export function NodeDetailPanel() {
                             <span className="text-[8px] font-bold">?</span>
                           )}
                         </div>
-                        <p className="text-xs font-medium leading-snug">{q.question}</p>
+                        <p className="text-xs font-medium leading-snug flex-1">
+                          {q.question}
+                          {q.isCustom && (
+                            <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">(custom)</span>
+                          )}
+                        </p>
                       </div>
-                      <textarea
-                        value={q.answer}
-                        onChange={(e) => answerNodeQuestion(node.id, q.id, e.target.value)}
-                        placeholder="Type your answer..."
-                        rows={2}
-                        className="w-full text-xs px-2 py-1.5 rounded-md border bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60"
-                      />
+
+                      {q.options && q.options.length > 0 ? (
+                        <div className="space-y-1 ml-5">
+                          {q.options.map((option, optIdx) => (
+                            <button
+                              key={optIdx}
+                              onClick={() => answerNodeQuestion(node.id, q.id, option)}
+                              className={cn(
+                                'w-full text-left text-xs px-2.5 py-1.5 rounded-md border transition-colors',
+                                (q.answer ?? '') === option
+                                  ? 'border-primary bg-primary/10 text-foreground font-medium'
+                                  : 'border-transparent bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground'
+                              )}
+                            >
+                              <span className="inline-flex items-center gap-2">
+                                <span className={cn(
+                                  'w-3 h-3 rounded-full border-2 shrink-0 flex items-center justify-center',
+                                  (q.answer ?? '') === option
+                                    ? 'border-primary'
+                                    : 'border-muted-foreground/40'
+                                )}>
+                                  {(q.answer ?? '') === option && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                  )}
+                                </span>
+                                {option}
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <textarea
+                          value={q.answer}
+                          onChange={(e) => answerNodeQuestion(node.id, q.id, e.target.value)}
+                          placeholder="Type your answer..."
+                          rows={2}
+                          className="w-full text-xs px-2 py-1.5 rounded-md border bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60 ml-5"
+                          style={{ width: 'calc(100% - 1.25rem)' }}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              )}
+
+              {totalCount === 0 && !generatingQuestions && (
+                <p className="text-xs text-muted-foreground/60 italic">
+                  No questions yet. Click &quot;Generate&quot; to get started.
+                </p>
+              )}
+
+              {/* Custom Input */}
+              {showCustomInput ? (
+                <div className="mt-2 flex gap-1.5">
+                  <input
+                    autoFocus
+                    value={customQuestion}
+                    onChange={(e) => setCustomQuestion(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddCustomQuestion()
+                      if (e.key === 'Escape') { setShowCustomInput(false); setCustomQuestion('') }
+                    }}
+                    placeholder="Type your own question or note..."
+                    className="flex-1 text-xs px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAddCustomQuestion} disabled={!customQuestion.trim()}>
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => { setShowCustomInput(false); setCustomQuestion('') }}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowCustomInput(true)}
+                  className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  <PenLine className="h-3.5 w-3.5" />
+                  Add your own question
+                </button>
+              )}
+
+              {/* Submit Answers */}
+              {answeredCount > 0 && (
+                <Button
+                  size="sm"
+                  className="w-full mt-3 h-8"
+                  disabled={submittingAnswers}
+                  onClick={handleSubmitAnswers}
+                >
+                  {submittingAnswers ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                      Generating PRD & Prompt...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="h-3.5 w-3.5 mr-1.5" />
+                      Submit Answers → Generate PRD & Prompt
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
 
             {/* Notes Rich Text Editor */}
             {node.type === 'notes' && (
