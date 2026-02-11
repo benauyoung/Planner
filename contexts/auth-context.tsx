@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.replace('/login')
     }
     if (user && pathname === '/login') {
-      router.replace('/')
+      router.replace('/dashboard')
     }
   }, [user, loading, pathname, router])
 

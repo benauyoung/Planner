@@ -156,12 +156,63 @@
 
 ---
 
-## Future Work
+## Phase 8: Export & Import ✅
 
-### Persistence
-- [ ] Firebase Firestore save/load projects
-- [x] LocalStorage fallback for offline
-- [ ] Export/import as JSON
+### 8.1 JSON Export/Import
+- [x] `lib/export-import.ts` — `exportProjectAsJSON()`, `importProjectFromJSON()`, `downloadFile()`, `readFileContent()`
+- [x] `components/dashboard/import-project-button.tsx` — JSON file upload on dashboard
+- [x] Canvas toolbar export dropdown with JSON download
+
+### 8.2 Markdown Context Export
+- [x] `lib/export-markdown.ts` — `exportSubtreeAsMarkdown()`, `exportFullPlanAsMarkdown()`
+- [x] `lib/export-project-files.ts` — `generateCursorRules()`, `generateClaudeMD()`, `generatePlanMD()`, `generateTasksMD()`
+- [x] Canvas toolbar export dropdown: Full Plan MD, Tasks MD, .cursorrules, CLAUDE.md, Copy to Clipboard
+- [x] Node context menu: "Copy Context for AI", "Export as Markdown"
+
+### 8.3 Markdown Spec Import
+- [x] `lib/import-markdown.ts` — `parseMarkdownToNodes()` (heading hierarchy, checklists, frontmatter)
+- [x] `components/dashboard/import-markdown-modal.tsx` — Paste/upload with live preview
+- [x] Dashboard "Import Markdown" button
+- [x] New project flow import option
+
+---
+
+## Phase 9: Typed Edges & Blast Radius ✅
+
+### 9.1 Typed Edge System
+- [x] `types/project.ts` — `EdgeType` (`hierarchy` | `blocks` | `depends_on`), `ProjectEdge` with `edgeType` and `label`
+- [x] `stores/project-store.ts` — `addDependencyEdge()`, `removeDependencyEdge()`
+- [x] `planNodesToFlow()` renders typed edges with visual styles (red dashed for blocks, blue dashed for depends_on)
+- [x] Node context menu: "Add Blocks Edge", "Add Depends On Edge"
+- [x] `stores/ui-store.ts` — `pendingEdge` state for edge creation flow
+
+### 9.2 Blast Radius
+- [x] `lib/blast-radius.ts` — `getBlastRadius()`, `getBlastRadiusSummary()`
+- [x] Canvas toolbar Radar toggle for blast radius mode
+- [x] `graph-canvas.tsx` — dims unaffected nodes to 0.25 opacity when active
+
+---
+
+## Phase 10: Shareable Plans ✅
+
+- [x] `types/project.ts` — `isPublic`, `shareId` fields on Project
+- [x] `stores/project-store.ts` — `toggleShareProject()`
+- [x] `components/share/share-button.tsx` — Popover with public/private toggle, copy link
+- [x] `components/share/shared-plan-view.tsx` — Read-only canvas rendering
+- [x] `app/share/[id]/page.tsx` — Share page with error states
+
+---
+
+## Phase 11: Template Library ✅
+
+- [x] `lib/templates/` — 3 seed templates: Auth System (24 nodes), CRUD API (22 nodes), Landing Page (20 nodes)
+- [x] `components/onboarding/template-gallery.tsx` — Template cards with tags and use button
+- [x] `components/onboarding/new-project-chooser.tsx` — 3-option entry (AI Chat / Template / Import)
+- [x] `app/project/new/page.tsx` — Updated with chooser screen
+
+---
+
+## Future Work
 
 ### Real-Time Collaboration
 - [ ] Yjs CRDT integration
@@ -170,15 +221,19 @@
 
 ### Advanced Canvas
 - [ ] Spring physics (d3-force)
-- [ ] Keyboard shortcuts
 - [ ] Multi-select
-- [x] Undo/redo
 - [ ] Level of detail (LOD) zoom
 
 ### Territory Sync
 - [ ] Bidirectional file sync (canvas ↔ Markdown)
 - [ ] Chokidar file watcher
 - [ ] YAML frontmatter serialization
+
+### Polish
+- [ ] Keyboard shortcut discoverability (help overlay)
+- [ ] Edge deletion UI (click edge to select, then delete)
+- [ ] Image compression / size limits
+- [ ] `changeNodeType` hierarchy validation
 
 ---
 
@@ -188,3 +243,8 @@
 - Images stored as base64 data URLs (no external storage needed)
 - PRDs and prompts designed for copy-paste into IDE workflows
 - Smart mapping uses `PARENT_TYPE_MAP` hierarchy + Euclidean distance
+- Typed edges: `blocks` (red dashed, animated), `depends_on` (blue dashed)
+- Blast radius traverses children + dependency edges recursively
+- Export supports 7 formats: JSON, Full Plan MD, Tasks MD, .cursorrules, CLAUDE.md, plan.md, tasks.md
+- Markdown import maps heading levels: # → goal, ## → subgoal, ### → feature, #### → task
+- 3 seed templates available: SaaS Auth, REST API, Landing Page

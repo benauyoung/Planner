@@ -14,8 +14,14 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - Upload images for mood boards
 - Right-click to create nodes anywhere on canvas with smart parent suggestion
 - Drag edges between nodes to set relationships
+- Add typed dependency edges (`blocks`, `depends_on`) between any nodes
+- Preview blast radius: see all downstream-affected nodes when one changes
+- Export plans as JSON, Markdown, `.cursorrules`, `CLAUDE.md`, `plan.md`, `tasks.md`
+- Import projects from JSON or Markdown specs
+- Share plans via public read-only URL
+- Start from pre-built templates (Auth System, CRUD API, Landing Page)
 
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Generate PRDs & prompts → Copy into your IDE.
+**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Generate PRDs & prompts → Export & share.
 
 ---
 
@@ -84,8 +90,8 @@ Planner/
 │       └── generate-questions/route.ts # POST - AI question generation for nodes
 ├── components/
 │   ├── canvas/
-│   │   ├── graph-canvas.tsx          # React Flow canvas (onConnect, context menus, layout)
-│   │   ├── canvas-toolbar.tsx        # Re-layout button
+│   │   ├── graph-canvas.tsx          # React Flow canvas (blast radius, typed edges, onConnect)
+│   │   ├── canvas-toolbar.tsx        # Export dropdown, blast radius toggle, undo/redo
 │   │   ├── timeline-bar.tsx          # Goal progress circles
 │   │   ├── nodes/
 │   │   │   ├── base-plan-node.tsx    # Shared node (goal/subgoal/feature/task)
@@ -99,7 +105,7 @@ Planner/
 │   │   │   ├── node-toolbar.tsx      # Hover toolbar (edit, status, collapse, add child)
 │   │   │   └── node-types.ts         # nodeTypes registry (7 types)
 │   │   └── context-menu/
-│   │       ├── node-context-menu.tsx  # Right-click node menu
+│   │       ├── node-context-menu.tsx  # Right-click node (+ dependency edge creation)
 │   │       ├── pane-context-menu.tsx  # Right-click canvas (add node + smart mapping)
 │   │       └── context-submenu.tsx    # Flyout submenu helper
 │   ├── chat/
@@ -108,18 +114,25 @@ Planner/
 │   │   ├── chat-message.tsx          # Message bubble (markdown)
 │   │   └── typing-indicator.tsx      # Loading dots
 │   ├── dashboard/
-│   │   ├── project-list.tsx          # Grid of project cards
+│   │   ├── project-list.tsx          # Grid of project cards + import buttons
 │   │   ├── project-card.tsx          # Card with node counts
 │   │   ├── create-project-button.tsx # Link to /project/new
+│   │   ├── import-project-button.tsx # JSON import button
+│   │   ├── import-markdown-modal.tsx # Markdown import modal with preview
 │   │   └── empty-state.tsx           # No projects state
 │   ├── onboarding/
-│   │   └── project-onboarding.tsx    # Multi-step questionnaire (7 steps + summary)
+│   │   ├── project-onboarding.tsx    # Multi-step questionnaire (7 steps + summary)
+│   │   ├── new-project-chooser.tsx   # 3-option entry: AI Chat / Template / Import
+│   │   └── template-gallery.tsx      # Template cards with use button
 │   ├── panels/
 │   │   ├── node-detail-panel.tsx     # Full panel: edit, PRDs, prompts, images, AI generate
 │   │   ├── node-edit-form.tsx        # Title + description inline edit
 │   │   └── rich-text-editor.tsx      # Tiptap rich text editor
+│   ├── share/
+│   │   ├── share-button.tsx          # Share popover (public/private toggle, copy link)
+│   │   └── shared-plan-view.tsx      # Read-only canvas for shared plans
 │   ├── project/
-│   │   └── project-workspace.tsx     # Canvas + chat + detail panel layout
+│   │   └── project-workspace.tsx     # Canvas + chat + detail panel + share button
 │   ├── layout/
 │   │   ├── header.tsx                # Top nav bar
 │   │   ├── theme-toggle.tsx          # Dark/light toggle
@@ -150,13 +163,23 @@ Planner/
 ├── lib/
 │   ├── constants.ts                 # NODE_CONFIG (7 types), NODE_CHILD_TYPE, DAGRE_CONFIG
 │   ├── node-context.ts              # buildNodeContext() — hierarchy context for AI generation
+│   ├── export-import.ts             # JSON export/import with download/read helpers
+│   ├── export-markdown.ts           # Subtree + full plan markdown export
+│   ├── export-project-files.ts      # .cursorrules, CLAUDE.md, plan.md, tasks.md generators
+│   ├── import-markdown.ts           # Markdown spec parser (headings, checklists, frontmatter)
+│   ├── blast-radius.ts              # Downstream impact analysis (getBlastRadius)
+│   ├── templates/                   # Seed plan templates
+│   │   ├── index.ts                 # Template registry (3 templates)
+│   │   ├── auth-system.ts           # SaaS Authentication System (24 nodes)
+│   │   ├── crud-api.ts              # REST API with CRUD (22 nodes)
+│   │   └── landing-page.ts          # Marketing Landing Page (20 nodes)
 │   ├── feature-suggestions.ts       # AI feature suggestion schema
 │   ├── onboarding-config.ts         # Onboarding step definitions
 │   ├── onboarding-message.ts        # Formats answers into AI prompt
 │   ├── id.ts                        # generateId() — crypto.randomUUID
 │   └── utils.ts                     # cn() — clsx + tailwind-merge
 ├── types/
-│   ├── project.ts                   # PlanNode, NodePRD, NodePrompt, Project, NodeType
+│   ├── project.ts                   # PlanNode, ProjectEdge, EdgeType, Project
 │   ├── canvas.ts                    # FlowNode, FlowEdge, PlanNodeData
 │   └── chat.ts                      # ChatMessage, AIPlanNode
 ├── public/
@@ -186,6 +209,36 @@ interface PlanNode {
   images?: string[]         // Base64 data URLs (moodboard nodes)
   prds?: NodePRD[]          // Attached PRD documents
   prompts?: NodePrompt[]    // Attached IDE prompts
+}
+```
+
+### ProjectEdge (Typed Dependencies)
+```typescript
+type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
+
+interface ProjectEdge {
+  id: string
+  source: string
+  target: string
+  edgeType?: EdgeType       // Visual style: red dashed (blocks), blue dashed (depends_on)
+  label?: string
+}
+```
+
+### Project
+```typescript
+interface Project {
+  id: string
+  userId: string
+  title: string
+  description: string
+  phase: 'planning' | 'active'
+  nodes: PlanNode[]
+  edges: ProjectEdge[]
+  createdAt: number
+  updatedAt: number
+  isPublic?: boolean        // Shareable plans
+  shareId?: string          // Share URL identifier
 }
 ```
 
@@ -233,13 +286,15 @@ interface NodePrompt {
 
 **Prompts**: `addNodePrompt`, `updateNodePrompt`, `removeNodePrompt`
 
-**Connections**: `connectNodes`, `setNodeParent`
+**Connections**: `connectNodes`, `addDependencyEdge`, `removeDependencyEdge`, `setNodeParent`
+
+**Sharing**: `toggleShareProject`
 
 **Flow State**: `setFlowNodes`, `setFlowEdges`
 
 **Undo/Redo**: `undo`, `redo` (with `canUndo`, `canRedo` state)
 
-**Flow Conversion**: `planNodesToFlow()` — converts PlanNode[] → FlowNode[] + FlowEdge[]
+**Flow Conversion**: `planNodesToFlow(nodes, projectEdges)` — converts PlanNode[] + ProjectEdge[] → FlowNode[] + FlowEdge[]
 
 ---
 
@@ -247,16 +302,21 @@ interface NodePrompt {
 
 ### New Project
 ```
-/project/new → Onboarding (7 steps) → AI suggests features → Summary → Start Planning
-→ PlanningChat + GraphCanvas → AI builds nodes → User clicks Save → /project/[id]
+/project/new → NewProjectChooser (AI Chat / Template / Import)
+  → AI Chat: Onboarding (7 steps) → AI suggests features → Summary → Start Planning
+  → Template: TemplateGallery → choose template → ingestPlan() → /project/[id]
+  → Import: ImportMarkdownModal → paste/upload markdown → create project
 ```
 
 ### Canvas Interactions
 - **Click node** → Detail panel opens (edit, PRDs, prompts, images, children, AI generate)
-- **Right-click node** → Context menu (edit, type, status, add child/sibling, duplicate, delete)
+- **Right-click node** → Context menu (edit, type, status, add child/sibling, duplicate, delete, add dependency edge)
 - **Right-click empty canvas** → Pane context menu (add any node type, smart parent suggestion)
-- **Drag source→target handle** → Creates edge (sets parentId)
+- **Drag source→target handle** → Creates edge (sets parentId, or typed dependency if pendingEdge)
 - **Re-layout button** → Dagre auto-layout
+- **Blast radius toggle** → Dims unaffected nodes when a node is selected
+- **Export dropdown** → JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
+- **Share button** → Public/private toggle with shareable URL
 
 ### Smart Mapping
 When right-clicking empty canvas, the pane context menu shows an arrow (→) button next to node types that have a valid parent nearby. Hierarchy rules:
@@ -271,13 +331,17 @@ The nearest valid parent is found by Euclidean distance between flow positions.
 ## Key Patterns
 
 1. **All shared state in Zustand** — component-local state only for UI
-2. **`planNodesToFlow()`** — always called after node mutations to sync React Flow
+2. **`planNodesToFlow(nodes, edges)`** — always called after node mutations to sync React Flow (hierarchy + typed edges)
 3. **Dagre for layout** — `useAutoLayout` hook, TB direction, triggered on node count change
 4. **AI responses are structured JSON** — Gemini uses `responseSchema` for typed output
 5. **AI generation uses full context** — `buildNodeContext()` gathers parent chain, Q&A, siblings, children
 6. **Merge by ID** — `mergeNodes()` upserts; same ID = update, new ID = add
 7. **Firebase null-guarded** — all services return early if Firebase not initialized
 8. **Images as base64** — stored directly in PlanNode, no external storage needed
+9. **Typed edges** — `blocks` (red dashed, animated) and `depends_on` (blue dashed) with labels
+10. **Blast radius** — `getBlastRadius()` recursively traverses hierarchy + dependency edges
+11. **Multi-format export** — JSON, AI-optimized Markdown, Spec Kit files (.cursorrules, CLAUDE.md)
+12. **Markdown import** — heading levels map to node types (# → goal, ## → subgoal, ### → feature, #### → task)
 
 ---
 
@@ -317,4 +381,4 @@ npm run lint      # ESLint
 2. Read `ARCHITECTURE.md` for data models and component structure
 3. Check `types/project.ts` for the canonical data model
 4. Check `stores/project-store.ts` for all available mutations
-5. The next big features are: **Firebase persistence**, **keyboard shortcuts**, and **export/import** (localStorage persistence and undo/redo are already implemented)
+5. The next big features are: **real-time collaboration** (Yjs), **territory file sync**, and **production polish** (v0.5.0 Beta is complete)

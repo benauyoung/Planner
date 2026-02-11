@@ -51,14 +51,19 @@ You are working on **VisionPath**, a visual DAG-based project planning tool buil
 
 ---
 
-## Current State Summary
+## Current State Summary (v0.5.0 Beta ✅)
 
 - **7 node types**: goal, subgoal, feature, task, moodboard, notes, connector
 - **Rich content**: images (base64), rich text (Tiptap), PRDs, IDE prompts
 - **AI integration**: onboarding questionnaire + chat planning via Gemini
 - **Smart mapping**: auto-suggest parent nodes by hierarchy + proximity
-- **Manual connections**: drag edges between node handles
-- **localStorage persistence**: state persists via localStorage fallback (Firebase optional)
+- **Typed edges**: `blocks` (red dashed) and `depends_on` (blue dashed) dependency edges
+- **Blast radius**: select a node to see all downstream-affected nodes highlighted
+- **Export**: JSON, Markdown (full plan, tasks), .cursorrules, CLAUDE.md, clipboard
+- **Import**: JSON projects, Markdown specs (paste/upload with preview)
+- **Shareable plans**: public toggle + read-only share URL
+- **Template library**: 3 seed templates (Auth System, CRUD API, Landing Page)
+- **Persistence**: Firebase Firestore + localStorage fallback
 
 ---
 

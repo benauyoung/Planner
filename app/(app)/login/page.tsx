@@ -26,7 +26,7 @@ export default function LoginPage() {
       } else {
         await signInWithEmail(email, password)
       }
-      router.replace('/')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong'
       setError(message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
@@ -40,7 +40,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       await signInWithGoogle()
-      router.replace('/')
+      router.replace('/dashboard')
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Something went wrong'
       setError(message.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '').trim())
