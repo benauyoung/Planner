@@ -46,8 +46,18 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     function handleKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
+      // Let contentEditable elements (e.g. TipTap) handle their own undo
+      if (target.isContentEditable) return
 
-      if (e.key === 'Escape') {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        useProjectStore.getState().undo()
+      } else if (
+        (e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')
+      ) {
+        e.preventDefault()
+        useProjectStore.getState().redo()
+      } else if (e.key === 'Escape') {
         useUIStore.getState().closeDetailPanel()
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
         const selectedId = useUIStore.getState().selectedNodeId

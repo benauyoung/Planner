@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
-import { useAuth } from '@/contexts/auth-context'
+import { useEffectiveUserId } from '@/contexts/auth-context'
 import { ProjectCard } from './project-card'
 import { CreateProjectButton } from './create-project-button'
 import { EmptyState } from './empty-state'
@@ -11,14 +11,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export function ProjectList() {
   const { loadProjects, removeProject } = useProject()
-  const { user } = useAuth()
+  const userId = useEffectiveUserId()
   const projects = useProjectStore((s) => s.projects)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    if (!user) return
-    loadProjects(user.uid).finally(() => setLoading(false))
-  }, [loadProjects, user])
+    loadProjects(userId).finally(() => setLoading(false))
+  }, [loadProjects, userId])
 
   if (loading) {
     return (

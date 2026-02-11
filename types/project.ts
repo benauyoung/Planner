@@ -8,6 +8,8 @@ export interface NodeQuestion {
   id: string
   question: string
   answer: string
+  options?: string[]
+  isCustom?: boolean
 }
 
 export interface NodePRD {

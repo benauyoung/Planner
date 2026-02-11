@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
-import { useAuth } from '@/contexts/auth-context'
+import { useEffectiveUserId } from '@/contexts/auth-context'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
@@ -18,15 +18,15 @@ function NewProjectContent() {
   const phase = useChatStore((s) => s.phase)
   const setOnboardingAnswers = useChatStore((s) => s.setOnboardingAnswers)
   const setPhase = useChatStore((s) => s.setPhase)
-  const { user } = useAuth()
+  const userId = useEffectiveUserId()
   const initRef = useRef(false)
 
   useEffect(() => {
-    if (!initRef.current && user) {
+    if (!initRef.current) {
       initRef.current = true
-      initDraftProject(user.uid)
+      initDraftProject(userId)
     }
-  }, [initDraftProject, user])
+  }, [initDraftProject, userId])
 
   const handleOnboardingComplete = (answers: OnboardingAnswers) => {
     setOnboardingAnswers(answers)

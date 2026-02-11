@@ -40,10 +40,18 @@ export const progressiveChatSchema: Schema = {
           },
           questions: {
             type: SchemaType.ARRAY,
-            description: 'Decision-oriented questions for this node (2-4 for features/tasks, 0-1 for goals/subgoals)',
+            description: 'Decision-oriented multiple-choice questions for this node (2-4 for features/tasks, 0-1 for goals/subgoals)',
             items: {
-              type: SchemaType.STRING,
-              description: 'A specific, decision-oriented question',
+              type: SchemaType.OBJECT,
+              properties: {
+                question: { type: SchemaType.STRING, description: 'A specific, decision-oriented question' },
+                options: {
+                  type: SchemaType.ARRAY,
+                  description: '3-5 multiple-choice options for this question',
+                  items: { type: SchemaType.STRING },
+                },
+              },
+              required: ['question', 'options'],
             },
           },
         },

@@ -1,7 +1,7 @@
 'use client'
 
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown } from 'lucide-react'
+import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 
@@ -13,6 +13,10 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
   const { fitView } = useReactFlow()
   const currentProject = useProjectStore((s) => s.currentProject)
   const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
+  const undo = useProjectStore((s) => s.undo)
+  const redo = useProjectStore((s) => s.redo)
+  const canUndo = useProjectStore((s) => s.canUndo)
+  const canRedo = useProjectStore((s) => s.canRedo)
 
   const handleExpandAll = () => {
     if (!currentProject) return
@@ -32,6 +36,24 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
 
   return (
     <div className="absolute top-4 right-4 flex flex-col gap-1 z-10">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={undo}
+        disabled={!canUndo}
+        title="Undo (Ctrl+Z)"
+      >
+        <Undo2 className="h-4 w-4" />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={redo}
+        disabled={!canRedo}
+        title="Redo (Ctrl+Shift+Z)"
+      >
+        <Redo2 className="h-4 w-4" />
+      </Button>
       <Button
         variant="outline"
         size="icon"

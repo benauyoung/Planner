@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
-import * as firestore from '@/services/firestore'
+import * as firestore from '@/services/persistence'
 import type { Project } from '@/types/project'
 
 export function useProject(projectId?: string) {

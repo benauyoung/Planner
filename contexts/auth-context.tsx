@@ -6,6 +6,8 @@ import { usePathname, useRouter } from 'next/navigation'
 import { auth } from '@/services/firebase'
 import { signOutUser } from '@/services/auth'
 
+const LOCAL_GUEST_ID = 'local-guest'
+
 interface AuthContextValue {
   user: User | null
   loading: boolean
@@ -38,6 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) return
+    // Skip login redirect when Firebase is not configured (guest mode)
+    if (!auth) return
     if (!user && pathname !== '/login') {
       router.replace('/login')
     }
@@ -63,4 +67,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   return useContext(AuthContext)
+}
+
+export function useEffectiveUserId(): string {
+  const { user } = useAuth()
+  return user?.uid ?? LOCAL_GUEST_ID
 }

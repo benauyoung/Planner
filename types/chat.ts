@@ -17,13 +17,18 @@ export interface ChatMessage {
   timestamp: number
 }
 
+export interface AINodeQuestion {
+  question: string
+  options: string[]
+}
+
 export interface AIPlanNode {
   id: string
   type: 'goal' | 'subgoal' | 'feature' | 'task'
   title: string
   description: string
   parentId: string | null
-  questions?: string[]
+  questions?: (string | AINodeQuestion)[]
 }
 
 export interface AIProgressiveResponse {
