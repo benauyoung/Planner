@@ -156,11 +156,11 @@
 
 ---
 
-## Future Work (Not Started)
+## Future Work
 
 ### Persistence
 - [ ] Firebase Firestore save/load projects
-- [ ] LocalStorage fallback for offline
+- [x] LocalStorage fallback for offline
 - [ ] Export/import as JSON
 
 ### Real-Time Collaboration
@@ -172,7 +172,7 @@
 - [ ] Spring physics (d3-force)
 - [ ] Keyboard shortcuts
 - [ ] Multi-select
-- [ ] Undo/redo
+- [x] Undo/redo
 - [ ] Level of detail (LOD) zoom
 
 ### Territory Sync

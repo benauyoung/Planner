@@ -2,7 +2,7 @@
 
 > **Visual, AI-powered project planning on an infinite canvas.** Describe your idea, get a DAG of goals, features, and tasks — then refine, connect, and execute.
 
-[![Next.js](https://img.shields.io/badge/Next.js-15.1-black)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15.5-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://typescriptlang.org/)
 [![React Flow](https://img.shields.io/badge/React%20Flow-12.3-purple)](https://reactflow.dev/)
 
@@ -70,7 +70,7 @@ Open [http://localhost:3000](http://localhost:3000) to start planning.
 ```
 Planner/
 ├── app/                          # Next.js App Router pages
-│   ├── api/ai/                   # AI routes (chat, suggest-features, generate-prd, generate-prompt)
+│   ├── api/ai/                   # AI routes (chat, suggest-features, generate-prd, generate-prompt, generate-questions)
 │   ├── project/[id]/page.tsx     # Project workspace (canvas + chat)
 │   ├── project/new/page.tsx      # Onboarding questionnaire
 │   ├── login/page.tsx            # Auth page
@@ -110,7 +110,7 @@ Planner/
 | Type | Purpose | Icon |
 |------|---------|------|
 | **Goal** | Top-level project objective | Target |
-| **Subgoal** | Major milestone | GitBranch |
+| **Subgoal** | Major milestone | Flag |
 | **Feature** | Specific capability to build | Puzzle |
 | **Task** | Atomic work item | CheckSquare |
 | **Moodboard** | Image collection for visual reference | ImagePlus |
@@ -131,13 +131,13 @@ Every node can have:
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| Framework | Next.js (App Router) | 15.1.3 |
+| Framework | Next.js (App Router) | 15.5.12 |
 | Language | TypeScript | 5.x |
 | Canvas | @xyflow/react | 12.3.2 |
 | Layout | dagre | 0.8.5 |
 | State | Zustand | 5.0.2 |
 | AI | @google/generative-ai (Gemini) | 0.21.0 |
-| Database | Firebase Firestore (optional) | 12.8.0 |
+| Database | Firebase Firestore (optional) | 12.9.0 |
 | Styling | Tailwind CSS | 3.4.1 |
 | Animation | Framer Motion | 11.x |
 | Icons | Lucide React | 0.462.0 |

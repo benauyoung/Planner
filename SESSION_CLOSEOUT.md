@@ -87,7 +87,7 @@ Complete these steps IN ORDER before ending the session:
 ```markdown
 - [ ] All files saved
 - [ ] No syntax errors in modified files
-- [ ] Code compiles/type-checks (run `pnpm type-check` if available)
+- [ ] Code compiles/type-checks (run `npm run type-check` if available)
 - [ ] No commented-out debug code left behind
 - [ ] No TODO comments without corresponding PLAN.md entry
 ```

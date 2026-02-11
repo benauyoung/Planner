@@ -58,7 +58,7 @@ You are working on **VisionPath**, a visual DAG-based project planning tool buil
 - **AI integration**: onboarding questionnaire + chat planning via Gemini
 - **Smart mapping**: auto-suggest parent nodes by hierarchy + proximity
 - **Manual connections**: drag edges between node handles
-- **No persistence yet**: state resets on refresh (Firebase not configured)
+- **localStorage persistence**: state persists via localStorage fallback (Firebase optional)
 
 ---
 

@@ -16,7 +16,7 @@
 │                      │                                        │
 │  ┌───────────────────▼──────────────────┐                    │
 │  │         Dagre Auto-Layout            │                    │
-│  │    (Hierarchical node positioning)   │                    │
+│  │  (Left-to-right hierarchical layout) │                    │
 │  └──────────────────────────────────────┘                    │
 ├──────────────────────────────────────────────────────────────┤
 │                    Next.js App Router                         │
@@ -24,6 +24,7 @@
 │              API Routes: /api/ai/suggest-features             │
 │              API Routes: /api/ai/generate-prd                 │
 │              API Routes: /api/ai/generate-prompt              │
+│              API Routes: /api/ai/generate-questions           │
 ├──────────────────────────────────────────────────────────────┤
 │              Firebase (Optional, guarded)                     │
 │              Auth + Firestore                                 │
@@ -36,14 +37,14 @@
 
 | Layer | Technology | Version | Purpose |
 |-------|------------|---------|---------|
-| Framework | Next.js | 15.1.3 | App Router, API routes |
+| Framework | Next.js | 15.5.12 | App Router, API routes |
 | Language | TypeScript | 5.x | Type safety |
 | React | React | 19.0.0 | UI rendering |
 | Canvas | @xyflow/react | 12.3.2 | Infinite canvas, node/edge rendering |
 | Layout | dagre | 0.8.5 | Hierarchical auto-layout |
 | State | Zustand | 5.0.2 | Client-side reactive state |
 | AI | @google/generative-ai | 0.21.0 | Gemini 2.0 Flash |
-| Database | Firebase Firestore | 12.8.0 | Optional persistence (guarded) |
+| Database | Firebase Firestore | 12.9.0 | Optional persistence (guarded) |
 | Styling | Tailwind CSS | 3.4.1 | Utility-first CSS |
 | Icons | Lucide React | 0.462.0 | Icon library |
 | Animation | Framer Motion | 11.x | Transitions, context menus |
@@ -68,6 +69,8 @@ interface NodeQuestion {
   id: string
   question: string
   answer: string
+  options?: string[]
+  isCustom?: boolean
 }
 
 interface NodePRD {
@@ -151,14 +154,24 @@ type FlowEdge = Edge
 ```typescript
 interface ProjectState {
   currentProject: Project | null
+  projects: Project[]
   flowNodes: FlowNode[]
   flowEdges: FlowEdge[]
+  _undoStack: Project[]
+  _redoStack: Project[]
+  canUndo: boolean
+  canRedo: boolean
 
   // Project lifecycle
   setCurrentProject: (project: Project | null) => void
+  setProjects: (projects: Project[]) => void
+  setFlowNodes: (nodes: FlowNode[]) => void
+  setFlowEdges: (edges: FlowEdge[]) => void
   initDraftProject: (userId: string) => void
   ingestPlan: (plan, userId) => Project
-  mergeNodes: (newNodes: AIPlanNode[]) => void
+  mergeNodes: (newNodes: AIPlanNode[], suggestedTitle?) => void
+  addProject: (project: Project) => void
+  removeProject: (projectId: string) => void
 
   // Node CRUD
   updateNodeStatus: (nodeId, status) => void
@@ -169,6 +182,11 @@ interface ProjectState {
   duplicateNode: (nodeId, includeChildren) => string | null
   changeNodeType: (nodeId, newType) => void
   addFreeNode: (type, title, parentId?) => string
+
+  // Questions
+  answerNodeQuestion: (nodeId, questionId, answer) => void
+  addNodeQuestions: (nodeId, questions) => void
+  addCustomNodeQuestion: (nodeId, question) => void
 
   // Rich content
   updateNodeRichContent: (nodeId, content) => void
@@ -186,6 +204,10 @@ interface ProjectState {
   // Connections
   connectNodes: (sourceId, targetId) => void
   setNodeParent: (nodeId, parentId) => void
+
+  // Undo/Redo
+  undo: () => void
+  redo: () => void
 }
 ```
 
@@ -300,14 +322,15 @@ User right-clicks empty canvas → PaneContextMenu appears
 ## Node Configuration (from `lib/constants.ts`)
 
 ```typescript
+// Each entry also has bgClass, borderClass, textClass, badgeClass, icon
 const NODE_CONFIG = {
-  goal:      { label: 'Goal',      color: '#6366f1', width: 280, height: 80 },
-  subgoal:   { label: 'Subgoal',   color: '#8b5cf6', width: 260, height: 70 },
-  feature:   { label: 'Feature',   color: '#3b82f6', width: 240, height: 65 },
-  task:      { label: 'Task',      color: '#22c55e', width: 220, height: 60 },
-  moodboard: { label: 'Moodboard', color: '#f59e0b', width: 280, height: 200 },
-  notes:     { label: 'Notes',     color: '#ec4899', width: 260, height: 150 },
-  connector: { label: 'Connector', color: '#64748b', width: 120, height: 40 },
+  goal:      { label: 'Goal',       color: 'hsl(var(--node-goal))',      icon: 'Target',     width: 280, height: 120 },
+  subgoal:   { label: 'Subgoal',    color: 'hsl(var(--node-subgoal))',   icon: 'Flag',       width: 260, height: 110 },
+  feature:   { label: 'Feature',    color: 'hsl(var(--node-feature))',   icon: 'Puzzle',     width: 240, height: 100 },
+  task:      { label: 'Task',       color: 'hsl(var(--node-task))',      icon: 'CheckSquare',width: 220, height: 90  },
+  moodboard: { label: 'Mood Board', color: 'hsl(var(--node-moodboard))', icon: 'ImagePlus',  width: 300, height: 250 },
+  notes:     { label: 'Notes',      color: 'hsl(var(--node-notes))',     icon: 'FileText',   width: 320, height: 200 },
+  connector: { label: 'Connector',  color: 'hsl(var(--node-connector))', icon: 'Circle',     width: 120, height: 40  },
 }
 ```
 
@@ -319,8 +342,10 @@ All Firebase usage is null-guarded so the app works without credentials:
 - `services/firebase.ts` — Initializes only if env vars present
 - `services/firestore.ts` — Returns early if `db` is null
 - `services/auth.ts` — Returns early if `auth` is null
+- `services/persistence.ts` — Persistence abstraction layer
+- `services/local-storage.ts` — localStorage fallback for offline persistence
 
-Without Firebase, the app runs entirely in-memory (Zustand state resets on refresh).
+Without Firebase, the app persists state to localStorage as a fallback. If neither Firebase nor localStorage is available, Zustand state resets on refresh.
 
 ---
 

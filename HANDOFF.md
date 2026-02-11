@@ -23,14 +23,14 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 
 | Layer | Technology | Version |
 |-------|------------|---------|
-| Framework | Next.js (App Router) | 15.1.3 |
+| Framework | Next.js (App Router) | 15.5.12 |
 | Language | TypeScript | 5.x |
 | React | React | 19.0.0 |
 | Canvas | @xyflow/react (React Flow) | 12.3.2 |
 | Layout | dagre | 0.8.5 |
 | State | Zustand | 5.0.2 |
 | AI | @google/generative-ai (Gemini) | 0.21.0 |
-| Database | Firebase Firestore | 12.8.0 |
+| Database | Firebase Firestore | 12.9.0 |
 | Styling | Tailwind CSS | 3.4.1 |
 | Animation | Framer Motion | 11.x |
 | Icons | Lucide React | 0.462.0 |
@@ -80,7 +80,8 @@ Planner/
 │       ├── chat/route.ts             # POST - Gemini chat (progressive plan building)
 │       ├── suggest-features/route.ts # POST - AI feature suggestions for onboarding
 │       ├── generate-prd/route.ts     # POST - AI PRD generation from node context
-│       └── generate-prompt/route.ts  # POST - AI implementation prompt generation
+│       ├── generate-prompt/route.ts  # POST - AI implementation prompt generation
+│       └── generate-questions/route.ts # POST - AI question generation for nodes
 ├── components/
 │   ├── canvas/
 │   │   ├── graph-canvas.tsx          # React Flow canvas (onConnect, context menus, layout)
@@ -123,6 +124,7 @@ Planner/
 │   │   ├── header.tsx                # Top nav bar
 │   │   ├── theme-toggle.tsx          # Dark/light toggle
 │   │   └── user-menu.tsx             # User avatar/menu
+│   ├── error-boundary.tsx             # React error boundary component
 │   └── ui/                           # Reusable primitives (button, card, badge, etc.)
 ├── hooks/
 │   ├── use-ai-chat.ts               # Chat logic: send, init, context injection
@@ -136,11 +138,14 @@ Planner/
 │   ├── firebase.ts                  # Firebase init (null-guarded)
 │   ├── firestore.ts                 # CRUD (null-guarded)
 │   ├── auth.ts                      # Auth functions (null-guarded)
-│   └── gemini.ts                    # Gemini client + response schemas (chat, PRD, prompt)
+│   ├── gemini.ts                    # Gemini client + response schemas (chat, PRD, prompt)
+│   ├── persistence.ts               # Persistence abstraction layer
+│   └── local-storage.ts             # localStorage fallback for offline persistence
 ├── prompts/
 │   ├── planning-system.ts           # Main AI system prompt
 │   ├── prd-generation.ts            # PRD generation system prompt
 │   ├── prompt-generation.ts         # Implementation prompt generation system prompt
+│   ├── question-generation.ts       # AI question generation system prompt
 │   └── refinement-system.ts         # Refinement prompt (unused)
 ├── lib/
 │   ├── constants.ts                 # NODE_CONFIG (7 types), NODE_CHILD_TYPE, DAGRE_CONFIG
@@ -202,21 +207,25 @@ interface NodePrompt {
 ```
 
 ### Node Configuration (`lib/constants.ts`)
-| Type | Color | Width | Height | Icon |
-|------|-------|-------|--------|------|
-| Goal | #6366f1 (indigo) | 280 | 80 | Target |
-| Subgoal | #8b5cf6 (violet) | 260 | 70 | GitBranch |
-| Feature | #3b82f6 (blue) | 240 | 65 | Puzzle |
-| Task | #22c55e (green) | 220 | 60 | CheckSquare |
-| Moodboard | #f59e0b (amber) | 280 | 200 | ImagePlus |
-| Notes | #ec4899 (pink) | 260 | 150 | FileText |
-| Connector | #64748b (slate) | 120 | 40 | Circle |
+| Type | Color (CSS var) | Width | Height | Icon |
+|------|-----------------|-------|--------|------|
+| Goal | hsl(var(--node-goal)) | 280 | 120 | Target |
+| Subgoal | hsl(var(--node-subgoal)) | 260 | 110 | Flag |
+| Feature | hsl(var(--node-feature)) | 240 | 100 | Puzzle |
+| Task | hsl(var(--node-task)) | 220 | 90 | CheckSquare |
+| Moodboard | hsl(var(--node-moodboard)) | 300 | 250 | ImagePlus |
+| Notes | hsl(var(--node-notes)) | 320 | 200 | FileText |
+| Connector | hsl(var(--node-connector)) | 120 | 40 | Circle |
 
 ---
 
 ## Key Store Methods (`project-store.ts`)
 
+**Project Lifecycle**: `setCurrentProject`, `setProjects`, `initDraftProject`, `ingestPlan`, `mergeNodes`, `addProject`, `removeProject`
+
 **Node CRUD**: `addChildNode`, `addFreeNode`, `deleteNode`, `duplicateNode`, `changeNodeType`, `toggleNodeCollapse`, `updateNodeContent`, `updateNodeStatus`
+
+**Questions**: `answerNodeQuestion`, `addNodeQuestions`, `addCustomNodeQuestion`
 
 **Rich Content**: `updateNodeRichContent`, `addNodeImage`, `removeNodeImage`
 
@@ -226,7 +235,9 @@ interface NodePrompt {
 
 **Connections**: `connectNodes`, `setNodeParent`
 
-**AI Integration**: `mergeNodes`, `ingestPlan`
+**Flow State**: `setFlowNodes`, `setFlowEdges`
+
+**Undo/Redo**: `undo`, `redo` (with `canUndo`, `canRedo` state)
 
 **Flow Conversion**: `planNodesToFlow()` — converts PlanNode[] → FlowNode[] + FlowEdge[]
 
@@ -272,7 +283,7 @@ The nearest valid parent is found by Euclidean distance between flow positions.
 
 ## Known Issues
 
-1. **No persistence without Firebase** — state resets on page refresh
+1. **localStorage persistence fallback** — state persists via localStorage when Firebase is not configured
 2. **SWC warning on build** — pre-existing Windows environment issue, not code-related
 3. **`changeNodeType` has no hierarchy validation** — user can change a goal to a task
 4. **No auth enforcement** — app works without Firebase auth
@@ -306,4 +317,4 @@ npm run lint      # ESLint
 2. Read `ARCHITECTURE.md` for data models and component structure
 3. Check `types/project.ts` for the canonical data model
 4. Check `stores/project-store.ts` for all available mutations
-5. The next big features are: **persistence** (Firebase/localStorage), **keyboard shortcuts**, and **export/import**
+5. The next big features are: **Firebase persistence**, **keyboard shortcuts**, and **export/import** (localStorage persistence and undo/redo are already implemented)

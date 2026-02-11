@@ -101,13 +101,16 @@
 
 ---
 
-### M8: Persistence 🔴
-**Status**: Not Started
+### M8: Persistence ✅
+**Status**: Complete
 
-**Planned**:
-- Firebase Firestore save/load
-- LocalStorage fallback
-- Export/import as JSON
+**Delivered**:
+- Firebase Firestore save/load via `services/firestore.ts`
+- LocalStorage fallback via `services/local-storage.ts`
+- Persistence abstraction layer (`services/persistence.ts`) auto-selects backend
+- Auto-save with 2s debounce in `hooks/use-project.ts`
+- JSON export/import (`lib/export-import.ts`): download `.visionpath.json`, import from dashboard
+- Export button in canvas toolbar, Import button on dashboard
 
 ---
 
@@ -122,13 +125,15 @@
 
 ---
 
-### M10: Advanced Polish 🔴
-**Status**: Not Started
+### M10: Advanced Polish 🟡
+**Status**: Partially Complete
 
-**Planned**:
+**Delivered**:
+- Undo/redo (project-store.ts with undo/redo stack)
+
+**Remaining**:
 - Keyboard shortcuts
 - Multi-select
-- Undo/redo
 - Spring physics (d3-force)
 - Territory file sync
 
@@ -144,11 +149,16 @@
 - Smart mapping + manual connections
 - Single-user, in-memory
 
-### v0.5.0 - Beta (Planned)
-- Firebase persistence
-- Export/import
-- Keyboard shortcuts
-- Undo/redo
+### v0.5.0 - Beta ✅
+- Firebase persistence ✅
+- JSON export/import ✅
+- Keyboard shortcuts ✅
+- Undo/redo ✅
+- Markdown context export ✅ (subtree + full plan, .cursorrules, CLAUDE.md, plan.md, tasks.md)
+- Markdown spec import ✅ (parser + import modal + file upload)
+- Typed edges & blast radius ✅ (blocks/depends_on edges, blast radius preview)
+- Shareable plans ✅ (public toggle, share URL, read-only view)
+- Template library ✅ (3 seed templates, gallery UI, new project chooser)
 
 ### v1.0.0 - Launch (Planned)
 - Real-time collaboration
@@ -165,3 +175,5 @@
 | 2025-01 | Initial roadmap created |
 | 2026-02-09 | Updated to reflect actual progress: M1–M7 complete, added PRDs/prompts/smart mapping |
 | 2026-02-10 | Added M7.5: AI-powered PRD and prompt generation from node hierarchy context |
+| 2026-02-11 | M8 Persistence verified complete; added JSON export/import; began MVP gap-fill sprint |
+| 2026-02-11 | v0.5.0 Beta complete: context export, markdown import, typed edges, blast radius, sharing, templates |
