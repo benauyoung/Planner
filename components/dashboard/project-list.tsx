@@ -9,7 +9,7 @@ import { CreateProjectButton } from './create-project-button'
 import { ImportProjectButton } from './import-project-button'
 import { ImportMarkdownModal } from './import-markdown-modal'
 import { EmptyState } from './empty-state'
-import { Skeleton } from '@/components/ui/skeleton'
+import { DashboardLoader } from './dashboard-loader'
 import { FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
@@ -25,19 +25,7 @@ export function ProjectList() {
   }, [loadProjects, userId])
 
   if (loading) {
-    return (
-      <div>
-        <div className="flex items-center justify-between mb-6">
-          <Skeleton className="h-8 w-40" />
-          <Skeleton className="h-10 w-32" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-48 rounded-lg" />
-          ))}
-        </div>
-      </div>
-    )
+    return <DashboardLoader />
   }
 
   if (projects.length === 0) {
