@@ -26,6 +26,8 @@
 │              API Routes: /api/ai/generate-prd                 │
 │              API Routes: /api/ai/generate-prompt              │
 │              API Routes: /api/ai/generate-questions           │
+│              API Routes: /api/ai/iterate                      │
+│              API Routes: /api/ai/analyze                      │
 ├──────────────────────────────────────────────────────────────┤
 │         Firebase (Optional, guarded, runtime failover)        │
 │              Auth + Firestore → localStorage fallback         │
@@ -53,9 +55,9 @@
 
 ### Not Installed (Referenced in older docs but NOT in package.json)
 - d3-force (spring physics) — using dagre for layout instead
-- yjs / y-partykit (real-time collaboration) — not yet needed
+- yjs / y-partykit (real-time collaboration) — client infrastructure ready, no WebSocket backend yet
 - chokidar (file watcher) — territory sync not implemented
-- partykit (WebSocket) — no real-time collab yet
+- partykit (WebSocket) — collaboration provider ready to connect
 
 ---
 
@@ -88,6 +90,8 @@ interface NodePrompt {
   updatedAt: number
 }
 
+type Priority = 'critical' | 'high' | 'medium' | 'low' | 'none'
+
 interface PlanNode {
   id: string
   type: NodeType
@@ -99,8 +103,16 @@ interface PlanNode {
   questions: NodeQuestion[]
   content?: string        // Rich text (notes nodes)
   images?: string[]       // Base64 data URLs (moodboard nodes)
-  prds?: NodePRD[]        // Attached PRD documents
-  prompts?: NodePrompt[]  // Attached IDE prompts
+  prds?: NodePRD[]
+  prompts?: NodePrompt[]
+  assigneeId?: string     // Team member ID
+  priority?: Priority
+  dueDate?: number
+  estimatedHours?: number
+  tags?: string[]
+  comments?: NodeComment[]
+  sprintId?: string
+  document?: NodeDocument // Notion-style block document
 }
 
 type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
@@ -125,7 +137,21 @@ interface Project {
   updatedAt: number
   isPublic?: boolean
   shareId?: string
+  team?: TeamMember[]
+  activity?: ActivityEvent[]
+  sprints?: Sprint[]
+  versions?: ProjectVersion[]
+  currentVersionId?: string
 }
+
+// Supporting types
+interface TeamMember { id, name, email, avatar?, color }
+interface NodeComment { id, authorId, authorName, authorColor, content, createdAt }
+interface ActivityEvent { id, type, nodeId, nodeTitle, actorName, detail, timestamp }
+interface Sprint { id, name, startDate, endDate, nodeIds, status }
+interface ProjectVersion { id, name, snapshot, parentVersionId?, createdAt }
+type DocumentBlock = heading | paragraph | code | checklist | divider | callout
+interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
 ```
 
 ### Canvas Types (from `types/canvas.ts`)
@@ -220,6 +246,24 @@ interface ProjectState {
   removeDependencyEdge: (edgeId) => void
   setNodeParent: (nodeId, parentId) => void
 
+  // Assignees & Metadata
+  setNodeAssignee, setNodePriority, setNodeDueDate, setNodeEstimate, setNodeTags
+
+  // Team
+  addTeamMember, removeTeamMember
+
+  // Comments & Activity
+  addNodeComment, deleteNodeComment, addActivityEvent
+
+  // Sprints
+  createSprint, updateSprint, deleteSprint, assignNodeToSprint
+
+  // Versions
+  saveVersion, restoreVersion, deleteVersion
+
+  // Documents
+  updateNodeDocument
+
   // Sharing
   toggleShareProject: () => string | null
 
@@ -276,10 +320,36 @@ components/
 │   ├── chat-input.tsx                # Message input
 │   ├── chat-message.tsx              # Message bubble
 │   └── typing-indicator.tsx          # AI typing dots
+├── views/                             # Multiple view components
+│   ├── view-switcher.tsx              # Tab bar: Canvas / List / Table / Board / Timeline / Sprints
+│   ├── list-view.tsx                  # Hierarchical tree with expand/collapse
+│   ├── table-view.tsx                 # Sortable/filterable grid
+│   ├── board-view.tsx                 # Kanban by status with drag-and-drop
+│   └── timeline-view.tsx              # Gantt chart with day grid, status bars
+├── sprints/
+│   └── sprint-board.tsx               # Sprint overview: create, drag backlog, progress bars
+├── ai/
+│   ├── ai-suggestions-panel.tsx       # AI iteration accept/dismiss
+│   └── smart-suggestions-panel.tsx    # Ambient AI analysis panel
+├── comments/
+│   ├── comment-thread.tsx             # Comment thread with add/delete
+│   └── activity-feed.tsx              # Activity timeline
+├── editor/
+│   └── block-editor.tsx               # Notion-style block editor
+├── versions/
+│   └── version-history.tsx            # Save/restore/delete version snapshots
+├── collaboration/
+│   ├── presence-avatars.tsx           # Who's online with status dots
+│   └── presence-cursors.tsx           # Live cursors with name labels
+├── integrations/
+│   └── integration-settings.tsx       # GitHub/Slack/Linear connect/disconnect
 ├── panels/
-│   ├── node-detail-panel.tsx         # Full detail panel (edit, PRDs, prompts, images)
-│   ├── node-edit-form.tsx            # Title/description edit form
-│   └── rich-text-editor.tsx          # Tiptap rich text editor
+│   ├── node-detail-panel.tsx          # Full detail panel (edit, PRDs, prompts, images, docs, comments)
+│   ├── node-edit-form.tsx             # Title/description edit form
+│   └── rich-text-editor.tsx           # Tiptap rich text editor
+├── project/
+│   ├── project-workspace.tsx          # Canvas + views + chat + panels + modals
+│   └── team-manager.tsx               # Modal to add/remove team members
 ├── onboarding/
 │   ├── project-onboarding.tsx        # Multi-step questionnaire (7 steps + summary)
 │   ├── new-project-chooser.tsx       # 3-option entry: AI Chat / Template / Import
@@ -300,13 +370,12 @@ components/
 │   ├── theme-toggle.tsx              # Dark/light toggle
 │   └── user-menu.tsx                 # User avatar/menu
 └── ui/                               # Reusable primitives
-    ├── button.tsx
-    ├── badge.tsx
-    ├── card.tsx
-    ├── dialog.tsx
-    ├── input.tsx
-    ├── skeleton.tsx
-    └── textarea.tsx
+    ├── command-palette.tsx            # Cmd+K fuzzy search command palette
+    ├── shortcuts-help.tsx             # Keyboard shortcut help overlay
+    ├── priority-badge.tsx             # Priority badge + selector
+    ├── assignee-picker.tsx            # Assignee dropdown with avatars
+    ├── tag-input.tsx                  # Tag chips with add/remove
+    └── (button, card, badge, skeleton, etc.)
 ```
 
 ---
@@ -468,3 +537,13 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2026-02 | Route groups | (marketing) for public pages, (app) for authenticated pages |
 | 2026-02 | Persistence failover | Runtime Firestore → localStorage fallback on error |
 | 2026-02 | Dashboard loader | Animated loading screen with floating nodes + spinning compass |
+| 2026-02 | Command palette | Cmd+K fuzzy search + keyboard shortcuts for power users |
+| 2026-02 | Multiple views | 6 views: Canvas, List, Table, Board, Timeline, Sprints |
+| 2026-02 | Team features | Assignees, priority, due dates, comments, activity feed |
+| 2026-02 | AI iteration | Break down, audit, estimate, suggest deps — accept/dismiss |
+| 2026-02 | Sprint planning | Create sprints, drag backlog, progress bars |
+| 2026-02 | AI smart suggestions | Ambient analysis with severity-ranked insights |
+| 2026-02 | Version history | Save/restore/delete named project snapshots |
+| 2026-02 | Embedded docs | Notion-style block editor for node documents |
+| 2026-02 | Collaboration | Pluggable provider, presence avatars, live cursors |
+| 2026-02 | Integrations | GitHub, Slack, Linear service clients + settings UI |

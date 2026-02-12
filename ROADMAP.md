@@ -114,14 +114,20 @@
 
 ---
 
-### M9: Real-Time Collaboration 🔴
-**Status**: Not Started
+### M9: Real-Time Collaboration ✅
+**Status**: Complete (Infrastructure)
 
-**Planned**:
-- Yjs CRDT integration
-- WebSocket sync
-- Presence cursors
-- Conflict resolution
+**Delivered**:
+- Pluggable collaboration provider abstraction (`services/collaboration.ts`)
+- `LocalCollaborationProvider` mock for development
+- `useCollaboration` hook with cursor/node selection sync
+- `PresenceAvatars` component with online status dots
+- `PresenceCursors` component with animated cursor rendering + name labels
+- Ready for Yjs/PartyKit/Liveblocks backend connection
+
+**Remaining** (production):
+- Deploy WebSocket backend (PartyKit or Liveblocks)
+- Connect Yjs CRDT document to Zustand store
 
 ---
 
@@ -139,17 +145,33 @@
 
 ---
 
-### M11: Advanced Polish 🟡
-**Status**: Partially Complete
+### M11: Feature Expansion (12 Phases) ✅
+**Status**: Complete
 
-**Delivered**:
-- Undo/redo (project-store.ts with undo/redo stack)
+**Delivered** (Feb 12, 2026):
+- **Phase 1**: Command Palette (`Cmd+K`) + keyboard shortcuts + `?` help overlay
+- **Phase 2**: Multiple views — List, Table, Board (Kanban), Timeline (Gantt), Sprints (6 total)
+- **Phase 3**: Assignees, priority, due dates, estimated hours, tags, team manager
+- **Phase 4**: AI iteration loops — break down, audit, estimate, suggest dependencies
+- **Phase 5**: Comments & activity feed on nodes
+- **Phase 6**: Timeline / Gantt view with day grid, status bars, navigation
+- **Phase 7**: Sprint planning — create sprints, drag backlog, progress bars
+- **Phase 8**: AI smart suggestions — ambient project analysis with severity-ranked insights
+- **Phase 9**: Version history — save/restore/delete named snapshots
+- **Phase 10**: Embedded docs — Notion-style block editor (headings, code, checklists, callouts)
+- **Phase 11**: Collaboration infrastructure — presence avatars, cursors, pluggable provider
+- **Phase 12**: Integrations — GitHub, Slack, Linear service clients + settings UI
 
-**Remaining**:
-- Keyboard shortcuts
-- Multi-select
+### M12: Remaining Polish 🟡
+**Status**: Planned
+
+**Planned**:
+- Multi-select on canvas
 - Spring physics (d3-force)
 - Territory file sync
+- Image compression
+- Hierarchy validation on type change
+- Production OAuth for integrations
 
 ---
 
@@ -176,10 +198,22 @@
 - Landing page ✅ (public marketing page, route groups, animated dashboard loader)
 - Persistence failover ✅ (runtime Firestore → localStorage fallback)
 
+### v0.9.0 - Feature Complete ✅ (Current)
+- All 12 feature phases implemented
+- 6 views: Canvas, List, Table, Board, Timeline, Sprints
+- AI iteration + smart suggestions
+- Team management, comments, activity feed
+- Sprint planning with drag-and-drop
+- Version history with snapshots
+- Embedded docs (Notion-style block editor)
+- Collaboration infrastructure (presence, cursors)
+- Integrations (GitHub, Slack, Linear)
+
 ### v1.0.0 - Launch (Planned)
-- Real-time collaboration
+- Production WebSocket backend for real-time collaboration
+- OAuth flows for GitHub/Slack/Linear
 - Territory file sync
-- Full polish
+- Image compression + performance polish
 - Production ready
 
 ---
@@ -196,3 +230,5 @@
 | 2026-02-11 | Landing page + route restructure: (marketing)/(app) route groups, 8 landing components |
 | 2026-02-11 | Firestore runtime failover + animated dashboard loader |
 | 2026-02-12 | Full project handoff documentation update |
+| 2026-02-12 | M11 Feature Expansion: All 12 phases implemented (command palette, views, assignees, AI iteration, comments, timeline, sprints, AI suggestions, version history, embedded docs, collaboration, integrations) |
+| 2026-02-12 | v0.9.0 Feature Complete: 55+ store mutations, 6 views, 7 API routes, 3 integration clients |

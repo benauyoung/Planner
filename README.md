@@ -22,18 +22,26 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 ### Key Features
 
 - **7 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector
+- **6 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
-- **AI Generation** — One-click PRD and implementation prompt generation for feature/subgoal nodes
-- **Rich Nodes** — Attach images, rich text, PRDs, and IDE prompts to any node
-- **Smart Mapping** — Auto-suggest parent nodes when creating new nodes on canvas
-- **Manual Connections** — Drag edges between handles to set parent-child relationships
+- **AI Generation** — One-click PRD and implementation prompt generation
+- **AI Iteration** — Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
+- **AI Smart Suggestions** — Ambient project analysis with severity-ranked insights
+- **Command Palette** — `Cmd+K` fuzzy search with keyboard shortcuts for all actions
+- **Rich Nodes** — Attach images, rich text, PRDs, IDE prompts, and Notion-style documents
+- **Team Management** — Assign members, set priority, due dates, estimates, tags
+- **Comments & Activity** — Threaded comments on nodes, project-level activity timeline
+- **Sprint Planning** — Create sprints, drag tasks from backlog, progress tracking
+- **Version History** — Save/restore named snapshots with branch support
+- **Embedded Docs** — Notion-style block editor (headings, code, checklists, callouts, dividers)
 - **Typed Edges** — `blocks` and `depends_on` dependency edges with visual styles
 - **Blast Radius** — Select a node to see all downstream-affected nodes highlighted
-- **Export** — JSON, Markdown (full plan, tasks), `.cursorrules`, `CLAUDE.md`, clipboard copy
+- **Export** — JSON, Markdown, `.cursorrules`, `CLAUDE.md`, `plan.md`, `tasks.md`
 - **Import** — JSON projects, Markdown specs (paste or file upload with preview)
 - **Shareable Plans** — Toggle public sharing, get a read-only URL for stakeholders
-- **Template Library** — Start from pre-built plans (Auth System, CRUD API, Landing Page)
-- **Context Menus** — Right-click nodes or empty canvas for quick actions
+- **Template Library** — Pre-built plans (Auth System, CRUD API, Landing Page)
+- **Integrations** — GitHub, Slack, Linear service clients + settings UI
+- **Collaboration** — Presence avatars, live cursors, pluggable provider (local mock + Yjs-ready)
 - **Dark Theme** — Near-black canvas with dashed bezier curve edges
 - **Auto-Layout** — Dagre-powered hierarchical arrangement
 
@@ -76,45 +84,53 @@ Open [http://localhost:3000](http://localhost:3000) to start planning.
 ```
 Planner/
 ├── app/                          # Next.js App Router pages
-│   ├── api/ai/                   # AI routes (chat, suggest-features, generate-prd, generate-prompt, generate-questions)
-│   ├── project/[id]/page.tsx     # Project workspace (canvas + chat)
-│   ├── project/new/page.tsx      # New project chooser (AI / Template / Import)
-│   ├── share/[id]/page.tsx       # Read-only shared plan view
-│   ├── login/page.tsx            # Auth page
-│   ├── layout.tsx                # Root layout
-│   └── page.tsx                  # Dashboard
+│   ├── api/ai/                   # AI routes (chat, iterate, analyze, generate-prd, etc.)
+│   ├── (marketing)/              # Public landing page route group
+│   ├── (app)/                    # Authenticated app route group
+│   │   ├── dashboard/            # Project list dashboard
+│   │   ├── login/                # Auth page
+│   │   ├── project/[id]/         # Project workspace (canvas + views + chat)
+│   │   ├── project/new/          # New project chooser
+│   │   └── share/[id]/           # Read-only shared plan
+│   └── layout.tsx                # Root layout
 ├── components/
-│   ├── canvas/                   # React Flow canvas
-│   │   ├── graph-canvas.tsx      # Main canvas (blast radius, typed edges)
-│   │   ├── canvas-toolbar.tsx    # Export dropdown, blast radius toggle
-│   │   ├── context-menu/         # Node + pane context menus (dependency edges)
-│   │   └── nodes/                # 7 custom node components
+│   ├── landing/                  # Public landing page (8 components)
+│   ├── canvas/                   # React Flow canvas + nodes (7 types) + context menus
+│   ├── views/                    # View switcher + List, Table, Board, Timeline views
+│   ├── sprints/                  # Sprint board with drag-and-drop backlog
+│   ├── ai/                       # AI suggestion panels (iteration + smart suggestions)
+│   ├── comments/                 # Comment thread + activity feed
+│   ├── editor/                   # Notion-style block editor
+│   ├── versions/                 # Version history modal
+│   ├── collaboration/            # Presence avatars + cursors
+│   ├── integrations/             # GitHub/Slack/Linear settings UI
 │   ├── chat/                     # AI planning chat
-│   ├── panels/                   # Detail panel, edit form, rich text editor
-│   ├── onboarding/               # Project onboarding, new project chooser, template gallery
+│   ├── panels/                   # Node detail panel (edit, PRDs, docs, comments)
+│   ├── project/                  # Project workspace + team manager
+│   ├── onboarding/               # Project onboarding + template gallery
 │   ├── dashboard/                # Project list, cards, import buttons/modals
-│   ├── share/                    # Share button popover, shared plan view
+│   ├── share/                    # Share button + shared plan view
 │   ├── layout/                   # Header, theme toggle, user menu
-│   └── ui/                       # Reusable UI primitives
+│   └── ui/                       # Command palette, shortcuts help, priority badge, assignee picker, tag input, etc.
 ├── stores/                       # Zustand state management
-│   ├── project-store.ts          # Core project/node/edge state + dependency edges
+│   ├── project-store.ts          # 55+ mutations: nodes, edges, sprints, versions, team, comments
 │   ├── chat-store.ts             # AI chat history
-│   └── ui-store.ts               # UI selections, blast radius, edge creation
-├── services/                     # Firebase auth/firestore (guarded)
-├── hooks/                        # Auto-layout, AI chat, project loading
-├── lib/                          # Constants, utils, export/import, blast radius, templates
-│   ├── export-import.ts          # JSON export/import
-│   ├── export-markdown.ts        # Subtree + full plan markdown export
-│   ├── export-project-files.ts   # .cursorrules, CLAUDE.md, plan.md, tasks.md
-│   ├── import-markdown.ts        # Markdown spec parser
-│   ├── blast-radius.ts           # Downstream impact analysis
-│   └── templates/                # Seed plan templates (3 built-in)
-├── prompts/                      # AI system prompts (planning, PRD, prompt generation)
-├── types/                        # TypeScript interfaces
-│   ├── project.ts                # PlanNode, ProjectEdge, EdgeType, Project
-│   ├── canvas.ts                 # FlowNode, FlowEdge, PlanNodeData
-│   └── chat.ts                   # Chat message types
-└── public/                       # Static assets (favicon)
+│   └── ui-store.ts               # View, theme, selected node, filters, pending edge
+├── services/
+│   ├── firebase.ts / firestore.ts / auth.ts  # Firebase (null-guarded)
+│   ├── gemini.ts                 # Gemini client + schemas (chat, PRD, iteration, suggestion)
+│   ├── persistence.ts            # Firestore → localStorage failover
+│   ├── collaboration.ts          # Pluggable collaboration provider
+│   └── integrations/             # GitHub, Slack, Linear service clients
+├── hooks/                        # AI chat, AI iterate, AI suggestions, collaboration, auto-layout
+├── prompts/                      # AI system prompts (planning, PRD, iteration, suggestion)
+├── lib/                          # Constants, commands, export/import, blast radius, templates
+├── types/
+│   ├── project.ts                # PlanNode, Sprint, ProjectVersion, DocumentBlock, etc.
+│   ├── integrations.ts           # GitHub/Slack/Linear integration types
+│   ├── canvas.ts                 # FlowNode, FlowEdge
+│   └── chat.ts                   # ChatMessage, AIPlanNode
+└── public/                       # Static assets
 ```
 
 ---
@@ -191,6 +207,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=<id>
 | [INTRO.md](./INTRO.md) | AI agent onboarding — read this first |
 | [HANDOFF.md](./HANDOFF.md) | Detailed codebase walkthrough |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical decisions and data models |
+| [NEXT_FEATURES.md](./NEXT_FEATURES.md) | 12-phase feature plan (all complete) |
 | [PLAN.md](./PLAN.md) | Implementation status checklist |
 | [ROADMAP.md](./ROADMAP.md) | Milestone tracking |
 | [VISION.md](./VISION.md) | North Star goals and target audience |

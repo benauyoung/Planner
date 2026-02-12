@@ -20,8 +20,19 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - Import projects from JSON or Markdown specs
 - Share plans via public read-only URL
 - Start from pre-built templates (Auth System, CRUD API, Landing Page)
+- **6 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints
+- **Command palette** (Cmd+K) with fuzzy search + keyboard shortcuts
+- **Team management**: Assign members, set priority, due dates, estimates, tags
+- **AI iteration**: Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
+- **Comments & activity feed**: Threaded comments on nodes, project-level activity timeline
+- **Sprint planning**: Create sprints, drag tasks from backlog, progress tracking
+- **AI smart suggestions**: Ambient project analysis with severity-ranked insights
+- **Embedded docs**: Notion-style block editor (headings, code, checklists, callouts, dividers)
+- **Version history**: Save/restore named snapshots with branch support
+- **Integrations**: GitHub, Slack, Linear service clients + settings UI
+- **Collaboration infrastructure**: Presence avatars, live cursors, pluggable provider
 
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Generate PRDs & prompts → Export & share.
+**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Collaborate & integrate.
 
 ---
 
@@ -155,7 +166,9 @@ Planner/
 │       ├── suggest-features/route.ts   # POST — AI feature suggestions
 │       ├── generate-prd/route.ts       # POST — AI PRD generation
 │       ├── generate-prompt/route.ts    # POST — AI prompt generation
-│       └── generate-questions/route.ts # POST — AI question generation
+│       ├── generate-questions/route.ts # POST — AI question generation
+│       ├── iterate/route.ts            # POST — AI iteration (break down, audit, estimate)
+│       └── analyze/route.ts            # POST — AI smart suggestions analysis
 ├── components/
 │   ├── landing/                        # Landing page components (public)
 │   │   ├── nav-bar.tsx                 # Sticky nav, transparent → blur on scroll, mobile menu
@@ -185,6 +198,29 @@ Planner/
 │   │       ├── node-context-menu.tsx   # Right-click node (+ dependency edge creation)
 │   │       ├── pane-context-menu.tsx   # Right-click canvas (add node + smart mapping)
 │   │       └── context-submenu.tsx     # Flyout submenu helper
+│   ├── views/                          # Multiple view components
+│   │   ├── view-switcher.tsx           # Tab bar: Canvas / List / Table / Board / Timeline / Sprints
+│   │   ├── list-view.tsx               # Hierarchical tree with expand/collapse
+│   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
+│   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
+│   │   └── timeline-view.tsx           # Gantt chart with day grid, month headers, status bars
+│   ├── sprints/
+│   │   └── sprint-board.tsx            # Sprint overview: create, drag backlog, progress bars
+│   ├── ai/
+│   │   ├── ai-suggestions-panel.tsx    # AI iteration suggestions (accept/dismiss per suggestion)
+│   │   └── smart-suggestions-panel.tsx # Ambient AI analysis with severity-ranked insights
+│   ├── comments/
+│   │   ├── comment-thread.tsx          # Comment thread with add/delete
+│   │   └── activity-feed.tsx           # Chronological project activity timeline
+│   ├── editor/
+│   │   └── block-editor.tsx            # Notion-style block editor (headings, code, checklists, callouts)
+│   ├── versions/
+│   │   └── version-history.tsx         # Save/restore/delete version snapshots
+│   ├── collaboration/
+│   │   ├── presence-avatars.tsx        # Who's online avatars with status dots
+│   │   └── presence-cursors.tsx        # Live cursor rendering with name labels
+│   ├── integrations/
+│   │   └── integration-settings.tsx    # GitHub/Slack/Linear connect/disconnect UI
 │   ├── chat/
 │   │   ├── planning-chat.tsx           # Chat panel with message list + Save
 │   │   ├── chat-input.tsx              # Input with context chip
@@ -203,43 +239,61 @@ Planner/
 │   │   ├── new-project-chooser.tsx     # 3-option entry: AI Chat / Template / Import
 │   │   └── template-gallery.tsx        # Template cards with use button
 │   ├── panels/
-│   │   ├── node-detail-panel.tsx       # Full panel: edit, PRDs, prompts, images, AI generate
+│   │   ├── node-detail-panel.tsx       # Full panel: edit, PRDs, prompts, images, priority, assignee, tags, document, comments
 │   │   ├── node-edit-form.tsx          # Title + description inline edit
 │   │   └── rich-text-editor.tsx        # Tiptap rich text editor
 │   ├── share/
 │   │   ├── share-button.tsx            # Share popover (public/private toggle, copy link)
 │   │   └── shared-plan-view.tsx        # Read-only canvas for shared plans
 │   ├── project/
-│   │   └── project-workspace.tsx       # Canvas + chat + detail panel + share button
+│   │   ├── project-workspace.tsx       # Canvas + views + chat + panels + modals
+│   │   └── team-manager.tsx            # Modal to add/remove team members
 │   ├── layout/
 │   │   ├── header.tsx                  # App header (Compass icon + VisionPath → /dashboard)
 │   │   ├── theme-toggle.tsx            # Dark/light toggle
 │   │   └── user-menu.tsx               # User avatar/menu
 │   ├── error-boundary.tsx              # React error boundary component
-│   └── ui/                             # Reusable primitives (button, card, badge, skeleton, etc.)
+│   └── ui/                             # Reusable primitives
+│       ├── command-palette.tsx          # Cmd+K fuzzy search command palette
+│       ├── shortcuts-help.tsx           # Keyboard shortcut help overlay
+│       ├── priority-badge.tsx           # Priority badge + selector
+│       ├── assignee-picker.tsx          # Assignee dropdown with avatars
+│       ├── tag-input.tsx                # Tag chips with add/remove
+│       └── (button, card, badge, skeleton, etc.)
 ├── hooks/
 │   ├── use-ai-chat.ts                 # Chat logic: send, init, context injection
-│   ├── use-auto-layout.ts            # Dagre layout algorithm
-│   └── use-project.ts                # Persistence load/save with 2s debounce
+│   ├── use-ai-iterate.ts              # AI iteration actions (break down, audit, estimate)
+│   ├── use-ai-suggestions.ts          # Smart suggestions hook (analyze project)
+│   ├── use-auto-layout.ts             # Dagre layout algorithm
+│   ├── use-collaboration.ts            # Collaboration provider hook (presence, cursors)
+│   └── use-project.ts                 # Persistence load/save with 2s debounce
 ├── stores/
-│   ├── project-store.ts               # Central state: project, nodes, edges, PRDs, prompts
+│   ├── project-store.ts               # Central state: project, nodes, edges, sprints, versions, 55+ mutations
 │   ├── chat-store.ts                  # Chat messages, phase, onboarding answers
-│   └── ui-store.ts                    # Theme, selected node, detail panel, pending edge
+│   └── ui-store.ts                    # Theme, selected node, view, filters, pending edge
 ├── services/
 │   ├── firebase.ts                    # Firebase init (null-guarded)
 │   ├── firestore.ts                   # CRUD (null-guarded)
 │   ├── auth.ts                        # Auth functions (null-guarded)
-│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt)
+│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion)
 │   ├── persistence.ts                 # Persistence abstraction: Firestore → localStorage failover
-│   └── local-storage.ts              # localStorage backend for offline persistence
+│   ├── local-storage.ts              # localStorage backend for offline persistence
+│   ├── collaboration.ts               # Collaboration provider abstraction (pluggable, local mock)
+│   └── integrations/
+│       ├── github.ts                  # GitHub issue creation/fetch
+│       ├── slack.ts                   # Slack webhook message builders
+│       └── linear.ts                  # Linear GraphQL client
 ├── prompts/
 │   ├── planning-system.ts             # Main AI system prompt
 │   ├── prd-generation.ts              # PRD generation system prompt
 │   ├── prompt-generation.ts           # Implementation prompt generation system prompt
 │   ├── question-generation.ts         # AI question generation system prompt
+│   ├── iteration-system.ts            # AI iteration actions system prompt
+│   ├── suggestion-system.ts           # Ambient AI analysis system prompt
 │   └── refinement-system.ts           # Refinement prompt (unused)
 ├── lib/
 │   ├── constants.ts                   # NODE_CONFIG (7 types), NODE_CHILD_TYPE, DAGRE_CONFIG
+│   ├── commands.ts                    # Command palette command definitions
 │   ├── node-context.ts                # buildNodeContext() — hierarchy context for AI generation
 │   ├── export-import.ts               # JSON export/import with download/read helpers
 │   ├── export-markdown.ts             # Subtree + full plan markdown export
@@ -257,7 +311,8 @@ Planner/
 │   ├── id.ts                          # generateId() — crypto.randomUUID
 │   └── utils.ts                       # cn() — clsx + tailwind-merge
 ├── types/
-│   ├── project.ts                     # PlanNode, ProjectEdge, EdgeType, Project
+│   ├── project.ts                     # PlanNode, ProjectEdge, Sprint, ProjectVersion, DocumentBlock, etc.
+│   ├── integrations.ts               # GitHub/Slack/Linear integration types
 │   ├── canvas.ts                      # FlowNode, FlowEdge, PlanNodeData
 │   └── chat.ts                        # ChatMessage, AIPlanNode
 ├── contexts/
@@ -278,6 +333,7 @@ Planner/
 ### PlanNode (7 types)
 ```typescript
 type NodeType = 'goal' | 'subgoal' | 'feature' | 'task' | 'moodboard' | 'notes' | 'connector'
+type Priority = 'critical' | 'high' | 'medium' | 'low' | 'none'
 
 interface PlanNode {
   id: string
@@ -292,6 +348,14 @@ interface PlanNode {
   images?: string[]         // Base64 data URLs (moodboard nodes)
   prds?: NodePRD[]          // Attached PRD documents
   prompts?: NodePrompt[]    // Attached IDE prompts
+  assigneeId?: string       // Team member ID
+  priority?: Priority
+  dueDate?: number          // Unix timestamp
+  estimatedHours?: number
+  tags?: string[]
+  comments?: NodeComment[]
+  sprintId?: string         // Sprint assignment
+  document?: NodeDocument   // Notion-style block document
 }
 ```
 
@@ -320,26 +384,25 @@ interface Project {
   edges: ProjectEdge[]
   createdAt: number
   updatedAt: number
-  isPublic?: boolean        // Shareable plans
-  shareId?: string          // Share URL identifier
+  isPublic?: boolean
+  shareId?: string
+  team?: TeamMember[]       // Project-level team roster
+  activity?: ActivityEvent[]
+  sprints?: Sprint[]
+  versions?: ProjectVersion[]
+  currentVersionId?: string
 }
 ```
 
-### NodePRD / NodePrompt
+### Supporting Types
 ```typescript
-interface NodePRD {
-  id: string
-  title: string
-  content: string           // Monospaced content, copyable to clipboard
-  updatedAt: number
-}
-
-interface NodePrompt {
-  id: string
-  title: string
-  content: string           // IDE prompt, one-click copy
-  updatedAt: number
-}
+interface TeamMember { id, name, email, avatar?, color }
+interface NodeComment { id, authorId, authorName, authorColor, content, createdAt }
+interface ActivityEvent { id, type, nodeId, nodeTitle, actorName, detail, timestamp }
+interface Sprint { id, name, startDate, endDate, nodeIds, status: 'planning'|'active'|'completed' }
+interface ProjectVersion { id, name, snapshot: { nodes, edges, title, description }, parentVersionId?, createdAt }
+type DocumentBlock = heading | paragraph | code | checklist | divider | callout
+interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
 ```
 
 ### Node Configuration (`lib/constants.ts`)
@@ -370,6 +433,18 @@ interface NodePrompt {
 **Prompts**: `addNodePrompt`, `updateNodePrompt`, `removeNodePrompt`
 
 **Connections**: `connectNodes`, `addDependencyEdge`, `removeDependencyEdge`, `setNodeParent`
+
+**Assignees & Metadata**: `setNodeAssignee`, `setNodePriority`, `setNodeDueDate`, `setNodeEstimate`, `setNodeTags`
+
+**Team**: `addTeamMember`, `removeTeamMember`
+
+**Comments & Activity**: `addNodeComment`, `deleteNodeComment`, `addActivityEvent`
+
+**Sprints**: `createSprint`, `updateSprint`, `deleteSprint`, `assignNodeToSprint`
+
+**Versions**: `saveVersion`, `restoreVersion`, `deleteVersion`
+
+**Documents**: `updateNodeDocument`
 
 **Sharing**: `toggleShareProject`
 
@@ -402,7 +477,7 @@ interface NodePrompt {
 ```
 
 ### Canvas Interactions
-- **Click node** → Detail panel opens (edit, PRDs, prompts, images, children, AI generate)
+- **Click node** → Detail panel opens (edit, PRDs, prompts, images, priority, assignee, tags, document, comments, AI generate)
 - **Right-click node** → Context menu (edit, type, status, add child/sibling, duplicate, delete, add dependency edge)
 - **Right-click empty canvas** → Pane context menu (add any node type, smart parent suggestion)
 - **Drag source→target handle** → Creates edge (sets parentId, or typed dependency if pendingEdge)
@@ -410,6 +485,9 @@ interface NodePrompt {
 - **Blast radius toggle** → Dims unaffected nodes when a node is selected
 - **Export dropdown** → JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - **Share button** → Public/private toggle with shareable URL
+- **Cmd+K** → Command palette with fuzzy search
+- **View switcher** → Canvas / List / Table / Board / Timeline / Sprints
+- **Toolbar buttons** → Team Manager, AI Smart Suggestions, Version History, Integrations
 
 ### Smart Mapping
 When right-clicking empty canvas, the pane context menu shows an arrow (→) button next to node types that have a valid parent nearby. Hierarchy rules:
@@ -551,13 +629,29 @@ npm run type-check  # Alias for tsc --noEmit
 5. Run `npm run dev` and visit `http://localhost:3000` to see the landing page
 6. Visit `/dashboard` to see the authenticated app
 
-### Next Big Features
-- **Real-time collaboration** — Yjs CRDT integration, WebSocket sync, presence cursors
+### Next Big Features (Post v1.0)
+- **Production WebSocket backend** — Deploy PartyKit/Liveblocks for real-time multi-user collaboration
+- **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth for production integration use
 - **Territory file sync** — bidirectional canvas ↔ Markdown file sync
 - **Advanced canvas** — spring physics (d3-force), multi-select, level-of-detail zoom
-- **Production polish** — keyboard shortcut overlay, edge deletion UI, image compression, hierarchy validation on type change
+- **Image compression** — resize/compress base64 images to reduce state size
+- **Hierarchy validation** — enforce valid type changes based on position in hierarchy
 
-### Recent Changes (Feb 11-12, 2026)
+### Recent Changes (Feb 12, 2026)
+- **Phase 1**: Command Palette + keyboard shortcuts (`Cmd+K`, `?` help overlay)
+- **Phase 2**: Multiple views — List, Table, Board, Timeline, Sprints (6 total views)
+- **Phase 3**: Assignees, priority, due dates, estimated hours, tags, team manager
+- **Phase 4**: AI iteration loops — break down, audit, estimate, suggest dependencies
+- **Phase 5**: Comments & activity feed on nodes
+- **Phase 6**: Timeline / Gantt view with day grid, status bars, navigation
+- **Phase 7**: Sprint planning — create sprints, drag backlog, progress bars
+- **Phase 8**: AI smart suggestions — ambient project analysis with severity-ranked insights
+- **Phase 9**: Version history — save/restore/delete named snapshots
+- **Phase 10**: Embedded docs — Notion-style block editor (headings, code, checklists, callouts)
+- **Phase 11**: Collaboration infrastructure — presence avatars, cursors, pluggable provider
+- **Phase 12**: Integrations — GitHub, Slack, Linear service clients + settings UI
+
+### Earlier Changes (Feb 11, 2026)
 - **Landing page** — 8 new components in `components/landing/`, public route at `/`
 - **Route restructure** — Next.js route groups: `(marketing)` for public, `(app)` for authenticated
 - **Dashboard moved** to `/dashboard` (was `/`); all auth redirects updated
