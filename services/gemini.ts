@@ -112,6 +112,45 @@ export const promptGenerationSchema: Schema = {
   required: ['title', 'content'],
 }
 
+export const suggestionSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    suggestions: {
+      type: SchemaType.ARRAY,
+      description: 'List of proactive suggestions to improve the project plan',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: {
+            type: SchemaType.STRING,
+            enum: ['missing_testing', 'orphan_nodes', 'bottleneck', 'stale_items', 'unbalanced_workload', 'missing_dependencies', 'estimation_gap', 'missing_subtasks', 'risk'],
+            description: 'Category of suggestion',
+          },
+          title: { type: SchemaType.STRING, description: 'Short actionable title' },
+          description: { type: SchemaType.STRING, description: '1-2 sentence explanation' },
+          nodeIds: {
+            type: SchemaType.ARRAY,
+            description: 'IDs of affected nodes',
+            items: { type: SchemaType.STRING },
+          },
+          severity: {
+            type: SchemaType.STRING,
+            enum: ['high', 'medium', 'low'],
+            description: 'How important this suggestion is',
+          },
+          action: {
+            type: SchemaType.STRING,
+            description: 'Specific action to take',
+            nullable: true,
+          },
+        },
+        required: ['type', 'title', 'description', 'nodeIds', 'severity'],
+      },
+    },
+  },
+  required: ['suggestions'],
+}
+
 export const iterationSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
