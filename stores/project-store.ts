@@ -47,6 +47,7 @@ interface ProjectState {
   addNodePrompt: (nodeId: string, title: string, content: string) => string | null
   updateNodePrompt: (nodeId: string, promptId: string, title: string, content: string) => void
   removeNodePrompt: (nodeId: string, promptId: string) => void
+  updateProjectTitle: (title: string) => void
   addProject: (project: Project) => void
   removeProject: (projectId: string) => void
   toggleShareProject: () => string | null
@@ -68,6 +69,13 @@ interface ProjectState {
   restoreVersion: (versionId: string) => void
   deleteVersion: (versionId: string) => void
   updateNodeDocument: (nodeId: string, blocks: DocumentBlock[]) => void
+  updateNodeVersion: (nodeId: string, version: string) => void
+  updateNodeSchemaType: (nodeId: string, schemaType: PlanNode['schemaType']) => void
+  updateNodePromptType: (nodeId: string, promptType: PlanNode['promptType']) => void
+  updateNodeTargetTool: (nodeId: string, targetTool: PlanNode['targetTool']) => void
+  updateNodeReferenceType: (nodeId: string, referenceType: PlanNode['referenceType']) => void
+  updateNodeUrl: (nodeId: string, url: string) => void
+  updateNodeAcceptanceCriteria: (nodeId: string, criteria: string[]) => void
   undo: () => void
   redo: () => void
 }
@@ -76,6 +84,11 @@ const EDGE_STYLES: Record<EdgeType, { strokeDasharray?: string; stroke: string; 
   hierarchy: { stroke: 'hsl(var(--border))', animated: false },
   blocks: { strokeDasharray: '8 4', stroke: 'hsl(0 84% 60%)', animated: true },
   depends_on: { strokeDasharray: '8 4', stroke: 'hsl(217 91% 60%)', animated: false },
+  informs: { stroke: 'hsl(200 80% 50%)', animated: false },
+  defines: { stroke: 'hsl(270 60% 55%)', animated: false },
+  implements: { stroke: 'hsl(152 60% 42%)', animated: false },
+  references: { strokeDasharray: '6 4', stroke: 'hsl(220 10% 50%)', animated: false },
+  supersedes: { strokeDasharray: '3 3', stroke: 'hsl(0 70% 55%)', animated: false },
 }
 
 function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
@@ -102,6 +115,13 @@ function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): {
         images: node.images,
         prds: node.prds,
         prompts: node.prompts,
+        version: node.version,
+        schemaType: node.schemaType,
+        promptType: node.promptType,
+        targetTool: node.targetTool,
+        referenceType: node.referenceType,
+        url: node.url,
+        acceptanceCriteria: node.acceptanceCriteria,
       },
       width: NODE_CONFIG[node.type].width,
       height: NODE_CONFIG[node.type].height,
@@ -133,7 +153,15 @@ function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): {
         target: e.target,
         type: 'default',
         animated: style.animated,
-        label: e.label || (edgeType === 'blocks' ? 'blocks' : edgeType === 'depends_on' ? 'depends on' : undefined),
+        label: e.label || ({
+          blocks: 'blocks',
+          depends_on: 'depends on',
+          informs: 'informs',
+          defines: 'defines',
+          implements: 'implements',
+          references: 'references',
+          supersedes: 'supersedes',
+        } as Record<string, string>)[edgeType],
         style: {
           stroke: style.stroke,
           strokeWidth: 2,
@@ -574,6 +602,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         questions: [],
         content: type === 'notes' ? '' : undefined,
         images: type === 'moodboard' ? [] : undefined,
+        schemaType: type === 'schema' ? 'other' : undefined,
+        promptType: type === 'prompt' ? 'implementation' : undefined,
+        targetTool: type === 'prompt' ? 'generic' : undefined,
+        referenceType: type === 'reference' ? 'link' : undefined,
+        acceptanceCriteria: type === 'prd' ? [] : undefined,
       }
 
       const updatedNodes = [...project.nodes, newNode]
@@ -600,12 +633,21 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         (e) => e.source === sourceId && e.target === targetId && e.edgeType === edgeType
       )
       if (exists) return
+      const edgeLabels: Record<string, string> = {
+        blocks: 'blocks',
+        depends_on: 'depends on',
+        informs: 'informs',
+        defines: 'defines',
+        implements: 'implements',
+        references: 'references',
+        supersedes: 'supersedes',
+      }
       const newEdge: ProjectEdge = {
         id: generateId(),
         source: sourceId,
         target: targetId,
         edgeType,
-        label: edgeType === 'blocks' ? 'blocks' : edgeType === 'depends_on' ? 'depends on' : undefined,
+        label: edgeLabels[edgeType],
       }
       commitProjectUpdate({
         ...project,
@@ -936,6 +978,75 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         return { ...n, document: doc }
       })
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodeVersion: (nodeId, version) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, version } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodeSchemaType: (nodeId, schemaType) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, schemaType } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodePromptType: (nodeId, promptType) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, promptType } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodeTargetTool: (nodeId, targetTool) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, targetTool } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodeReferenceType: (nodeId, referenceType) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, referenceType } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodeUrl: (nodeId, url) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, url } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateNodeAcceptanceCriteria: (nodeId, criteria) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, acceptanceCriteria: criteria } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    updateProjectTitle: (title) => {
+      const project = get().currentProject
+      if (!project) return
+      commitProjectUpdate({ ...project, title, updatedAt: Date.now() })
     },
 
     undo: () => {

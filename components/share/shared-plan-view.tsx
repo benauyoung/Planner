@@ -21,6 +21,11 @@ const EDGE_STYLES: Record<EdgeType, { strokeDasharray?: string; stroke: string; 
   hierarchy: { stroke: 'hsl(var(--border))', animated: false },
   blocks: { strokeDasharray: '8 4', stroke: 'hsl(0 84% 60%)', animated: true },
   depends_on: { strokeDasharray: '8 4', stroke: 'hsl(217 91% 60%)', animated: false },
+  informs: { stroke: 'hsl(200 80% 50%)', animated: false },
+  defines: { stroke: 'hsl(270 60% 55%)', animated: false },
+  implements: { stroke: 'hsl(152 60% 42%)', animated: false },
+  references: { strokeDasharray: '6 4', stroke: 'hsl(220 10% 50%)', animated: false },
+  supersedes: { strokeDasharray: '3 3', stroke: 'hsl(0 70% 55%)', animated: false },
 }
 
 function projectToFlow(project: Project): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
@@ -70,7 +75,15 @@ function projectToFlow(project: Project): { flowNodes: FlowNode[]; flowEdges: Fl
         target: e.target,
         type: 'bezier',
         animated: style.animated,
-        label: e.label || (edgeType === 'blocks' ? 'blocks' : edgeType === 'depends_on' ? 'depends on' : undefined),
+        label: e.label || ({
+          blocks: 'blocks',
+          depends_on: 'depends on',
+          informs: 'informs',
+          defines: 'defines',
+          implements: 'implements',
+          references: 'references',
+          supersedes: 'supersedes',
+        } as Record<string, string>)[edgeType],
         style: {
           stroke: style.stroke,
           strokeWidth: 2,

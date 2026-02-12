@@ -2,8 +2,9 @@ import type { Project } from '@/types/project'
 
 /**
  * Compute the blast radius for a given node: all nodes that are
- * downstream via `blocks` or `depends_on` edges, plus all child
- * nodes in the hierarchy.
+ * downstream via dependency edges (blocks, depends_on) and document
+ * relationship edges (informs, defines, implements, references,
+ * supersedes), plus all child nodes in the hierarchy.
  */
 export function getBlastRadius(nodeId: string, project: Project): Set<string> {
   const affected = new Set<string>()
@@ -20,22 +21,37 @@ export function getBlastRadius(nodeId: string, project: Project): Set<string> {
       traverse(child.id)
     }
 
-    // Nodes this node blocks (source → target means source blocks target)
-    const blockedEdges = project.edges.filter(
-      (e) => e.source === currentId && (e.edgeType === 'blocks' || e.edgeType === 'depends_on')
+    // Nodes downstream via blocks, depends_on, and doc relationship edges
+    const downstreamEdges = project.edges.filter(
+      (e) =>
+        e.source === currentId &&
+        (e.edgeType === 'blocks' ||
+          e.edgeType === 'depends_on' ||
+          e.edgeType === 'informs' ||
+          e.edgeType === 'defines' ||
+          e.edgeType === 'implements' ||
+          e.edgeType === 'references')
     )
-    for (const edge of blockedEdges) {
+    for (const edge of downstreamEdges) {
       affected.add(edge.target)
       traverse(edge.target)
     }
 
-    // Also traverse reverse depends_on: if something depends on currentId, it's affected
+    // Reverse depends_on: if something depends on currentId, it's affected
     const dependentEdges = project.edges.filter(
       (e) => e.target === currentId && e.edgeType === 'depends_on'
     )
     for (const edge of dependentEdges) {
       affected.add(edge.source)
       // Don't recurse further on reverse depends_on to avoid cycles
+    }
+
+    // Reverse supersedes: if something supersedes currentId, it's affected
+    const supersededByEdges = project.edges.filter(
+      (e) => e.target === currentId && e.edgeType === 'supersedes'
+    )
+    for (const edge of supersededByEdges) {
+      affected.add(edge.source)
     }
   }
 

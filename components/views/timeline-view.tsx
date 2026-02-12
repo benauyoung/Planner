@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useCallback, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -47,6 +47,17 @@ interface TimelineNode extends PlanNode {
   endDay: number
 }
 
+type DragMode = 'move' | 'resize-left' | 'resize-right'
+
+interface DragState {
+  nodeId: string
+  mode: DragMode
+  startX: number
+  origStartDay: number
+  origEndDay: number
+  origEstimateHours: number
+}
+
 export function TimelineView() {
   const nodes = useProjectStore((s) => s.currentProject?.nodes ?? EMPTY_NODES)
   const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
@@ -56,9 +67,12 @@ export function TimelineView() {
   const filterType = useUIStore((s) => s.filterType)
   const filterStatus = useUIStore((s) => s.filterStatus)
   const setNodeDueDate = useProjectStore((s) => s.setNodeDueDate)
+  const setNodeEstimate = useProjectStore((s) => s.setNodeEstimate)
 
   const today = startOfDay(Date.now())
   const [viewStart, setViewStart] = useState(() => today - 7 * DAY_MS)
+  const [drag, setDrag] = useState<DragState | null>(null)
+  const [dragPreview, setDragPreview] = useState<{ nodeId: string; startDay: number; endDay: number } | null>(null)
 
   const VISIBLE_DAYS = 42
 
@@ -118,6 +132,69 @@ export function TimelineView() {
     return headers
   }, [dayColumns])
 
+  // Drag handlers
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!drag) return
+    const deltaX = e.clientX - drag.startX
+    const deltaDays = Math.round(deltaX / COL_WIDTH)
+
+    if (drag.mode === 'move') {
+      const newStart = drag.origStartDay + deltaDays * DAY_MS
+      const newEnd = drag.origEndDay + deltaDays * DAY_MS
+      setDragPreview({ nodeId: drag.nodeId, startDay: newStart, endDay: newEnd })
+    } else if (drag.mode === 'resize-right') {
+      const newEnd = Math.max(drag.origStartDay + DAY_MS, drag.origEndDay + deltaDays * DAY_MS)
+      setDragPreview({ nodeId: drag.nodeId, startDay: drag.origStartDay, endDay: newEnd })
+    } else if (drag.mode === 'resize-left') {
+      const newStart = Math.min(drag.origEndDay - DAY_MS, drag.origStartDay + deltaDays * DAY_MS)
+      setDragPreview({ nodeId: drag.nodeId, startDay: newStart, endDay: drag.origEndDay })
+    }
+  }, [drag])
+
+  const handleMouseUp = useCallback(() => {
+    if (!drag || !dragPreview) {
+      setDrag(null)
+      setDragPreview(null)
+      return
+    }
+
+    const durationDays = Math.max(1, Math.round((dragPreview.endDay - dragPreview.startDay) / DAY_MS))
+    const newHours = durationDays * 8
+    const newDueDate = dragPreview.endDay
+
+    setNodeDueDate(drag.nodeId, newDueDate)
+    setNodeEstimate(drag.nodeId, newHours)
+
+    setDrag(null)
+    setDragPreview(null)
+  }, [drag, dragPreview, setNodeDueDate, setNodeEstimate])
+
+  useEffect(() => {
+    if (drag) {
+      window.addEventListener('mousemove', handleMouseMove)
+      window.addEventListener('mouseup', handleMouseUp)
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove)
+        window.removeEventListener('mouseup', handleMouseUp)
+      }
+    }
+  }, [drag, handleMouseMove, handleMouseUp])
+
+  const startDrag = (nodeId: string, mode: DragMode, e: React.MouseEvent, node: TimelineNode) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDrag({
+      nodeId,
+      mode,
+      startX: e.clientX,
+      origStartDay: node.startDay,
+      origEndDay: node.endDay,
+      origEstimateHours: node.estimatedHours || 4,
+    })
+    setDragPreview({ nodeId, startDay: node.startDay, endDay: node.endDay })
+    selectNode(nodeId)
+  }
+
   const scrollLeft = () => setViewStart((v) => v - 7 * DAY_MS)
   const scrollRight = () => setViewStart((v) => v + 7 * DAY_MS)
   const scrollToToday = () => setViewStart(today - 7 * DAY_MS)
@@ -133,7 +210,7 @@ export function TimelineView() {
   }
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col select-none">
       {/* Controls */}
       <div className="flex items-center gap-2 px-4 py-1.5 border-b shrink-0">
         <button onClick={scrollLeft} className="p-1 rounded hover:bg-muted transition-colors">
@@ -148,6 +225,9 @@ export function TimelineView() {
         <button onClick={scrollRight} className="p-1 rounded hover:bg-muted transition-colors">
           <ChevronRight className="h-4 w-4" />
         </button>
+        <span className="text-[10px] text-muted-foreground ml-2">
+          Drag bars to move • Drag edges to resize
+        </span>
       </div>
 
       {/* Gantt chart */}
@@ -160,6 +240,10 @@ export function TimelineView() {
 
             {timelineNodes.map((node) => {
               const member = node.assigneeId ? team.find((m) => m.id === node.assigneeId) : null
+              const preview = dragPreview?.nodeId === node.id ? dragPreview : null
+              const displayStart = preview ? preview.startDay : node.startDay
+              const displayEnd = preview ? preview.endDay : node.endDay
+              const durationDays = Math.round((displayEnd - displayStart) / DAY_MS)
               return (
                 <button
                   key={node.id}
@@ -174,6 +258,7 @@ export function TimelineView() {
                     style={{ backgroundColor: STATUS_COLORS[node.status] }}
                   />
                   <span className="truncate flex-1 font-medium">{node.title}</span>
+                  <span className="text-[10px] text-muted-foreground shrink-0">{durationDays}d</span>
                   {member && <AssigneeAvatar member={member} size="sm" />}
                 </button>
               )
@@ -222,17 +307,24 @@ export function TimelineView() {
             {/* Bars */}
             <div style={{ width: VISIBLE_DAYS * COL_WIDTH }}>
               {timelineNodes.map((node) => {
-                const barStart = Math.max(0, (node.startDay - viewStart) / DAY_MS)
-                const barEnd = Math.min(VISIBLE_DAYS, (node.endDay - viewStart) / DAY_MS)
-                const barWidth = Math.max(0, (barEnd - barStart) * COL_WIDTH)
-                const barLeft = barStart * COL_WIDTH
+                const preview = dragPreview?.nodeId === node.id ? dragPreview : null
+                const displayStart = preview ? preview.startDay : node.startDay
+                const displayEnd = preview ? preview.endDay : node.endDay
 
-                const isVisible = barEnd > 0 && barStart < VISIBLE_DAYS
+                const barStartDays = (displayStart - viewStart) / DAY_MS
+                const barEndDays = (displayEnd - viewStart) / DAY_MS
+                const clampedStart = Math.max(0, barStartDays)
+                const clampedEnd = Math.min(VISIBLE_DAYS, barEndDays)
+                const barWidth = Math.max(0, (clampedEnd - clampedStart) * COL_WIDTH)
+                const barLeft = clampedStart * COL_WIDTH
+
+                const isVisible = clampedEnd > 0 && clampedStart < VISIBLE_DAYS
+                const isDragging = drag?.nodeId === node.id
 
                 return (
                   <div key={node.id} className="h-10 relative border-b">
                     {/* Grid columns */}
-                    <div className="absolute inset-0 flex">
+                    <div className="absolute inset-0 flex pointer-events-none">
                       {dayColumns.map((day) => {
                         const isWeekend = getWeekday(day) === 0 || getWeekday(day) === 6
                         const isToday = day === today
@@ -254,22 +346,39 @@ export function TimelineView() {
                     {isVisible && barWidth > 0 && (
                       <div
                         className={cn(
-                          'absolute top-1.5 h-7 rounded-md cursor-pointer transition-all hover:brightness-110 flex items-center px-2 overflow-hidden',
+                          'absolute top-1.5 h-7 rounded-md flex items-center overflow-hidden group',
+                          isDragging ? 'opacity-90 shadow-lg z-20' : 'hover:brightness-110 z-10',
                           selectedNodeId === node.id && 'ring-2 ring-primary ring-offset-1'
                         )}
                         style={{
                           left: barLeft,
                           width: barWidth,
                           backgroundColor: STATUS_COLORS[node.status],
+                          cursor: isDragging ? 'grabbing' : 'grab',
                         }}
-                        onClick={() => selectNode(node.id)}
-                        title={`${node.title} — ${node.estimatedHours || 4}h`}
+                        onMouseDown={(e) => startDrag(node.id, 'move', e, node)}
+                        title={`${node.title} — ${Math.round((displayEnd - displayStart) / DAY_MS)}d\nDrag to move • Drag edges to resize`}
                       >
-                        {barWidth > 40 && (
-                          <span className="text-[10px] text-white font-medium truncate">
-                            {node.title}
-                          </span>
-                        )}
+                        {/* Left resize handle */}
+                        <div
+                          className="absolute left-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-white/30 transition-colors rounded-l-md"
+                          onMouseDown={(e) => startDrag(node.id, 'resize-left', e, node)}
+                        />
+
+                        {/* Bar label */}
+                        <div className="flex-1 px-2.5 overflow-hidden">
+                          {barWidth > 50 && (
+                            <span className="text-[10px] text-white font-medium truncate block">
+                              {node.title}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Right resize handle */}
+                        <div
+                          className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-white/30 transition-colors rounded-r-md"
+                          onMouseDown={(e) => startDrag(node.id, 'resize-right', e, node)}
+                        />
                       </div>
                     )}
                   </div>

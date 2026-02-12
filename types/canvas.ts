@@ -14,6 +14,13 @@ export interface PlanNodeData {
   images?: string[]
   prds?: NodePRD[]
   prompts?: NodePrompt[]
+  version?: string
+  schemaType?: string
+  promptType?: string
+  targetTool?: string
+  referenceType?: string
+  url?: string
+  acceptanceCriteria?: string[]
   [key: string]: unknown
 }
 

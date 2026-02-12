@@ -20,6 +20,12 @@ Guidelines:
   - **goal/subgoal**: Strategic direction, priority, scope boundaries
   - **feature**: Technical approach, UX patterns, integration points
   - **task**: Implementation specifics, tooling, edge cases
+  - **spec**: Scope of specification, stakeholders, constraints, architecture style, versioning strategy
+  - **prd**: Acceptance criteria detail, user stories, edge cases, dependency on other specs
+  - **schema**: Entities and relationships, validation rules, versioning, migration strategy, API format (REST/GraphQL)
+  - **prompt**: Target tool preferences, coding style, framework constraints, test coverage expectations
+  - **reference**: Relevance to project, how to incorporate, licensing concerns
+- If the node has document relationships (connected specs, PRDs, schemas), ask questions about how they relate
 - Make options specific to the project context, not generic
 
 Return a JSON object with a "questions" array, where each item has "question" (string) and "options" (string array of 3-5 choices).`

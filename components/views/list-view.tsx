@@ -11,6 +11,11 @@ import {
   ImagePlus,
   FileText,
   Circle,
+  ScrollText,
+  ClipboardList,
+  Braces,
+  Terminal,
+  ExternalLink,
 } from 'lucide-react'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -28,6 +33,11 @@ const TYPE_ICONS: Record<NodeType, React.ReactNode> = {
   moodboard: <ImagePlus className="h-3.5 w-3.5" />,
   notes: <FileText className="h-3.5 w-3.5" />,
   connector: <Circle className="h-3.5 w-3.5" />,
+  spec: <ScrollText className="h-3.5 w-3.5" />,
+  prd: <ClipboardList className="h-3.5 w-3.5" />,
+  schema: <Braces className="h-3.5 w-3.5" />,
+  prompt: <Terminal className="h-3.5 w-3.5" />,
+  reference: <ExternalLink className="h-3.5 w-3.5" />,
 }
 
 const STATUS_DOTS: Record<NodeStatus, string> = {

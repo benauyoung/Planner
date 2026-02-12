@@ -21,6 +21,11 @@ PLAN HIERARCHY:
 - subgoal: Key areas under each goal (2-4 per goal). parentId references a goal.
 - feature: Specific capabilities (2-4 per subgoal). parentId references a subgoal.
 - task: Concrete action items (2-4 per feature). parentId references a feature.
+- spec: High-level specification documents (architecture, vision, requirements). parentId references a goal or subgoal.
+- prd: Product Requirements Documents with acceptance criteria. parentId references a spec or feature.
+- schema: Data models, API contracts, database schemas. parentId references a spec or prd.
+- prompt: Implementation prompts for AI/IDE tools. parentId references a prd, schema, feature, or task.
+- reference: External links and resources. Can connect to anything.
 
 NODE IDS:
 - Use stable, descriptive IDs: goal-1, subgoal-1-1, feature-1-1-1, task-1-1-1-1
@@ -43,6 +48,11 @@ QUESTIONS:
 - Questions should be specific and decision-oriented (e.g., "OAuth, email/password, or both?" not "How will users log in?").
 - Goal and subgoal nodes should have 0-1 questions at most.
 - Questions help the user think through implementation details.
+
+DOCUMENT NODES:
+- When the user asks for documentation, architecture docs, specs, or schemas, use the doc node types (spec, prd, schema, prompt, reference) instead of generic notes.
+- Doc nodes use the same node format but convey documentation intent through their type.
+- Use spec for high-level architecture/vision docs, prd for feature requirements, schema for data/API definitions, prompt for AI coding instructions, reference for external links.
 
 RULES:
 - ALWAYS include the nodes array (empty [] if no nodes to add yet)

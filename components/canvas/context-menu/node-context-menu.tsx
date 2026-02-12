@@ -21,6 +21,13 @@ import {
   Ban,
   ArrowRight,
   Sparkles,
+  ScrollText,
+  ClipboardList,
+  Braces,
+  Terminal,
+  ExternalLink,
+  Link,
+  RotateCcw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG, NODE_CHILD_TYPE, STATUS_COLORS } from '@/lib/constants'
@@ -37,7 +44,7 @@ interface NodeContextMenuProps {
   onClose: () => void
 }
 
-const NODE_TYPES: NodeType[] = ['goal', 'subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector']
+const NODE_TYPES: NodeType[] = ['goal', 'subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference']
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string; color: string }[] = [
   { value: 'not_started', label: 'Not Started', color: '#9ca3af' },
@@ -204,6 +211,12 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
     onClose()
   }
 
+  const handleAddDocNode = (type: NodeType, label: string) => {
+    const newId = useProjectStore.getState().addFreeNode(type, label, node.parentId)
+    if (newId) useUIStore.getState().selectNode(newId)
+    onClose()
+  }
+
   const handleAddBlocksEdge = () => {
     useUIStore.getState().startEdgeCreation(nodeId, 'blocks')
     onClose()
@@ -211,6 +224,11 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
 
   const handleAddDependsOnEdge = () => {
     useUIStore.getState().startEdgeCreation(nodeId, 'depends_on')
+    onClose()
+  }
+
+  const handleAddEdge = (edgeType: 'informs' | 'defines' | 'implements' | 'references' | 'supersedes') => {
+    useUIStore.getState().startEdgeCreation(nodeId, edgeType)
     onClose()
   }
 
@@ -340,6 +358,51 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         <span>Add Connector</span>
       </button>
 
+      {/* Document Nodes */}
+      <div className="px-3 py-1 mt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+        Document Nodes
+      </div>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddDocNode('spec', 'New Specification')}
+        onMouseEnter={handleItemHover}
+      >
+        <ScrollText className="h-4 w-4" style={{ color: NODE_CONFIG.spec.color }} />
+        <span>Add Specification</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddDocNode('prd', 'New PRD')}
+        onMouseEnter={handleItemHover}
+      >
+        <ClipboardList className="h-4 w-4" style={{ color: NODE_CONFIG.prd.color }} />
+        <span>Add PRD</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddDocNode('schema', 'New Schema')}
+        onMouseEnter={handleItemHover}
+      >
+        <Braces className="h-4 w-4" style={{ color: NODE_CONFIG.schema.color }} />
+        <span>Add Schema</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddDocNode('prompt', 'New Prompt')}
+        onMouseEnter={handleItemHover}
+      >
+        <Terminal className="h-4 w-4" style={{ color: NODE_CONFIG.prompt.color }} />
+        <span>Add Prompt</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddDocNode('reference', 'New Reference')}
+        onMouseEnter={handleItemHover}
+      >
+        <ExternalLink className="h-4 w-4" style={{ color: NODE_CONFIG.reference.color }} />
+        <span>Add Reference</span>
+      </button>
+
       <div className="h-px bg-border mx-2 my-1" />
 
       {/* Add Blocks Edge */}
@@ -360,6 +423,51 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
       >
         <ArrowRight className="h-4 w-4 text-blue-500" />
         <span>Add &quot;Depends On&quot; Edge</span>
+      </button>
+
+      {/* Document Edge Types */}
+      <div className="px-3 py-1 mt-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+        Document Edges
+      </div>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddEdge('informs')}
+        onMouseEnter={handleItemHover}
+      >
+        <ArrowRight className="h-4 w-4 text-sky-500" />
+        <span>Informs...</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddEdge('defines')}
+        onMouseEnter={handleItemHover}
+      >
+        <ArrowRight className="h-4 w-4 text-purple-500" />
+        <span>Defines...</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddEdge('implements')}
+        onMouseEnter={handleItemHover}
+      >
+        <ArrowRight className="h-4 w-4 text-emerald-500" />
+        <span>Implements...</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddEdge('references')}
+        onMouseEnter={handleItemHover}
+      >
+        <Link className="h-4 w-4 text-gray-500" />
+        <span>References...</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => handleAddEdge('supersedes')}
+        onMouseEnter={handleItemHover}
+      >
+        <RotateCcw className="h-4 w-4 text-red-500" />
+        <span>Supersedes...</span>
       </button>
 
       <div className="h-px bg-border mx-2 my-1" />

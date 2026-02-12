@@ -67,6 +67,36 @@ export function exportSubtreeAsMarkdown(nodeId: string, project: Project): strin
     }
   }
 
+  // Doc-specific metadata
+  if (node.version) {
+    sections.push(`- **Version**: ${node.version}`)
+  }
+  if (node.type === 'schema' && node.schemaType) {
+    const schemaLabels: Record<string, string> = { data_model: 'Data Model', api_contract: 'API Contract', database: 'Database', other: 'Other' }
+    sections.push(`- **Schema Type**: ${schemaLabels[node.schemaType] || node.schemaType}`)
+  }
+  if (node.type === 'prompt') {
+    if (node.promptType) sections.push(`- **Prompt Type**: ${node.promptType}`)
+    if (node.targetTool) sections.push(`- **Target Tool**: ${node.targetTool}`)
+  }
+  if (node.type === 'reference' && node.url) {
+    sections.push(`- **URL**: ${node.url}`)
+  }
+
+  // Acceptance criteria (PRD nodes)
+  if (node.acceptanceCriteria && node.acceptanceCriteria.length > 0) {
+    sections.push('\n## Acceptance Criteria')
+    for (const criterion of node.acceptanceCriteria) {
+      sections.push(`- [ ] ${criterion}`)
+    }
+  }
+
+  // Document blocks as markdown
+  if (node.document && node.document.blocks.length > 0) {
+    sections.push('\n## Document Content')
+    sections.push(blocksToMarkdown(node.document.blocks))
+  }
+
   // PRD content if available
   if (node.prds && node.prds.length > 0) {
     sections.push('\n## Requirements (from PRD)')
@@ -164,8 +194,34 @@ export function exportFullPlanAsMarkdown(project: Project): string {
     }
   }
 
-  // Orphan nodes (no parentId, not goals)
-  const orphans = project.nodes.filter((n) => !n.parentId && n.type !== 'goal')
+  // Documentation section — group doc nodes by type
+  const docTypes = ['spec', 'prd', 'schema', 'prompt', 'reference'] as const
+  const docTypeLabels: Record<string, string> = { spec: 'Specifications', prd: 'PRDs', schema: 'Schemas', prompt: 'Prompts', reference: 'References' }
+  const docNodes = project.nodes.filter((n) => docTypes.includes(n.type as typeof docTypes[number]))
+  if (docNodes.length > 0) {
+    sections.push('\n---\n\n## Documentation')
+    for (const dt of docTypes) {
+      const nodesOfType = docNodes.filter((n) => n.type === dt)
+      if (nodesOfType.length === 0) continue
+      sections.push(`\n### ${docTypeLabels[dt]}`)
+      for (const dn of nodesOfType) {
+        sections.push(`\n#### ${dn.title}${dn.version ? ` (v${dn.version})` : ''} \`[${dn.status}]\``)
+        if (dn.description) sections.push(dn.description)
+        if (dn.acceptanceCriteria && dn.acceptanceCriteria.length > 0) {
+          sections.push('')
+          for (const c of dn.acceptanceCriteria) sections.push(`- [ ] ${c}`)
+        }
+        if (dn.url) sections.push(`\n**URL**: ${dn.url}`)
+        if (dn.document && dn.document.blocks.length > 0) {
+          sections.push('')
+          sections.push(blocksToMarkdown(dn.document.blocks))
+        }
+      }
+    }
+  }
+
+  // Orphan nodes (no parentId, not goals, not doc types)
+  const orphans = project.nodes.filter((n) => !n.parentId && n.type !== 'goal' && !docTypes.includes(n.type as typeof docTypes[number]))
   if (orphans.length > 0) {
     sections.push('\n---\n\n## Other Nodes')
     for (const orphan of orphans) {
@@ -205,4 +261,42 @@ function getDecisions(node: PlanNode): { question: string; answer: string }[] {
   return (node.questions || [])
     .filter((q) => (q.answer ?? '').trim() !== '')
     .map((q) => ({ question: q.question, answer: q.answer }))
+}
+
+function blocksToMarkdown(blocks: import('@/types/project').DocumentBlock[]): string {
+  const lines: string[] = []
+  for (const block of blocks) {
+    switch (block.type) {
+      case 'heading': {
+        const prefix = '#'.repeat(block.level + 1) // offset by 1 since we're nested
+        lines.push(`${prefix} ${block.content}`)
+        break
+      }
+      case 'paragraph':
+        lines.push(block.content)
+        lines.push('')
+        break
+      case 'code':
+        lines.push(`\`\`\`${block.language}`)
+        lines.push(block.content)
+        lines.push('```')
+        lines.push('')
+        break
+      case 'checklist':
+        for (const item of block.items) {
+          lines.push(`- [${item.checked ? 'x' : ' '}] ${item.text}`)
+        }
+        lines.push('')
+        break
+      case 'divider':
+        lines.push('---')
+        lines.push('')
+        break
+      case 'callout':
+        lines.push(`> ${block.emoji} ${block.content}`)
+        lines.push('')
+        break
+    }
+  }
+  return lines.join('\n').trim()
 }

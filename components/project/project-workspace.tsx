@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, PanelLeftClose, Users, Lightbulb, History, Plug } from 'lucide-react'
+// Icons moved to ProjectToolbar
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
@@ -11,16 +11,14 @@ import { useUIStore } from '@/stores/ui-store'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 import { PlanningChat } from '@/components/chat/planning-chat'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ProjectToolbar } from '@/components/project/project-toolbar'
 import { TimelineBar } from '@/components/canvas/timeline-bar'
-import { ShareButton } from '@/components/share/share-button'
 import { CommandPalette } from '@/components/ui/command-palette'
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 import { AISuggestionsPanel } from '@/components/ai/ai-suggestions-panel'
 import { useAIIterate, type AISuggestion } from '@/hooks/use-ai-iterate'
 import { TeamManager } from '@/components/project/team-manager'
-import { ViewSwitcher } from '@/components/views/view-switcher'
 import { ListView } from '@/components/views/list-view'
 import { TableView } from '@/components/views/table-view'
 import { BoardView } from '@/components/views/board-view'
@@ -348,31 +346,67 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     )
   }
 
-  if (currentProject.phase === 'planning') {
-    return (
-      <ReactFlowProvider>
-        <div className="h-full flex">
-          <div className="w-96 shrink-0 border-r">
-            <PlanningChat />
-          </div>
-          <div className="flex-1 flex flex-col min-h-0">
-            {currentProject.nodes.length > 0 && <TimelineBar />}
-            <div className="flex-1 relative">
-              {currentProject.nodes.length === 0 ? (
-                <div className="h-full flex items-center justify-center">
-                  <div className="text-center text-muted-foreground">
-                    <p className="text-lg font-medium">Your plan will appear here</p>
-                    <p className="text-sm mt-1">
-                      Describe your project idea in the chat to get started
-                    </p>
-                  </div>
+  return (
+    <ReactFlowProvider>
+      <div className="h-full flex flex-col">
+        {/* Project Toolbar — always visible */}
+        <ProjectToolbar
+          chatOpen={chatOpen}
+          onToggleChat={() => setChatOpen((prev) => !prev)}
+          onOpenTeamManager={() => setTeamManagerOpen(true)}
+          onOpenSmartSuggestions={() => { setSmartPanelOpen(true); smartAnalyze() }}
+          onOpenVersionHistory={() => setVersionHistoryOpen(true)}
+          onOpenIntegrations={() => setIntegrationsOpen(true)}
+        />
+
+        <div className="flex-1 flex min-h-0">
+          {/* Chat Panel */}
+          <AnimatePresence>
+            {chatOpen && (
+              <motion.div
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: 384, opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 250 }}
+                className="border-r overflow-hidden shrink-0"
+              >
+                <div className="w-96 h-full">
+                  <PlanningChat />
                 </div>
-              ) : (
-                <GraphCanvas />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Main content area */}
+          <div className="flex-1 flex flex-col min-h-0">
+            <TimelineBar />
+            <div className="flex-1 relative">
+              {currentView === 'canvas' && (
+                currentProject.nodes.length === 0 ? (
+                  <div className="h-full flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                      <p className="text-lg font-medium">Your plan will appear here</p>
+                      <p className="text-sm mt-1">
+                        Open the chat to describe your project idea, or add nodes manually
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <GraphCanvas />
+                )
               )}
+              {currentView === 'list' && <ListView />}
+              {currentView === 'table' && <TableView />}
+              {currentView === 'board' && <BoardView />}
+              {currentView === 'timeline' && <TimelineView />}
+              {currentView === 'sprints' && <SprintBoard />}
             </div>
           </div>
+
+          {/* Detail Panel */}
           <NodeDetailPanel />
+
+          {/* AI Suggestions Panel */}
           {aiPanelOpen && (
             <AISuggestionsPanel
               result={aiResult}
@@ -386,134 +420,19 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
               applied={appliedSuggestions}
             />
           )}
-        </div>
-        <CommandPalette
-          open={commandPaletteOpen}
-          onClose={() => useUIStore.getState().closeCommandPalette()}
-          toggleChat={() => setChatOpen((prev) => !prev)}
-        />
-        <ShortcutsHelp
-          open={shortcutsHelpOpen}
-          onClose={() => useUIStore.getState().closeShortcutsHelp()}
-        />
-      </ReactFlowProvider>
-    )
-  }
 
-  return (
-    <ReactFlowProvider>
-      <div className="h-full flex">
-        {/* Chat Panel */}
-        <AnimatePresence>
-          {chatOpen && (
-            <motion.div
-              initial={{ width: 0, opacity: 0 }}
-              animate={{ width: 384, opacity: 1 }}
-              exit={{ width: 0, opacity: 0 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-              className="border-r overflow-hidden shrink-0"
-            >
-              <div className="w-96 h-full">
-                <PlanningChat />
-              </div>
-            </motion.div>
+          {/* Smart Suggestions Panel */}
+          {smartPanelOpen && (
+            <SmartSuggestionsPanel
+              suggestions={smartSuggestions}
+              loading={smartLoading}
+              error={smartError}
+              onAnalyze={smartAnalyze}
+              onDismiss={smartDismiss}
+              onClose={() => setSmartPanelOpen(false)}
+            />
           )}
-        </AnimatePresence>
-
-        {/* Main content area */}
-        <div className="flex-1 flex flex-col min-h-0">
-          <ViewSwitcher />
-          <TimelineBar />
-          <div className="flex-1 relative">
-            {currentView === 'canvas' && (
-              <>
-                <GraphCanvas />
-                <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setChatOpen(!chatOpen)}
-                    title={chatOpen ? 'Close chat' : 'Open chat'}
-                  >
-                    {chatOpen ? (
-                      <PanelLeftClose className="h-4 w-4" />
-                    ) : (
-                      <MessageSquare className="h-4 w-4" />
-                    )}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setTeamManagerOpen(true)}
-                    title="Manage team"
-                  >
-                    <Users className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => { setSmartPanelOpen(true); smartAnalyze() }}
-                    title="AI Smart Suggestions"
-                  >
-                    <Lightbulb className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setVersionHistoryOpen(true)}
-                    title="Version history"
-                  >
-                    <History className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => setIntegrationsOpen(true)}
-                    title="Integrations"
-                  >
-                    <Plug className="h-4 w-4" />
-                  </Button>
-                  <ShareButton />
-                </div>
-              </>
-            )}
-            {currentView === 'list' && <ListView />}
-            {currentView === 'table' && <TableView />}
-            {currentView === 'board' && <BoardView />}
-            {currentView === 'timeline' && <TimelineView />}
-            {currentView === 'sprints' && <SprintBoard />}
-          </div>
         </div>
-
-        {/* Detail Panel */}
-        <NodeDetailPanel />
-
-        {/* AI Suggestions Panel */}
-        {aiPanelOpen && (
-          <AISuggestionsPanel
-            result={aiResult}
-            loading={aiLoading}
-            error={aiError}
-            onApply={handleApplySuggestion}
-            onApplyAll={handleApplyAll}
-            onDismiss={handleDismissSuggestion}
-            onClose={handleCloseAIPanel}
-            dismissed={dismissedSuggestions}
-            applied={appliedSuggestions}
-          />
-        )}
-
-        {/* Smart Suggestions Panel */}
-        {smartPanelOpen && (
-          <SmartSuggestionsPanel
-            suggestions={smartSuggestions}
-            loading={smartLoading}
-            error={smartError}
-            onAnalyze={smartAnalyze}
-            onDismiss={smartDismiss}
-            onClose={() => setSmartPanelOpen(false)}
-          />
-        )}
       </div>
       <CommandPalette
         open={commandPaletteOpen}

@@ -7,6 +7,9 @@ You will receive structured context about a project node including:
 - Answered Q&A pairs (treat these as firm constraints)
 - Sibling nodes (for context on what's handled elsewhere)
 - Children nodes (the planned implementation steps)
+- Document-specific metadata (version, prompt type, target tool, schema type) if present
+- Document content (from the node's block editor) if present
+- Document relationships (informs, defines, implements, references, supersedes edges) showing connected specs, PRDs, and schemas
 
 Write a clear, actionable implementation prompt with the following sections:
 
@@ -23,6 +26,10 @@ Guidelines:
 - Use the answered Q&A as firm technical constraints and decisions
 - Treat children nodes as implementation steps or sub-tasks
 - Use sibling nodes to understand what's handled by other parts of the system
+- If the node has connected PRD or schema nodes (via document relationships), incorporate their requirements and data models into the prompt
+- If the target tool is specified (cursor, windsurf, claude, generic), tailor the prompt format for that tool
+- If the prompt type is specified (implementation, refactor, test, review), focus the prompt accordingly
+- If document content blocks are present, treat them as existing draft to refine
 - Be direct and imperative — this is an instruction, not a discussion
 - Include specific details from the context, not generic advice
 - Write in markdown format

@@ -21,7 +21,7 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 
 ### Key Features
 
-- **7 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector
+- **12 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
 - **6 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
 - **AI Generation** — One-click PRD and implementation prompt generation
@@ -34,7 +34,7 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 - **Sprint Planning** — Create sprints, drag tasks from backlog, progress tracking
 - **Version History** — Save/restore named snapshots with branch support
 - **Embedded Docs** — Notion-style block editor (headings, code, checklists, callouts, dividers)
-- **Typed Edges** — `blocks` and `depends_on` dependency edges with visual styles
+- **Typed Edges** — `blocks`, `depends_on`, `informs`, `defines`, `implements`, `references`, `supersedes` with visual styles
 - **Blast Radius** — Select a node to see all downstream-affected nodes highlighted
 - **Export** — JSON, Markdown, `.cursorrules`, `CLAUDE.md`, `plan.md`, `tasks.md`
 - **Import** — JSON projects, Markdown specs (paste or file upload with preview)
@@ -43,6 +43,8 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 - **Integrations** — GitHub, Slack, Linear service clients + settings UI
 - **Collaboration** — Presence avatars, live cursors, pluggable provider (local mock + Yjs-ready)
 - **Dark Theme** — Near-black canvas with dashed bezier curve edges
+- **Interactive Gantt** — Drag bars to move tasks, drag edges to resize durations
+- **Unified Toolbar** — Project name, save status, view tabs, and actions in one compact bar
 - **Auto-Layout** — Dagre-powered hierarchical arrangement
 
 ---
@@ -146,6 +148,11 @@ Planner/
 | **Moodboard** | Image collection for visual reference | ImagePlus |
 | **Notes** | Rich text content block | FileText |
 | **Connector** | Compact status waypoint | Circle |
+| **Spec** | Specification document | ScrollText |
+| **PRD** | Product requirements document | ClipboardList |
+| **Schema** | Data model / API contract | Braces |
+| **Prompt** | AI/IDE prompt template | Terminal |
+| **Reference** | External link / file reference | ExternalLink |
 
 ## Node Attachments
 

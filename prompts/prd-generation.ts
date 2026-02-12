@@ -7,6 +7,9 @@ You will receive structured context about a project node including:
 - Answered Q&A pairs (treat these as firm decisions)
 - Sibling nodes (for context on scope boundaries)
 - Children nodes (the planned breakdown of this node)
+- Document-specific metadata (version, schema type, acceptance criteria) if present
+- Document content (from the node's block editor) if present
+- Document relationships (informs, defines, implements, references, supersedes edges) showing how this node connects to specs, schemas, and other docs
 
 Write a comprehensive PRD with the following sections:
 
@@ -26,6 +29,9 @@ Guidelines:
 - Use sibling nodes to understand scope boundaries (what's handled elsewhere)
 - Be specific and actionable, not generic
 - Use the parent chain to understand the broader context and goals
+- If the node has connected spec or schema nodes (via document relationships), incorporate their content into the requirements
+- If existing acceptance criteria are provided, refine and expand them rather than starting from scratch
+- If document content blocks are present, treat them as existing drafts to build upon
 - Write in markdown format
 - Generate a concise, descriptive title for this PRD
 

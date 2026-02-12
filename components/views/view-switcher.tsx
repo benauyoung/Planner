@@ -23,6 +23,11 @@ const TYPE_OPTIONS: { value: NodeType; label: string }[] = [
   { value: 'moodboard', label: 'Mood Board' },
   { value: 'notes', label: 'Notes' },
   { value: 'connector', label: 'Connector' },
+  { value: 'spec', label: 'Specification' },
+  { value: 'prd', label: 'PRD' },
+  { value: 'schema', label: 'Schema' },
+  { value: 'prompt', label: 'Prompt' },
+  { value: 'reference', label: 'Reference' },
 ]
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string; color: string }[] = [

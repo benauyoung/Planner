@@ -162,7 +162,23 @@
 - **Phase 11**: Collaboration infrastructure — presence avatars, cursors, pluggable provider
 - **Phase 12**: Integrations — GitHub, Slack, Linear service clients + settings UI
 
-### M12: Remaining Polish 🟡
+### M12.5: UX Polish & Interactive Timeline ✅
+**Status**: Complete
+
+**Delivered** (Feb 12, 2026 — Session 2):
+- Unified project toolbar: merged ViewSwitcher into ProjectToolbar (back, title, save status, view tabs, action icons)
+- Interactive Gantt chart: drag bars to move tasks, drag left/right edges to resize durations, live preview, snap-to-day
+- 5 new document node types: spec, prd, schema, prompt, reference (with type-specific fields)
+- 5 new edge types: informs, defines, implements, references, supersedes
+- New project page header with Back button + Save & Open Workspace button
+- Chat state reset when navigating to /project/new
+- Tiptap SSR fix (immediatelyRender: false)
+- React Flow edge fix (deprecated bezier → default)
+- Firestore database provisioned
+
+---
+
+### M13: Remaining Polish 🟡
 **Status**: Planned
 
 **Planned**:
@@ -198,7 +214,7 @@
 - Landing page ✅ (public marketing page, route groups, animated dashboard loader)
 - Persistence failover ✅ (runtime Firestore → localStorage fallback)
 
-### v0.9.0 - Feature Complete ✅ (Current)
+### v0.9.0 - Feature Complete ✅
 - All 12 feature phases implemented
 - 6 views: Canvas, List, Table, Board, Timeline, Sprints
 - AI iteration + smart suggestions
@@ -208,6 +224,15 @@
 - Embedded docs (Notion-style block editor)
 - Collaboration infrastructure (presence, cursors)
 - Integrations (GitHub, Slack, Linear)
+
+### v0.9.5 - UX Polish ✅ (Current)
+- Unified project toolbar (single bar with all controls)
+- Interactive Gantt chart (drag-to-move, edge-resize)
+- 12 node types (5 new document types)
+- 7 edge types (5 new relationship types)
+- New project page header with Save & Open Workspace
+- Chat state reset on new project
+- Bug fixes: Tiptap SSR, React Flow edge type, Firestore provisioning
 
 ### v1.0.0 - Launch (Planned)
 - Production WebSocket backend for real-time collaboration
@@ -232,3 +257,4 @@
 | 2026-02-12 | Full project handoff documentation update |
 | 2026-02-12 | M11 Feature Expansion: All 12 phases implemented (command palette, views, assignees, AI iteration, comments, timeline, sprints, AI suggestions, version history, embedded docs, collaboration, integrations) |
 | 2026-02-12 | v0.9.0 Feature Complete: 55+ store mutations, 6 views, 7 API routes, 3 integration clients |
+| 2026-02-12 | v0.9.5 UX Polish: unified toolbar, interactive Gantt, 5 new node types, 5 new edge types, bug fixes |

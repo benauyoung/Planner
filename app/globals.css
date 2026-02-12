@@ -26,6 +26,11 @@
     --node-moodboard: 330 80% 55%;
     --node-notes: 38 92% 50%;
     --node-connector: 215 16% 47%;
+    --node-spec: 200 80% 50%;
+    --node-prd: 270 60% 55%;
+    --node-schema: 175 60% 42%;
+    --node-prompt: 152 60% 42%;
+    --node-reference: 220 10% 50%;
     --glow-rgb: 99, 102, 241;
   }
 
@@ -50,6 +55,11 @@
     --node-moodboard: 330 80% 65%;
     --node-notes: 38 92% 60%;
     --node-connector: 215 20% 55%;
+    --node-spec: 200 80% 60%;
+    --node-prd: 270 60% 65%;
+    --node-schema: 175 60% 52%;
+    --node-prompt: 152 60% 52%;
+    --node-reference: 220 15% 55%;
     --glow-rgb: 129, 140, 248;
   }
 }

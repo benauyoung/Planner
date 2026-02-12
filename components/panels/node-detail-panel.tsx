@@ -26,7 +26,36 @@ const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
   { value: 'blocked', label: 'Blocked' },
 ]
 
-const TYPE_OPTIONS: NodeType[] = ['goal', 'subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector']
+const TYPE_OPTIONS: NodeType[] = ['goal', 'subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference']
+
+const DOC_NODE_TYPES: NodeType[] = ['spec', 'prd', 'schema', 'prompt', 'reference']
+
+const SCHEMA_TYPE_OPTIONS = [
+  { value: 'data_model', label: 'Data Model' },
+  { value: 'api_contract', label: 'API Contract' },
+  { value: 'database', label: 'Database' },
+  { value: 'other', label: 'Other' },
+] as const
+
+const PROMPT_TYPE_OPTIONS = [
+  { value: 'implementation', label: 'Implementation' },
+  { value: 'refactor', label: 'Refactor' },
+  { value: 'test', label: 'Test' },
+  { value: 'review', label: 'Review' },
+] as const
+
+const TARGET_TOOL_OPTIONS = [
+  { value: 'cursor', label: 'Cursor' },
+  { value: 'windsurf', label: 'Windsurf' },
+  { value: 'claude', label: 'Claude' },
+  { value: 'generic', label: 'Generic' },
+] as const
+
+const REFERENCE_TYPE_OPTIONS = [
+  { value: 'link', label: 'Link' },
+  { value: 'file', label: 'File' },
+  { value: 'image', label: 'Image' },
+] as const
 const EMPTY_TEAM: TeamMember[] = []
 
 export function NodeDetailPanel() {
@@ -63,6 +92,13 @@ export function NodeDetailPanel() {
   const setNodeEstimate = useProjectStore((s) => s.setNodeEstimate)
   const setNodeTags = useProjectStore((s) => s.setNodeTags)
   const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
+  const updateNodeVersion = useProjectStore((s) => s.updateNodeVersion)
+  const updateNodeSchemaType = useProjectStore((s) => s.updateNodeSchemaType)
+  const updateNodePromptType = useProjectStore((s) => s.updateNodePromptType)
+  const updateNodeTargetTool = useProjectStore((s) => s.updateNodeTargetTool)
+  const updateNodeReferenceType = useProjectStore((s) => s.updateNodeReferenceType)
+  const updateNodeUrl = useProjectStore((s) => s.updateNodeUrl)
+  const updateNodeAcceptanceCriteria = useProjectStore((s) => s.updateNodeAcceptanceCriteria)
 
   const [editingPRD, setEditingPRD] = useState<string | null>(null)
   const [prdTitle, setPrdTitle] = useState('')
@@ -258,6 +294,29 @@ export function NodeDetailPanel() {
 
   const answeredCount = node?.questions.filter((q) => (q.answer ?? '').trim()).length ?? 0
   const totalCount = node?.questions.length ?? 0
+  const isDocNode = node ? DOC_NODE_TYPES.includes(node.type) : false
+
+  // Build document lineage breadcrumb by traversing informs/defines/implements edges backwards
+  const docLineage = (() => {
+    if (!node || !isDocNode || !currentProject) return []
+    const chain: { id: string; title: string }[] = []
+    const visited = new Set<string>()
+    let currentId: string | undefined = node.id
+    const docEdgeTypes = ['informs', 'defines', 'implements']
+    while (currentId && !visited.has(currentId)) {
+      visited.add(currentId)
+      // Find an incoming doc edge pointing to currentId
+      const incomingEdge = currentProject.edges.find(
+        (e) => e.target === currentId && docEdgeTypes.includes(e.edgeType || '')
+      )
+      if (!incomingEdge) break
+      const sourceNode = currentProject.nodes.find((n) => n.id === incomingEdge.source)
+      if (!sourceNode) break
+      chain.unshift({ id: sourceNode.id, title: sourceNode.title })
+      currentId = sourceNode.id
+    }
+    return chain
+  })()
 
   return (
     <AnimatePresence>
@@ -390,6 +449,172 @@ export function NodeDetailPanel() {
                 onChange={(tags) => setNodeTags(node.id, tags)}
               />
             </div>
+
+            {/* Doc-specific fields */}
+            {isDocNode && (
+              <div className="mt-4 space-y-3">
+                <div className="h-px bg-border" />
+                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Document Fields
+                </div>
+
+                {/* Version (spec, prd, schema) */}
+                {(node.type === 'spec' || node.type === 'prd' || node.type === 'schema') && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Version</label>
+                    <input
+                      type="text"
+                      value={node.version || ''}
+                      onChange={(e) => updateNodeVersion(node.id, e.target.value)}
+                      placeholder="e.g. 1.0"
+                      className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground font-mono"
+                    />
+                  </div>
+                )}
+
+                {/* Schema Type (schema) */}
+                {node.type === 'schema' && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Schema Type</label>
+                    <select
+                      value={node.schemaType || 'other'}
+                      onChange={(e) => updateNodeSchemaType(node.id, e.target.value as 'data_model' | 'api_contract' | 'database' | 'other')}
+                      className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
+                    >
+                      {SCHEMA_TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Prompt Type + Target Tool (prompt) */}
+                {node.type === 'prompt' && (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Prompt Type</label>
+                      <select
+                        value={node.promptType || 'implementation'}
+                        onChange={(e) => updateNodePromptType(node.id, e.target.value as 'implementation' | 'refactor' | 'test' | 'review')}
+                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
+                      >
+                        {PROMPT_TYPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Target Tool</label>
+                      <select
+                        value={node.targetTool || 'generic'}
+                        onChange={(e) => updateNodeTargetTool(node.id, e.target.value as 'cursor' | 'windsurf' | 'claude' | 'generic')}
+                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
+                      >
+                        {TARGET_TOOL_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Reference Type + URL (reference) */}
+                {node.type === 'reference' && (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Reference Type</label>
+                      <select
+                        value={node.referenceType || 'link'}
+                        onChange={(e) => updateNodeReferenceType(node.id, e.target.value as 'link' | 'file' | 'image')}
+                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
+                      >
+                        {REFERENCE_TYPE_OPTIONS.map((opt) => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">URL</label>
+                      <input
+                        type="url"
+                        value={node.url || ''}
+                        onChange={(e) => updateNodeUrl(node.id, e.target.value)}
+                        placeholder="https://..."
+                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground font-mono"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Acceptance Criteria (prd) */}
+                {node.type === 'prd' && (
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                      Acceptance Criteria ({(node.acceptanceCriteria || []).length})
+                    </label>
+                    <div className="space-y-1.5">
+                      {(node.acceptanceCriteria || []).map((criterion, idx) => (
+                        <div key={idx} className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
+                          <input
+                            type="text"
+                            value={criterion}
+                            onChange={(e) => {
+                              const updated = [...(node.acceptanceCriteria || [])]
+                              updated[idx] = e.target.value
+                              updateNodeAcceptanceCriteria(node.id, updated)
+                            }}
+                            className="flex-1 h-6 px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground"
+                          />
+                          <button
+                            onClick={() => {
+                              const updated = (node.acceptanceCriteria || []).filter((_, i) => i !== idx)
+                              updateNodeAcceptanceCriteria(node.id, updated)
+                            }}
+                            className="text-muted-foreground hover:text-red-500 shrink-0"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => {
+                          updateNodeAcceptanceCriteria(node.id, [...(node.acceptanceCriteria || []), ''])
+                        }}
+                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Add criterion
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Document Lineage Breadcrumb */}
+            {isDocNode && docLineage.length > 0 && (
+              <div className="mt-4">
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Lineage</label>
+                <div className="flex items-center gap-1 flex-wrap text-xs">
+                  {docLineage.map((item, idx) => (
+                    <span key={item.id} className="flex items-center gap-1">
+                      <button
+                        onClick={() => useUIStore.getState().selectNode(item.id)}
+                        className="text-primary hover:underline truncate max-w-[120px]"
+                      >
+                        {item.title}
+                      </button>
+                      {idx < docLineage.length - 1 && (
+                        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                      )}
+                    </span>
+                  ))}
+                  <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                  <span className="font-medium truncate max-w-[120px]">{node.title}</span>
+                </div>
+              </div>
+            )}
 
             {/* Document */}
             <div className="mt-4">

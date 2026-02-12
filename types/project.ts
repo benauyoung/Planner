@@ -1,4 +1,7 @@
-export type NodeType = 'goal' | 'subgoal' | 'feature' | 'task' | 'moodboard' | 'notes' | 'connector'
+export type NodeType =
+  | 'goal' | 'subgoal' | 'feature' | 'task'
+  | 'moodboard' | 'notes' | 'connector'
+  | 'spec' | 'prd' | 'schema' | 'prompt' | 'reference'
 
 export type NodeStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked'
 
@@ -101,9 +104,19 @@ export interface PlanNode {
   comments?: NodeComment[]
   sprintId?: string
   document?: NodeDocument
+  // Document node fields
+  version?: string
+  schemaType?: 'data_model' | 'api_contract' | 'database' | 'other'
+  promptType?: 'implementation' | 'refactor' | 'test' | 'review'
+  targetTool?: 'cursor' | 'windsurf' | 'claude' | 'generic'
+  referenceType?: 'link' | 'file' | 'image'
+  url?: string
+  acceptanceCriteria?: string[]
 }
 
-export type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
+export type EdgeType =
+  | 'hierarchy' | 'blocks' | 'depends_on'
+  | 'informs' | 'defines' | 'implements' | 'references' | 'supersedes'
 
 export interface ProjectEdge {
   id: string

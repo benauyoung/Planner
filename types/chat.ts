@@ -24,7 +24,7 @@ export interface AINodeQuestion {
 
 export interface AIPlanNode {
   id: string
-  type: 'goal' | 'subgoal' | 'feature' | 'task'
+  type: 'goal' | 'subgoal' | 'feature' | 'task' | 'spec' | 'prd' | 'schema' | 'prompt' | 'reference'
   title: string
   description: string
   parentId: string | null

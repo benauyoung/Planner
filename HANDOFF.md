@@ -14,13 +14,13 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - Upload images for mood boards
 - Right-click to create nodes anywhere on canvas with smart parent suggestion
 - Drag edges between nodes to set relationships
-- Add typed dependency edges (`blocks`, `depends_on`) between any nodes
+- Add typed dependency edges (`blocks`, `depends_on`, `informs`, `defines`, `implements`, `references`, `supersedes`) between any nodes
 - Preview blast radius: see all downstream-affected nodes when one changes
 - Export plans as JSON, Markdown, `.cursorrules`, `CLAUDE.md`, `plan.md`, `tasks.md`
 - Import projects from JSON or Markdown specs
 - Share plans via public read-only URL
 - Start from pre-built templates (Auth System, CRUD API, Landing Page)
-- **6 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints
+- **6 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt with drag-to-move/resize), Sprints
 - **Command palette** (Cmd+K) with fuzzy search + keyboard shortcuts
 - **Team management**: Assign members, set priority, due dates, estimates, tags
 - **AI iteration**: Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
@@ -203,7 +203,7 @@ Planner/
 │   │   ├── list-view.tsx               # Hierarchical tree with expand/collapse
 │   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
 │   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
-│   │   └── timeline-view.tsx           # Gantt chart with day grid, month headers, status bars
+│   │   └── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
 │   ├── sprints/
 │   │   └── sprint-board.tsx            # Sprint overview: create, drag backlog, progress bars
 │   ├── ai/
@@ -247,6 +247,7 @@ Planner/
 │   │   └── shared-plan-view.tsx        # Read-only canvas for shared plans
 │   ├── project/
 │   │   ├── project-workspace.tsx       # Canvas + views + chat + panels + modals
+│   │   ├── project-toolbar.tsx         # Unified toolbar: back, title, save status, view tabs, actions
 │   │   └── team-manager.tsx            # Modal to add/remove team members
 │   ├── layout/
 │   │   ├── header.tsx                  # App header (Compass icon + VisionPath → /dashboard)
@@ -330,9 +331,12 @@ Planner/
 
 ## Data Model
 
-### PlanNode (7 types)
+### PlanNode (12 types)
 ```typescript
-type NodeType = 'goal' | 'subgoal' | 'feature' | 'task' | 'moodboard' | 'notes' | 'connector'
+type NodeType =
+  | 'goal' | 'subgoal' | 'feature' | 'task'
+  | 'moodboard' | 'notes' | 'connector'
+  | 'spec' | 'prd' | 'schema' | 'prompt' | 'reference'
 type Priority = 'critical' | 'high' | 'medium' | 'low' | 'none'
 
 interface PlanNode {
@@ -356,12 +360,21 @@ interface PlanNode {
   comments?: NodeComment[]
   sprintId?: string         // Sprint assignment
   document?: NodeDocument   // Notion-style block document
+  version?: string            // Document version (spec/prd nodes)
+  schemaType?: 'data_model' | 'api_contract' | 'database' | 'other'
+  promptType?: 'implementation' | 'refactor' | 'test' | 'review'
+  targetTool?: 'cursor' | 'windsurf' | 'claude' | 'generic'
+  referenceType?: 'link' | 'file' | 'image'
+  url?: string                // External URL (reference nodes)
+  acceptanceCriteria?: string[] // PRD acceptance criteria
 }
 ```
 
 ### ProjectEdge (Typed Dependencies)
 ```typescript
-type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
+type EdgeType =
+  | 'hierarchy' | 'blocks' | 'depends_on'
+  | 'informs' | 'defines' | 'implements' | 'references' | 'supersedes'
 
 interface ProjectEdge {
   id: string
@@ -444,7 +457,9 @@ interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
 
 **Versions**: `saveVersion`, `restoreVersion`, `deleteVersion`
 
-**Documents**: `updateNodeDocument`
+**Documents**: `updateNodeDocument`, `updateNodeVersion`, `updateNodeSchemaType`, `updateNodePromptType`, `updateNodeTargetTool`, `updateNodeReferenceType`, `updateNodeUrl`, `updateNodeAcceptanceCriteria`
+
+**Project**: `updateProjectTitle`
 
 **Sharing**: `toggleShareProject`
 
@@ -637,7 +652,18 @@ npm run type-check  # Alias for tsc --noEmit
 - **Image compression** — resize/compress base64 images to reduce state size
 - **Hierarchy validation** — enforce valid type changes based on position in hierarchy
 
-### Recent Changes (Feb 12, 2026)
+### Recent Changes (Feb 12, 2026 — Session 2)
+- **Unified Project Toolbar** — Merged ViewSwitcher into ProjectToolbar: back button, editable project name, save status indicator, view tabs, and action buttons (Chat, Team, AI, History, Integrations, Share) all in one compact row
+- **Interactive Gantt Chart** — Timeline view now supports drag-to-move bars, drag left/right edges to resize durations, live preview while dragging, snaps to day grid
+- **5 New Node Types** — `spec`, `prd`, `schema`, `prompt`, `reference` with type-specific fields (schemaType, promptType, targetTool, referenceType, url, acceptanceCriteria, version)
+- **5 New Edge Types** — `informs`, `defines`, `implements`, `references`, `supersedes` with distinct visual styles
+- **New Project Page Header** — `/project/new` now has a header bar with Back button, project title, and Save & Open Workspace button (replaces floating canvas button)
+- **Chat State Reset** — Navigating to `/project/new` now resets the chat store (clears previous project's messages)
+- **Tiptap SSR Fix** — Added `immediatelyRender: false` to prevent hydration mismatch
+- **React Flow Edge Fix** — Changed deprecated `type: 'bezier'` to `type: 'default'`
+- **Firestore DB Provisioned** — Database created in Firebase console, resolving "Database not found" errors
+
+### Earlier Changes (Feb 12, 2026 — Session 1)
 - **Phase 1**: Command Palette + keyboard shortcuts (`Cmd+K`, `?` help overlay)
 - **Phase 2**: Multiple views — List, Table, Board, Timeline, Sprints (6 total views)
 - **Phase 3**: Assignees, priority, due dates, estimated hours, tags, team manager
