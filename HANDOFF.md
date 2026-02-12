@@ -20,7 +20,7 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - Import projects from JSON or Markdown specs
 - Share plans via public read-only URL
 - Start from pre-built templates (Auth System, CRUD API, Landing Page)
-- **6 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt with drag-to-move/resize), Sprints
+- **7 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt with drag-to-move/resize), Sprints, Pages (AI-generated UI previews)
 - **Command palette** (Cmd+K) with fuzzy search + keyboard shortcuts
 - **Team management**: Assign members, set priority, due dates, estimates, tags
 - **AI iteration**: Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
@@ -32,7 +32,9 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - **Integrations**: GitHub, Slack, Linear service clients + settings UI
 - **Collaboration infrastructure**: Presence avatars, live cursors, pluggable provider
 
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Collaborate & integrate.
+- **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing
+
+**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview UI pages → Collaborate & integrate.
 
 ---
 
@@ -120,7 +122,9 @@ app/
     ├── suggest-features/route.ts       # POST — AI feature suggestions for onboarding
     ├── generate-prd/route.ts           # POST — AI PRD generation from node context
     ├── generate-prompt/route.ts        # POST — AI implementation prompt generation
-    └── generate-questions/route.ts     # POST — AI question generation for nodes
+    ├── generate-questions/route.ts     # POST — AI question generation for nodes
+    ├── generate-pages/route.ts         # POST — AI page preview generation from project plan
+    └── edit-page/route.ts              # POST — AI page HTML editing from user instruction
 ```
 
 ### Route Summary
@@ -168,7 +172,9 @@ Planner/
 │       ├── generate-prompt/route.ts    # POST — AI prompt generation
 │       ├── generate-questions/route.ts # POST — AI question generation
 │       ├── iterate/route.ts            # POST — AI iteration (break down, audit, estimate)
-│       └── analyze/route.ts            # POST — AI smart suggestions analysis
+│       ├── analyze/route.ts            # POST — AI smart suggestions analysis
+│       ├── generate-pages/route.ts    # POST — AI page preview generation
+│       └── edit-page/route.ts         # POST — AI page HTML editing
 ├── components/
 │   ├── landing/                        # Landing page components (public)
 │   │   ├── nav-bar.tsx                 # Sticky nav, transparent → blur on scroll, mobile menu
@@ -199,11 +205,12 @@ Planner/
 │   │       ├── pane-context-menu.tsx   # Right-click canvas (add node + smart mapping)
 │   │       └── context-submenu.tsx     # Flyout submenu helper
 │   ├── views/                          # Multiple view components
-│   │   ├── view-switcher.tsx           # Tab bar: Canvas / List / Table / Board / Timeline / Sprints
+│   │   ├── view-switcher.tsx           # Tab bar: Canvas / List / Table / Board / Timeline / Sprints / Pages
 │   │   ├── list-view.tsx               # Hierarchical tree with expand/collapse
 │   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
 │   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
-│   │   └── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
+│   │   ├── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
+│   │   └── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat
 │   ├── sprints/
 │   │   └── sprint-board.tsx            # Sprint overview: create, drag backlog, progress bars
 │   ├── ai/
@@ -276,7 +283,7 @@ Planner/
 │   ├── firebase.ts                    # Firebase init (null-guarded)
 │   ├── firestore.ts                   # CRUD (null-guarded)
 │   ├── auth.ts                        # Auth functions (null-guarded)
-│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion)
+│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion, pages)
 │   ├── persistence.ts                 # Persistence abstraction: Firestore → localStorage failover
 │   ├── local-storage.ts              # localStorage backend for offline persistence
 │   ├── collaboration.ts               # Collaboration provider abstraction (pluggable, local mock)
@@ -291,6 +298,7 @@ Planner/
 │   ├── question-generation.ts         # AI question generation system prompt
 │   ├── iteration-system.ts            # AI iteration actions system prompt
 │   ├── suggestion-system.ts           # Ambient AI analysis system prompt
+│   ├── page-generation.ts             # AI page preview generation system prompt
 │   └── refinement-system.ts           # Refinement prompt (unused)
 ├── lib/
 │   ├── constants.ts                   # NODE_CONFIG (7 types), NODE_CHILD_TYPE, DAGRE_CONFIG
@@ -312,7 +320,7 @@ Planner/
 │   ├── id.ts                          # generateId() — crypto.randomUUID
 │   └── utils.ts                       # cn() — clsx + tailwind-merge
 ├── types/
-│   ├── project.ts                     # PlanNode, ProjectEdge, Sprint, ProjectVersion, DocumentBlock, etc.
+│   ├── project.ts                     # PlanNode, ProjectPage, PageEdge, ProjectEdge, Sprint, ProjectVersion, etc.
 │   ├── integrations.ts               # GitHub/Slack/Linear integration types
 │   ├── canvas.ts                      # FlowNode, FlowEdge, PlanNodeData
 │   └── chat.ts                        # ChatMessage, AIPlanNode
@@ -404,6 +412,8 @@ interface Project {
   sprints?: Sprint[]
   versions?: ProjectVersion[]
   currentVersionId?: string
+  pages?: ProjectPage[]       // AI-generated page previews
+  pageEdges?: PageEdge[]      // Navigation flow between pages
 }
 ```
 
@@ -416,6 +426,8 @@ interface Sprint { id, name, startDate, endDate, nodeIds, status: 'planning'|'ac
 interface ProjectVersion { id, name, snapshot: { nodes, edges, title, description }, parentVersionId?, createdAt }
 type DocumentBlock = heading | paragraph | code | checklist | divider | callout
 interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
+interface ProjectPage { id, title, route, html, linkedNodeIds, position: { x, y } }
+interface PageEdge { id, source, target, label? }
 ```
 
 ### Node Configuration (`lib/constants.ts`)
@@ -467,7 +479,9 @@ interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
 
 **Undo/Redo**: `undo`, `redo` (with `canUndo`, `canRedo` state)
 
-**Flow Conversion**: `planNodesToFlow(nodes, projectEdges)` — converts PlanNode[] + ProjectEdge[] → FlowNode[] + FlowEdge[]
+**Pages**: `setPages`, `updatePageHtml`, `updatePagePosition`, `addPageEdge`, `removePageEdge`, `removePage`
+
+**Flow Conversion**: `planNodesToFlow(nodes, projectEdges, existingFlowNodes?)` — converts PlanNode[] + ProjectEdge[] → FlowNode[] + FlowEdge[], preserves existing positions
 
 ---
 
@@ -501,7 +515,7 @@ interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
 - **Export dropdown** → JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - **Share button** → Public/private toggle with shareable URL
 - **Cmd+K** → Command palette with fuzzy search
-- **View switcher** → Canvas / List / Table / Board / Timeline / Sprints
+- **View switcher** → Canvas / List / Table / Board / Timeline / Sprints / Pages
 - **Toolbar buttons** → Team Manager, AI Smart Suggestions, Version History, Integrations
 
 ### Smart Mapping
@@ -652,7 +666,16 @@ npm run type-check  # Alias for tsc --noEmit
 - **Image compression** — resize/compress base64 images to reduce state size
 - **Hierarchy validation** — enforce valid type changes based on position in hierarchy
 
-### Recent Changes (Feb 12, 2026 — Session 2)
+### Recent Changes (Feb 12, 2026 — Session 3)
+- **Pages View** — New 7th view: AI auto-scans project plan, identifies all UI pages/screens, generates full-fidelity Tailwind HTML previews rendered in 1280x800 iframes on a zoomable React Flow canvas. Pages are flow-grouped by navigation with animated edges. Inline chat per page for AI-driven edits. Copy HTML to clipboard.
+- **Auto-Layout Fix** — `planNodesToFlow` now preserves existing node positions instead of resetting to (0,0). Nodes no longer stack after content changes.
+- **Goal Progress in Toolbar** — Merged TimelineBar goal progress circles into the ProjectToolbar.
+- **New Landing Page** — Replaced static mockup hero with interactive showcase (animated canvas, sortable task table, animated Gantt chart demos). Added "One-Shot Pipeline" section with 5-step animated walkthrough. Updated messaging: "Your Entire Project. Planned in One Shot."
+- **New API Routes** — `/api/ai/generate-pages` (full project page generation) and `/api/ai/edit-page` (inline page editing)
+- **New Types** — `ProjectPage`, `PageEdge` in `types/project.ts`; `pages`, `pageEdges` fields on Project
+- **New Store Actions** — `setPages`, `updatePageHtml`, `updatePagePosition`, `addPageEdge`, `removePageEdge`, `removePage`
+
+### Earlier Changes (Feb 12, 2026 — Session 2)
 - **Unified Project Toolbar** — Merged ViewSwitcher into ProjectToolbar: back button, editable project name, save status indicator, view tabs, and action buttons (Chat, Team, AI, History, Integrations, Share) all in one compact row
 - **Interactive Gantt Chart** — Timeline view now supports drag-to-move bars, drag left/right edges to resize durations, live preview while dragging, snaps to day grid
 - **5 New Node Types** — `spec`, `prd`, `schema`, `prompt`, `reference` with type-specific fields (schemaType, promptType, targetTool, referenceType, url, acceptanceCriteria, version)

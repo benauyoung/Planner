@@ -22,11 +22,13 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 ### Key Features
 
 - **12 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
-- **6 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints
+- **7 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints, Pages (AI-generated UI previews)
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
 - **AI Generation** — One-click PRD and implementation prompt generation
 - **AI Iteration** — Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
 - **AI Smart Suggestions** — Ambient project analysis with severity-ranked insights
+- **AI Page Generation** — Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas
+- **Inline Page Chat** — Click any generated page, describe changes, AI regenerates the HTML
 - **Command Palette** — `Cmd+K` fuzzy search with keyboard shortcuts for all actions
 - **Rich Nodes** — Attach images, rich text, PRDs, IDE prompts, and Notion-style documents
 - **Team Management** — Assign members, set priority, due dates, estimates, tags
@@ -45,7 +47,8 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 - **Dark Theme** — Near-black canvas with dashed bezier curve edges
 - **Interactive Gantt** — Drag bars to move tasks, drag edges to resize durations
 - **Unified Toolbar** — Project name, save status, view tabs, and actions in one compact bar
-- **Auto-Layout** — Dagre-powered hierarchical arrangement
+- **Auto-Layout** — Dagre-powered hierarchical arrangement with position preservation on updates
+- **Page Previews** — 1280x800 desktop-sized iframes with Tailwind CDN, flow-grouped by navigation
 
 ---
 
@@ -98,7 +101,7 @@ Planner/
 ├── components/
 │   ├── landing/                  # Public landing page (8 components)
 │   ├── canvas/                   # React Flow canvas + nodes (7 types) + context menus
-│   ├── views/                    # View switcher + List, Table, Board, Timeline views
+│   ├── views/                    # View switcher + List, Table, Board, Timeline, Pages views
 │   ├── sprints/                  # Sprint board with drag-and-drop backlog
 │   ├── ai/                       # AI suggestion panels (iteration + smart suggestions)
 │   ├── comments/                 # Comment thread + activity feed
@@ -120,15 +123,15 @@ Planner/
 │   └── ui-store.ts               # View, theme, selected node, filters, pending edge
 ├── services/
 │   ├── firebase.ts / firestore.ts / auth.ts  # Firebase (null-guarded)
-│   ├── gemini.ts                 # Gemini client + schemas (chat, PRD, iteration, suggestion)
+│   ├── gemini.ts                 # Gemini client + schemas (chat, PRD, iteration, suggestion, pages)
 │   ├── persistence.ts            # Firestore → localStorage failover
 │   ├── collaboration.ts          # Pluggable collaboration provider
 │   └── integrations/             # GitHub, Slack, Linear service clients
 ├── hooks/                        # AI chat, AI iterate, AI suggestions, collaboration, auto-layout
-├── prompts/                      # AI system prompts (planning, PRD, iteration, suggestion)
+├── prompts/                      # AI system prompts (planning, PRD, iteration, suggestion, pages)
 ├── lib/                          # Constants, commands, export/import, blast radius, templates
 ├── types/
-│   ├── project.ts                # PlanNode, Sprint, ProjectVersion, DocumentBlock, etc.
+│   ├── project.ts                # PlanNode, ProjectPage, PageEdge, Sprint, ProjectVersion, etc.
 │   ├── integrations.ts           # GitHub/Slack/Linear integration types
 │   ├── canvas.ts                 # FlowNode, FlowEdge
 │   └── chat.ts                   # ChatMessage, AIPlanNode

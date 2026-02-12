@@ -178,6 +178,22 @@
 
 ---
 
+### M12.6: Pages View & Landing Page Overhaul ✅
+**Status**: Complete
+
+**Delivered** (Feb 12, 2026 — Session 3):
+- **Pages View** — New 7th view: AI auto-scans project plan, identifies UI pages, generates full-fidelity Tailwind HTML in 1280x800 iframes on a zoomable React Flow canvas
+- Flow-grouped layout with animated navigation edges between pages
+- Inline chat per page for AI-driven edits (click page → describe changes → AI regenerates HTML)
+- Copy HTML to clipboard, delete pages, regenerate all
+- New API routes: `/api/ai/generate-pages`, `/api/ai/edit-page`
+- New types: `ProjectPage`, `PageEdge`; 6 new store actions
+- **Auto-Layout Fix** — `planNodesToFlow` preserves existing node positions; nodes no longer stack after content changes
+- **Goal Progress in Toolbar** — Merged TimelineBar into ProjectToolbar
+- **New Landing Page** — Interactive showcase (animated canvas, sortable task table, animated Gantt demos), one-shot pipeline section, updated messaging
+
+---
+
 ### M13: Remaining Polish 🟡
 **Status**: Planned
 
@@ -225,7 +241,7 @@
 - Collaboration infrastructure (presence, cursors)
 - Integrations (GitHub, Slack, Linear)
 
-### v0.9.5 - UX Polish ✅ (Current)
+### v0.9.5 - UX Polish ✅
 - Unified project toolbar (single bar with all controls)
 - Interactive Gantt chart (drag-to-move, edge-resize)
 - 12 node types (5 new document types)
@@ -233,6 +249,15 @@
 - New project page header with Save & Open Workspace
 - Chat state reset on new project
 - Bug fixes: Tiptap SSR, React Flow edge type, Firestore provisioning
+
+### v0.9.6 - Pages View & Landing ✅ (Current)
+- Pages View: AI-generated full-fidelity Tailwind page previews on zoomable canvas
+- 7 views total (added Pages)
+- Inline chat per page for AI editing
+- Auto-layout fix: position preservation on node updates
+- New interactive landing page with one-shot pipeline messaging
+- 2 new API routes (generate-pages, edit-page)
+- 6 new store actions for page management
 
 ### v1.0.0 - Launch (Planned)
 - Production WebSocket backend for real-time collaboration
@@ -258,3 +283,4 @@
 | 2026-02-12 | M11 Feature Expansion: All 12 phases implemented (command palette, views, assignees, AI iteration, comments, timeline, sprints, AI suggestions, version history, embedded docs, collaboration, integrations) |
 | 2026-02-12 | v0.9.0 Feature Complete: 55+ store mutations, 6 views, 7 API routes, 3 integration clients |
 | 2026-02-12 | v0.9.5 UX Polish: unified toolbar, interactive Gantt, 5 new node types, 5 new edge types, bug fixes |
+| 2026-02-12 | v0.9.6 Pages View: AI page generation, inline chat editing, auto-layout fix, new landing page |
