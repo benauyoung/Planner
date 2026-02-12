@@ -26,7 +26,23 @@ import { ShareButton } from '@/components/share/share-button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore, type ViewType } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
-import type { NodeType, NodeStatus } from '@/types/project'
+import { NODE_CONFIG } from '@/lib/constants'
+import type { PlanNode, NodeType, NodeStatus } from '@/types/project'
+
+function getGoalProgress(goal: PlanNode, allNodes: PlanNode[]) {
+  const descendants: PlanNode[] = []
+  function collect(parentId: string) {
+    const children = allNodes.filter((n) => n.parentId === parentId)
+    for (const child of children) {
+      descendants.push(child)
+      collect(child.id)
+    }
+  }
+  collect(goal.id)
+  if (descendants.length === 0) return 0
+  const completed = descendants.filter((n) => n.status === 'completed').length
+  return Math.round((completed / descendants.length) * 100)
+}
 
 const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] = [
   { value: 'canvas', label: 'Canvas', icon: <LayoutGrid className="h-3.5 w-3.5" /> },
@@ -75,6 +91,7 @@ export function ProjectToolbar({
 }: ProjectToolbarProps) {
   const currentProject = useProjectStore((s) => s.currentProject)
   const updateProjectTitle = useProjectStore((s) => s.updateProjectTitle)
+  const selectNode = useUIStore((s) => s.selectNode)
   const currentView = useUIStore((s) => s.currentView)
   const setCurrentView = useUIStore((s) => s.setCurrentView)
   const searchQuery = useUIStore((s) => s.searchQuery)
@@ -238,6 +255,39 @@ export function ProjectToolbar({
             )}
           </>
         )}
+
+        {/* Goal progress circles */}
+        {(() => {
+          const goals = currentProject.nodes.filter((n) => n.type === 'goal')
+          if (goals.length === 0) return null
+          return (
+            <>
+              <div className="w-px h-5 bg-border shrink-0" />
+              <div className="flex items-center gap-0.5 overflow-x-auto shrink min-w-0">
+                {goals.map((goal) => {
+                  const progress = getGoalProgress(goal, currentProject.nodes)
+                  return (
+                    <button
+                      key={goal.id}
+                      onClick={() => selectNode(goal.id)}
+                      className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-accent transition-colors shrink-0"
+                      title={`${goal.title} — ${progress}%`}
+                    >
+                      <div className="relative w-5 h-5">
+                        <svg className="w-5 h-5 -rotate-90" viewBox="0 0 20 20">
+                          <circle cx="10" cy="10" r="8" fill="none" strokeWidth="2" className="stroke-muted" />
+                          <circle cx="10" cy="10" r="8" fill="none" strokeWidth="2" strokeDasharray={`${(progress / 100) * 50.3} 50.3`} strokeLinecap="round" style={{ stroke: NODE_CONFIG.goal.color }} />
+                        </svg>
+                        <span className="absolute inset-0 flex items-center justify-center text-[6px] font-bold">{progress}%</span>
+                      </div>
+                      <span className="text-[10px] font-medium max-w-[80px] truncate text-muted-foreground">{goal.title}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </>
+          )
+        })()}
 
         {/* Spacer */}
         <div className="flex-1" />

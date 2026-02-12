@@ -13,7 +13,6 @@ import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ProjectToolbar } from '@/components/project/project-toolbar'
-import { TimelineBar } from '@/components/canvas/timeline-bar'
 import { CommandPalette } from '@/components/ui/command-palette'
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 import { AISuggestionsPanel } from '@/components/ai/ai-suggestions-panel'
@@ -379,7 +378,6 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
 
           {/* Main content area */}
           <div className="flex-1 flex flex-col min-h-0">
-            <TimelineBar />
             <div className="flex-1 relative">
               {currentView === 'canvas' && (
                 currentProject.nodes.length === 0 ? (

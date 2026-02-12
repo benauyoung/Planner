@@ -13,7 +13,6 @@ import { PlanningChat } from '@/components/chat/planning-chat'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 import { ProjectOnboarding } from '@/components/onboarding/project-onboarding'
-import { TimelineBar } from '@/components/canvas/timeline-bar'
 import { NewProjectChooser } from '@/components/onboarding/new-project-chooser'
 import { TemplateGallery } from '@/components/onboarding/template-gallery'
 import { ImportMarkdownModal } from '@/components/dashboard/import-markdown-modal'
@@ -143,7 +142,6 @@ function NewProjectContent() {
           <PlanningChat />
         </div>
         <div className="flex-1 flex flex-col min-h-0">
-          {flowNodes.length > 0 && <TimelineBar />}
           <div className="flex-1 relative">
             {flowNodes.length === 0 ? (
               <div className="h-full flex items-center justify-center">
