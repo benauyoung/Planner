@@ -5,6 +5,8 @@ import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
+import { PriorityBadge } from '@/components/ui/priority-badge'
+import { AssigneeAvatar } from '@/components/ui/assignee-picker'
 import type { PlanNode, NodeStatus } from '@/types/project'
 
 const COLUMNS: { status: NodeStatus; label: string; color: string; bg: string }[] = [
@@ -21,6 +23,7 @@ export function BoardView() {
   const selectNode = useUIStore((s) => s.selectNode)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filterType = useUIStore((s) => s.filterType)
+  const team = useProjectStore((s) => s.currentProject?.team || [])
 
   const filtered = useMemo(() => {
     let result = nodes
@@ -121,6 +124,19 @@ export function BoardView() {
                   <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                     {node.description}
                   </p>
+                )}
+
+                {/* Priority + Assignee footer */}
+                {(node.priority && node.priority !== 'none' || node.assigneeId) && (
+                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/50">
+                    {node.priority && node.priority !== 'none' ? (
+                      <PriorityBadge priority={node.priority} />
+                    ) : <span />}
+                    {node.assigneeId && (() => {
+                      const member = team.find((m) => m.id === node.assigneeId)
+                      return member ? <AssigneeAvatar member={member} size="sm" /> : null
+                    })()}
+                  </div>
                 )}
               </div>
             ))}

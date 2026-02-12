@@ -4,6 +4,16 @@ export type NodeStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked'
 
 export type ProjectPhase = 'planning' | 'active'
 
+export type Priority = 'critical' | 'high' | 'medium' | 'low' | 'none'
+
+export interface TeamMember {
+  id: string
+  name: string
+  email: string
+  avatar?: string
+  color: string
+}
+
 export interface NodeQuestion {
   id: string
   question: string
@@ -39,6 +49,11 @@ export interface PlanNode {
   images?: string[]
   prds?: NodePRD[]
   prompts?: NodePrompt[]
+  assigneeId?: string
+  priority?: Priority
+  dueDate?: number
+  estimatedHours?: number
+  tags?: string[]
 }
 
 export type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
@@ -63,4 +78,5 @@ export interface Project {
   updatedAt: number
   isPublic?: boolean
   shareId?: string
+  team?: TeamMember[]
 }

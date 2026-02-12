@@ -6,9 +6,19 @@ import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import type { PlanNode, NodeStatus } from '@/types/project'
+import { PriorityBadge } from '@/components/ui/priority-badge'
+import { AssigneeAvatar } from '@/components/ui/assignee-picker'
+import type { PlanNode, NodeStatus, Priority } from '@/types/project'
 
-type SortKey = 'title' | 'type' | 'status' | 'description'
+type SortKey = 'title' | 'type' | 'status' | 'priority' | 'description'
+
+const PRIORITY_ORDER: Record<Priority, number> = {
+  critical: 0,
+  high: 1,
+  medium: 2,
+  low: 3,
+  none: 4,
+}
 type SortDir = 'asc' | 'desc'
 
 const STATUS_ORDER: Record<NodeStatus, number> = {
@@ -39,6 +49,7 @@ export function TableView() {
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filterType = useUIStore((s) => s.filterType)
   const filterStatus = useUIStore((s) => s.filterStatus)
+  const team = useProjectStore((s) => s.currentProject?.team || [])
 
   const [sortKey, setSortKey] = useState<SortKey>('type')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -75,6 +86,8 @@ export function TableView() {
           return a.type.localeCompare(b.type) * dir
         case 'status':
           return (STATUS_ORDER[a.status] - STATUS_ORDER[b.status]) * dir
+        case 'priority':
+          return (PRIORITY_ORDER[a.priority || 'none'] - PRIORITY_ORDER[b.priority || 'none']) * dir
         case 'description':
           return a.description.localeCompare(b.description) * dir
         default:
@@ -126,6 +139,15 @@ export function TableView() {
               Status <SortIcon column="status" />
             </th>
             <th
+              className="text-left px-3 py-2 font-medium text-muted-foreground cursor-pointer hover:text-foreground select-none w-[8%]"
+              onClick={() => handleSort('priority')}
+            >
+              Priority <SortIcon column="priority" />
+            </th>
+            <th className="text-left px-3 py-2 font-medium text-muted-foreground select-none w-[8%]">
+              Assignee
+            </th>
+            <th
               className="text-left px-3 py-2 font-medium text-muted-foreground cursor-pointer hover:text-foreground select-none"
               onClick={() => handleSort('description')}
             >
@@ -164,6 +186,28 @@ export function TableView() {
                     <span className={cn('w-2 h-2 rounded-full', STATUS_DOTS[node.status])} />
                     {STATUS_LABELS[node.status]}
                   </span>
+                </td>
+                <td className="px-3 py-2">
+                  {node.priority && node.priority !== 'none' ? (
+                    <PriorityBadge priority={node.priority} />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="px-3 py-2">
+                  {node.assigneeId ? (
+                    (() => {
+                      const member = team.find((m) => m.id === node.assigneeId)
+                      return member ? (
+                        <div className="flex items-center gap-1.5">
+                          <AssigneeAvatar member={member} size="sm" />
+                          <span className="text-xs truncate max-w-[60px]">{member.name}</span>
+                        </div>
+                      ) : <span className="text-xs text-muted-foreground">—</span>
+                    })()
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
                 </td>
                 <td className="px-3 py-2 text-muted-foreground">
                   <span className="truncate block max-w-md">{node.description || '—'}</span>

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -50,6 +50,13 @@ interface ProjectState {
   addProject: (project: Project) => void
   removeProject: (projectId: string) => void
   toggleShareProject: () => string | null
+  setNodeAssignee: (nodeId: string, assigneeId: string | undefined) => void
+  setNodePriority: (nodeId: string, priority: Priority) => void
+  setNodeDueDate: (nodeId: string, dueDate: number | undefined) => void
+  setNodeEstimate: (nodeId: string, hours: number | undefined) => void
+  setNodeTags: (nodeId: string, tags: string[]) => void
+  addTeamMember: (member: TeamMember) => void
+  removeTeamMember: (memberId: string) => void
   undo: () => void
   redo: () => void
 }
@@ -697,6 +704,68 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const updated = { ...project, isPublic, shareId, updatedAt: Date.now() }
       commitProjectUpdate(updated)
       return isPublic ? shareId! : null
+    },
+
+    setNodeAssignee: (nodeId, assigneeId) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, assigneeId } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    setNodePriority: (nodeId, priority) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, priority } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    setNodeDueDate: (nodeId, dueDate) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, dueDate } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    setNodeEstimate: (nodeId, hours) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, estimatedHours: hours } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    setNodeTags: (nodeId, tags) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, tags } : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    addTeamMember: (member) => {
+      const project = get().currentProject
+      if (!project) return
+      const team = [...(project.team || []), member]
+      commitProjectUpdate({ ...project, team, updatedAt: Date.now() })
+    },
+
+    removeTeamMember: (memberId) => {
+      const project = get().currentProject
+      if (!project) return
+      const team = (project.team || []).filter((m) => m.id !== memberId)
+      const updatedNodes = project.nodes.map((n) =>
+        n.assigneeId === memberId ? { ...n, assigneeId: undefined } : n
+      )
+      commitProjectUpdate({ ...project, team, nodes: updatedNodes, updatedAt: Date.now() })
     },
 
     undo: () => {

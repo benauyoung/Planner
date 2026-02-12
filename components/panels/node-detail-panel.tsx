@@ -10,9 +10,12 @@ import { Badge } from '@/components/ui/badge'
 import { NodeEditForm } from './node-edit-form'
 import { RichTextEditor } from './rich-text-editor'
 import { NODE_CONFIG, STATUS_COLORS, NODE_CHILD_TYPE } from '@/lib/constants'
-import type { NodeStatus, NodeType } from '@/types/project'
+import type { NodeStatus, NodeType, Priority } from '@/types/project'
 import { cn } from '@/lib/utils'
 import { buildNodeContext } from '@/lib/node-context'
+import { PrioritySelector } from '@/components/ui/priority-badge'
+import { AssigneePicker } from '@/components/ui/assignee-picker'
+import { TagInput } from '@/components/ui/tag-input'
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
   { value: 'not_started', label: 'Not Started' },
@@ -51,6 +54,12 @@ export function NodeDetailPanel() {
 
   const addNodeQuestions = useProjectStore((s) => s.addNodeQuestions)
   const addCustomNodeQuestion = useProjectStore((s) => s.addCustomNodeQuestion)
+  const setNodeAssignee = useProjectStore((s) => s.setNodeAssignee)
+  const setNodePriority = useProjectStore((s) => s.setNodePriority)
+  const setNodeDueDate = useProjectStore((s) => s.setNodeDueDate)
+  const setNodeEstimate = useProjectStore((s) => s.setNodeEstimate)
+  const setNodeTags = useProjectStore((s) => s.setNodeTags)
+  const team = useProjectStore((s) => s.currentProject?.team || [])
 
   const [editingPRD, setEditingPRD] = useState<string | null>(null)
   const [prdTitle, setPrdTitle] = useState('')
@@ -324,6 +333,59 @@ export function NodeDetailPanel() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Priority & Assignee */}
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Priority</label>
+                <PrioritySelector
+                  value={node.priority || 'none'}
+                  onChange={(p: Priority) => setNodePriority(node.id, p)}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Assignee</label>
+                <AssigneePicker
+                  team={team}
+                  value={node.assigneeId}
+                  onChange={(id) => setNodeAssignee(node.id, id)}
+                />
+              </div>
+            </div>
+
+            {/* Due Date & Estimate */}
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Due Date</label>
+                <input
+                  type="date"
+                  value={node.dueDate ? new Date(node.dueDate).toISOString().split('T')[0] : ''}
+                  onChange={(e) => setNodeDueDate(node.id, e.target.value ? new Date(e.target.value).getTime() : undefined)}
+                  className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Estimate (hrs)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.5"
+                  value={node.estimatedHours ?? ''}
+                  onChange={(e) => setNodeEstimate(node.id, e.target.value ? parseFloat(e.target.value) : undefined)}
+                  placeholder="0"
+                  className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div className="mt-3">
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Tags</label>
+              <TagInput
+                tags={node.tags || []}
+                onChange={(tags) => setNodeTags(node.id, tags)}
+              />
             </div>
 
             {/* Questions */}

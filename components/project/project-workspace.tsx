@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, PanelLeftClose } from 'lucide-react'
+import { MessageSquare, PanelLeftClose, Users } from 'lucide-react'
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
@@ -19,6 +19,7 @@ import { CommandPalette } from '@/components/ui/command-palette'
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 import { AISuggestionsPanel } from '@/components/ai/ai-suggestions-panel'
 import { useAIIterate, type AISuggestion } from '@/hooks/use-ai-iterate'
+import { TeamManager } from '@/components/project/team-manager'
 import { ViewSwitcher } from '@/components/views/view-switcher'
 import { ListView } from '@/components/views/list-view'
 import { TableView } from '@/components/views/table-view'
@@ -41,6 +42,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const fitViewRef = useRef<(() => void) | null>(null)
   const { iterate, applySuggestion, applyAll, clearResult, loading: aiLoading, result: aiResult, error: aiError } = useAIIterate()
   const [aiPanelOpen, setAIPanelOpen] = useState(false)
+  const [teamManagerOpen, setTeamManagerOpen] = useState(false)
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set())
   const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set())
 
@@ -429,6 +431,14 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                       <MessageSquare className="h-4 w-4" />
                     )}
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setTeamManagerOpen(true)}
+                    title="Manage team"
+                  >
+                    <Users className="h-4 w-4" />
+                  </Button>
                   <ShareButton />
                 </div>
               </>
@@ -465,6 +475,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
       <ShortcutsHelp
         open={shortcutsHelpOpen}
         onClose={() => useUIStore.getState().closeShortcutsHelp()}
+      />
+      <TeamManager
+        open={teamManagerOpen}
+        onClose={() => setTeamManagerOpen(false)}
       />
     </ReactFlowProvider>
   )
