@@ -1,6 +1,5 @@
-import { HeroSectionNew, InteractiveShowcase } from '@/components/landing/interactive-showcase'
+import { HeroSectionNew, OneShotPipeline, InteractiveShowcase } from '@/components/landing/interactive-showcase'
 import { TrustBar } from '@/components/landing/trust-bar'
-import { HowItWorks } from '@/components/landing/how-it-works'
 import { FeaturesGrid } from '@/components/landing/features-grid'
 import { CTABanner } from '@/components/landing/cta-banner'
 
@@ -9,10 +8,10 @@ export default function LandingPage() {
     <>
       <HeroSectionNew />
       <TrustBar />
+      <OneShotPipeline />
       <div id="showcase">
         <InteractiveShowcase />
       </div>
-      <HowItWorks />
       <FeaturesGrid />
       <CTABanner />
     </>

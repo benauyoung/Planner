@@ -24,10 +24,10 @@ export function CTABanner() {
           transition={{ duration: 0.5 }}
         >
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Start planning in 30 seconds
+            One prompt. One plan. Let AI build it.
           </h2>
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
-            No credit card. No setup. Just describe your idea and watch it come to life on an infinite canvas.
+            No credit card. No setup. Describe your project, get a complete plan with PRDs and implementation prompts, then hand it to your AI coding assistant.
           </p>
           <Link
             href="/login"
