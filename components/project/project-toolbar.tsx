@@ -19,6 +19,7 @@ import {
   Zap,
   Search,
   X,
+  AppWindow,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -51,6 +52,7 @@ const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] 
   { value: 'board', label: 'Board', icon: <Columns3 className="h-3.5 w-3.5" /> },
   { value: 'timeline', label: 'Timeline', icon: <GanttChart className="h-3.5 w-3.5" /> },
   { value: 'sprints', label: 'Sprints', icon: <Zap className="h-3.5 w-3.5" /> },
+  { value: 'pages', label: 'Pages', icon: <AppWindow className="h-3.5 w-3.5" /> },
 ]
 
 const TYPE_OPTIONS: { value: NodeType; label: string }[] = [

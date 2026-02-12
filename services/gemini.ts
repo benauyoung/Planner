@@ -151,6 +151,55 @@ export const suggestionSchema: Schema = {
   required: ['suggestions'],
 }
 
+export const pageGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    designSystem: { type: SchemaType.STRING, description: 'Brief description of the chosen design direction' },
+    pages: {
+      type: SchemaType.ARRAY,
+      description: 'Generated page previews',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          id: { type: SchemaType.STRING, description: 'Unique page identifier (e.g. page-dashboard)' },
+          title: { type: SchemaType.STRING, description: 'Page name' },
+          route: { type: SchemaType.STRING, description: 'Suggested route path' },
+          html: { type: SchemaType.STRING, description: 'Complete HTML body content with Tailwind CSS classes' },
+          linkedNodeIds: {
+            type: SchemaType.ARRAY,
+            description: 'Project node IDs this page relates to',
+            items: { type: SchemaType.STRING },
+          },
+        },
+        required: ['id', 'title', 'route', 'html', 'linkedNodeIds'],
+      },
+    },
+    edges: {
+      type: SchemaType.ARRAY,
+      description: 'Navigation flow edges between pages',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          source: { type: SchemaType.STRING, description: 'Source page ID' },
+          target: { type: SchemaType.STRING, description: 'Target page ID' },
+          label: { type: SchemaType.STRING, description: 'Navigation action label' },
+        },
+        required: ['source', 'target', 'label'],
+      },
+    },
+  },
+  required: ['designSystem', 'pages', 'edges'],
+}
+
+export const pageEditSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    html: { type: SchemaType.STRING, description: 'Updated complete HTML body content with Tailwind CSS classes' },
+    summary: { type: SchemaType.STRING, description: 'Brief summary of what was changed' },
+  },
+  required: ['html', 'summary'],
+}
+
 export const iterationSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {

@@ -126,6 +126,22 @@ export interface ProjectEdge {
   label?: string
 }
 
+export interface ProjectPage {
+  id: string
+  title: string
+  route: string
+  html: string
+  linkedNodeIds: string[]
+  position: { x: number; y: number }
+}
+
+export interface PageEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
+}
+
 export interface ProjectVersion {
   id: string
   name: string
@@ -156,4 +172,6 @@ export interface Project {
   sprints?: Sprint[]
   versions?: ProjectVersion[]
   currentVersionId?: string
+  pages?: ProjectPage[]
+  pageEdges?: PageEdge[]
 }

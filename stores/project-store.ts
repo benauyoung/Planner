@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -76,6 +76,12 @@ interface ProjectState {
   updateNodeReferenceType: (nodeId: string, referenceType: PlanNode['referenceType']) => void
   updateNodeUrl: (nodeId: string, url: string) => void
   updateNodeAcceptanceCriteria: (nodeId: string, criteria: string[]) => void
+  setPages: (pages: ProjectPage[], pageEdges?: PageEdge[]) => void
+  updatePageHtml: (pageId: string, html: string) => void
+  updatePagePosition: (pageId: string, position: { x: number; y: number }) => void
+  addPageEdge: (source: string, target: string, label?: string) => void
+  removePageEdge: (edgeId: string) => void
+  removePage: (pageId: string) => void
   undo: () => void
   redo: () => void
 }
@@ -1054,6 +1060,47 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const project = get().currentProject
       if (!project) return
       commitProjectUpdate({ ...project, title, updatedAt: Date.now() })
+    },
+
+    setPages: (pages, pageEdges) => {
+      const p = get().currentProject
+      if (!p) return
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), pages, pageEdges: pageEdges || p.pageEdges || [] })
+    },
+
+    updatePageHtml: (pageId, html) => {
+      const p = get().currentProject
+      if (!p) return
+      const pages = (p.pages || []).map((pg) => pg.id === pageId ? { ...pg, html } : pg)
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), pages })
+    },
+
+    updatePagePosition: (pageId, position) => {
+      const p = get().currentProject
+      if (!p) return
+      const pages = (p.pages || []).map((pg) => pg.id === pageId ? { ...pg, position } : pg)
+      applyWithoutUndo({ ...p, pages })
+    },
+
+    addPageEdge: (source, target, label) => {
+      const p = get().currentProject
+      if (!p) return
+      const edge: PageEdge = { id: generateId(), source, target, label }
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), pageEdges: [...(p.pageEdges || []), edge] })
+    },
+
+    removePageEdge: (edgeId) => {
+      const p = get().currentProject
+      if (!p) return
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), pageEdges: (p.pageEdges || []).filter((e) => e.id !== edgeId) })
+    },
+
+    removePage: (pageId) => {
+      const p = get().currentProject
+      if (!p) return
+      const pages = (p.pages || []).filter((pg) => pg.id !== pageId)
+      const pageEdges = (p.pageEdges || []).filter((e) => e.source !== pageId && e.target !== pageId)
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), pages, pageEdges })
     },
 
     undo: () => {
