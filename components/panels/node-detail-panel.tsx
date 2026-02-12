@@ -16,6 +16,7 @@ import { buildNodeContext } from '@/lib/node-context'
 import { PrioritySelector } from '@/components/ui/priority-badge'
 import { AssigneePicker } from '@/components/ui/assignee-picker'
 import { TagInput } from '@/components/ui/tag-input'
+import { CommentThread } from '@/components/comments/comment-thread'
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
   { value: 'not_started', label: 'Not Started' },
@@ -385,6 +386,17 @@ export function NodeDetailPanel() {
               <TagInput
                 tags={node.tags || []}
                 onChange={(tags) => setNodeTags(node.id, tags)}
+              />
+            </div>
+
+            {/* Comments */}
+            <div className="mt-4">
+              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                Comments ({(node.comments || []).length})
+              </label>
+              <CommentThread
+                nodeId={node.id}
+                comments={node.comments || []}
               />
             </div>
 

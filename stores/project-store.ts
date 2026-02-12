@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -57,6 +57,9 @@ interface ProjectState {
   setNodeTags: (nodeId: string, tags: string[]) => void
   addTeamMember: (member: TeamMember) => void
   removeTeamMember: (memberId: string) => void
+  addNodeComment: (nodeId: string, authorName: string, authorColor: string, content: string) => void
+  deleteNodeComment: (nodeId: string, commentId: string) => void
+  addActivityEvent: (event: Omit<ActivityEvent, 'id' | 'timestamp'>) => void
   undo: () => void
   redo: () => void
 }
@@ -766,6 +769,56 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         n.assigneeId === memberId ? { ...n, assigneeId: undefined } : n
       )
       commitProjectUpdate({ ...project, team, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    addNodeComment: (nodeId, authorName, authorColor, content) => {
+      const project = get().currentProject
+      if (!project) return
+      const comment: NodeComment = {
+        id: generateId(),
+        authorId: 'local',
+        authorName,
+        authorColor,
+        content,
+        createdAt: Date.now(),
+      }
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, comments: [...(n.comments || []), comment] } : n
+      )
+      const activity: ActivityEvent = {
+        id: generateId(),
+        type: 'comment',
+        nodeId,
+        nodeTitle: project.nodes.find((n) => n.id === nodeId)?.title || '',
+        actorName: authorName,
+        detail: content.length > 60 ? content.slice(0, 60) + '…' : content,
+        timestamp: Date.now(),
+      }
+      const updatedActivity = [...(project.activity || []), activity]
+      commitProjectUpdate({ ...project, nodes: updatedNodes, activity: updatedActivity, updatedAt: Date.now() })
+    },
+
+    deleteNodeComment: (nodeId, commentId) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId
+          ? { ...n, comments: (n.comments || []).filter((c) => c.id !== commentId) }
+          : n
+      )
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    addActivityEvent: (event) => {
+      const project = get().currentProject
+      if (!project) return
+      const full: ActivityEvent = {
+        ...event,
+        id: generateId(),
+        timestamp: Date.now(),
+      }
+      const updatedActivity = [...(project.activity || []), full]
+      commitProjectUpdate({ ...project, activity: updatedActivity, updatedAt: Date.now() })
     },
 
     undo: () => {

@@ -36,6 +36,25 @@ export interface NodePrompt {
   updatedAt: number
 }
 
+export interface NodeComment {
+  id: string
+  authorId: string
+  authorName: string
+  authorColor: string
+  content: string
+  createdAt: number
+}
+
+export interface ActivityEvent {
+  id: string
+  type: 'status_change' | 'assignment' | 'priority_change' | 'comment' | 'node_created' | 'node_deleted' | 'node_updated'
+  nodeId: string
+  nodeTitle: string
+  actorName: string
+  detail: string
+  timestamp: number
+}
+
 export interface PlanNode {
   id: string
   type: NodeType
@@ -54,6 +73,7 @@ export interface PlanNode {
   dueDate?: number
   estimatedHours?: number
   tags?: string[]
+  comments?: NodeComment[]
 }
 
 export type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
@@ -79,4 +99,5 @@ export interface Project {
   isPublic?: boolean
   shareId?: string
   team?: TeamMember[]
+  activity?: ActivityEvent[]
 }
