@@ -18,6 +18,8 @@ import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import type { PlanNode, NodeType, NodeStatus } from '@/types/project'
 
+const EMPTY_NODES: PlanNode[] = []
+
 const TYPE_ICONS: Record<NodeType, React.ReactNode> = {
   goal: <Target className="h-3.5 w-3.5" />,
   subgoal: <Flag className="h-3.5 w-3.5" />,
@@ -77,7 +79,7 @@ function flattenTree(nodes: TreeNode[], expanded: Set<string>): TreeNode[] {
 }
 
 export function ListView() {
-  const nodes = useProjectStore((s) => s.currentProject?.nodes || [])
+  const nodes = useProjectStore((s) => s.currentProject?.nodes ?? EMPTY_NODES)
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const selectNode = useUIStore((s) => s.selectNode)
   const searchQuery = useUIStore((s) => s.searchQuery)

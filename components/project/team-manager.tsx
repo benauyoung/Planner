@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button'
 import { generateId } from '@/lib/id'
 import type { TeamMember } from '@/types/project'
 
+const EMPTY_TEAM: TeamMember[] = []
+
 const MEMBER_COLORS = [
   '#3b82f6', '#ef4444', '#22c55e', '#f59e0b', '#8b5cf6',
   '#ec4899', '#06b6d4', '#f97316', '#6366f1', '#14b8a6',
@@ -20,7 +22,7 @@ interface TeamManagerProps {
 }
 
 export function TeamManager({ open, onClose }: TeamManagerProps) {
-  const team = useProjectStore((s) => s.currentProject?.team || [])
+  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
   const addTeamMember = useProjectStore((s) => s.addTeamMember)
   const removeTeamMember = useProjectStore((s) => s.removeTeamMember)
 

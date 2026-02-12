@@ -10,7 +10,11 @@ import { Button } from '@/components/ui/button'
 import { PriorityBadge } from '@/components/ui/priority-badge'
 import { AssigneeAvatar } from '@/components/ui/assignee-picker'
 import { cn } from '@/lib/utils'
-import type { Sprint, SprintStatus, PlanNode, NodeStatus } from '@/types/project'
+import type { Sprint, SprintStatus, PlanNode, NodeStatus, TeamMember } from '@/types/project'
+
+const EMPTY_SPRINTS: Sprint[] = []
+const EMPTY_NODES: PlanNode[] = []
+const EMPTY_TEAM: TeamMember[] = []
 
 const STATUS_DOTS: Record<NodeStatus, string> = {
   not_started: 'bg-gray-400',
@@ -87,9 +91,9 @@ function CreateSprintForm({ onSubmit, onCancel }: CreateSprintFormProps) {
 }
 
 export function SprintBoard() {
-  const sprints = useProjectStore((s) => s.currentProject?.sprints || [])
-  const nodes = useProjectStore((s) => s.currentProject?.nodes || [])
-  const team = useProjectStore((s) => s.currentProject?.team || [])
+  const sprints = useProjectStore((s) => s.currentProject?.sprints ?? EMPTY_SPRINTS)
+  const nodes = useProjectStore((s) => s.currentProject?.nodes ?? EMPTY_NODES)
+  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
   const createSprint = useProjectStore((s) => s.createSprint)
   const updateSprint = useProjectStore((s) => s.updateSprint)
   const deleteSprint = useProjectStore((s) => s.deleteSprint)

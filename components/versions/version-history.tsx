@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ProjectVersion } from '@/types/project'
 
+const EMPTY_VERSIONS: ProjectVersion[] = []
+
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts
   const mins = Math.floor(diff / 60000)
@@ -25,7 +27,7 @@ interface VersionHistoryProps {
 }
 
 export function VersionHistory({ open, onClose }: VersionHistoryProps) {
-  const versions = useProjectStore((s) => s.currentProject?.versions || [])
+  const versions = useProjectStore((s) => s.currentProject?.versions ?? EMPTY_VERSIONS)
   const currentVersionId = useProjectStore((s) => s.currentProject?.currentVersionId)
   const nodeCount = useProjectStore((s) => s.currentProject?.nodes.length || 0)
   const saveVersion = useProjectStore((s) => s.saveVersion)

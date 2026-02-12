@@ -8,7 +8,10 @@ import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { PriorityBadge } from '@/components/ui/priority-badge'
 import { AssigneeAvatar } from '@/components/ui/assignee-picker'
-import type { PlanNode, NodeStatus } from '@/types/project'
+import type { PlanNode, NodeStatus, TeamMember } from '@/types/project'
+
+const EMPTY_NODES: PlanNode[] = []
+const EMPTY_TEAM: TeamMember[] = []
 
 const STATUS_COLORS: Record<NodeStatus, string> = {
   not_started: '#9ca3af',
@@ -45,8 +48,8 @@ interface TimelineNode extends PlanNode {
 }
 
 export function TimelineView() {
-  const nodes = useProjectStore((s) => s.currentProject?.nodes || [])
-  const team = useProjectStore((s) => s.currentProject?.team || [])
+  const nodes = useProjectStore((s) => s.currentProject?.nodes ?? EMPTY_NODES)
+  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const selectNode = useUIStore((s) => s.selectNode)
   const searchQuery = useUIStore((s) => s.searchQuery)

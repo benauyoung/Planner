@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge'
 import { NodeEditForm } from './node-edit-form'
 import { RichTextEditor } from './rich-text-editor'
 import { NODE_CONFIG, STATUS_COLORS, NODE_CHILD_TYPE } from '@/lib/constants'
-import type { NodeStatus, NodeType, Priority } from '@/types/project'
+import type { NodeStatus, NodeType, Priority, TeamMember } from '@/types/project'
 import { cn } from '@/lib/utils'
 import { buildNodeContext } from '@/lib/node-context'
 import { PrioritySelector } from '@/components/ui/priority-badge'
@@ -27,6 +27,7 @@ const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
 ]
 
 const TYPE_OPTIONS: NodeType[] = ['goal', 'subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector']
+const EMPTY_TEAM: TeamMember[] = []
 
 export function NodeDetailPanel() {
   const { selectedNodeId, detailPanelOpen, closeDetailPanel } = useUIStore()
@@ -61,7 +62,7 @@ export function NodeDetailPanel() {
   const setNodeDueDate = useProjectStore((s) => s.setNodeDueDate)
   const setNodeEstimate = useProjectStore((s) => s.setNodeEstimate)
   const setNodeTags = useProjectStore((s) => s.setNodeTags)
-  const team = useProjectStore((s) => s.currentProject?.team || [])
+  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
 
   const [editingPRD, setEditingPRD] = useState<string | null>(null)
   const [prdTitle, setPrdTitle] = useState('')

@@ -13,6 +13,8 @@ import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import type { ActivityEvent } from '@/types/project'
 
+const EMPTY_ACTIVITY: ActivityEvent[] = []
+
 function timeAgo(ts: number): string {
   const diff = Date.now() - ts
   const mins = Math.floor(diff / 60000)
@@ -45,7 +47,7 @@ const EVENT_COLORS: Record<ActivityEvent['type'], string> = {
 }
 
 export function ActivityFeed() {
-  const activity = useProjectStore((s) => s.currentProject?.activity || [])
+  const activity = useProjectStore((s) => s.currentProject?.activity ?? EMPTY_ACTIVITY)
   const selectNode = useUIStore((s) => s.selectNode)
 
   const sorted = [...activity].sort((a, b) => b.timestamp - a.timestamp).slice(0, 50)

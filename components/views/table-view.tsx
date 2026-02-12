@@ -8,7 +8,10 @@ import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { PriorityBadge } from '@/components/ui/priority-badge'
 import { AssigneeAvatar } from '@/components/ui/assignee-picker'
-import type { PlanNode, NodeStatus, Priority } from '@/types/project'
+import type { PlanNode, NodeStatus, Priority, TeamMember } from '@/types/project'
+
+const EMPTY_NODES: PlanNode[] = []
+const EMPTY_TEAM: TeamMember[] = []
 
 type SortKey = 'title' | 'type' | 'status' | 'priority' | 'description'
 
@@ -43,13 +46,13 @@ const STATUS_LABELS: Record<NodeStatus, string> = {
 }
 
 export function TableView() {
-  const nodes = useProjectStore((s) => s.currentProject?.nodes || [])
+  const nodes = useProjectStore((s) => s.currentProject?.nodes ?? EMPTY_NODES)
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const selectNode = useUIStore((s) => s.selectNode)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filterType = useUIStore((s) => s.filterType)
   const filterStatus = useUIStore((s) => s.filterStatus)
-  const team = useProjectStore((s) => s.currentProject?.team || [])
+  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
 
   const [sortKey, setSortKey] = useState<SortKey>('type')
   const [sortDir, setSortDir] = useState<SortDir>('asc')

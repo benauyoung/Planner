@@ -7,7 +7,10 @@ import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { PriorityBadge } from '@/components/ui/priority-badge'
 import { AssigneeAvatar } from '@/components/ui/assignee-picker'
-import type { PlanNode, NodeStatus } from '@/types/project'
+import type { PlanNode, NodeStatus, TeamMember } from '@/types/project'
+
+const EMPTY_NODES: PlanNode[] = []
+const EMPTY_TEAM: TeamMember[] = []
 
 const COLUMNS: { status: NodeStatus; label: string; color: string; bg: string }[] = [
   { status: 'not_started', label: 'Not Started', color: '#9ca3af', bg: 'bg-gray-500/10' },
@@ -17,13 +20,13 @@ const COLUMNS: { status: NodeStatus; label: string; color: string; bg: string }[
 ]
 
 export function BoardView() {
-  const nodes = useProjectStore((s) => s.currentProject?.nodes || [])
+  const nodes = useProjectStore((s) => s.currentProject?.nodes ?? EMPTY_NODES)
   const updateNodeStatus = useProjectStore((s) => s.updateNodeStatus)
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const selectNode = useUIStore((s) => s.selectNode)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const filterType = useUIStore((s) => s.filterType)
-  const team = useProjectStore((s) => s.currentProject?.team || [])
+  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
 
   const filtered = useMemo(() => {
     let result = nodes
