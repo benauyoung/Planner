@@ -19,7 +19,7 @@ export function HeroSection() {
 
       <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-          {/* Left — copy */}
+          {/* Left: copy */}
           <motion.div
             className="flex-1 text-center lg:text-left"
             initial={{ opacity: 0, x: -30 }}
@@ -32,14 +32,14 @@ export function HeroSection() {
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
               One prompt. One visual plan. VisionPath uses AI to transform your idea into an interactive DAG
-              of goals, features, and tasks — so you never lose the big picture.
+              of goals, features, and tasks so you never lose the big picture.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
               <Link
                 href="/login"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
               >
-                Get Started — Free
+                Get Started for Free
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a
@@ -51,7 +51,7 @@ export function HeroSection() {
             </div>
           </motion.div>
 
-          {/* Right — mockup */}
+          {/* Right: mockup */}
           <motion.div
             className="flex-1 w-full flex justify-center"
             initial={{ opacity: 0, x: 30 }}

@@ -7,14 +7,14 @@ const steps = [
   {
     icon: MessageSquareText,
     title: 'Describe your idea',
-    description: 'Write a single prompt in plain English. Tell us what you want to build — no templates, no forms.',
+    description: 'Write a single prompt in plain English. Tell us what you want to build. No templates, no forms.',
     accent: 'text-blue-500',
     bg: 'bg-blue-500/10',
   },
   {
     icon: Sparkles,
     title: 'AI generates your plan',
-    description: 'Gemini AI breaks your idea into goals, features, and tasks — laid out as a visual DAG on an infinite canvas.',
+    description: 'Gemini AI breaks your idea into goals, features, and tasks, laid out as a visual DAG on an infinite canvas.',
     accent: 'text-violet-500',
     bg: 'bg-violet-500/10',
   },

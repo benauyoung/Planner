@@ -33,7 +33,7 @@ export function CTABanner() {
             href="/login"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
-            Get Started — Free
+            Get Started for Free
             <ArrowRight className="h-4 w-4" />
           </Link>
         </motion.div>

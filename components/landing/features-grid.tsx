@@ -34,7 +34,7 @@ const features = [
   {
     icon: Download,
     title: 'Export Anywhere',
-    description: 'Markdown, JSON, .cursorrules, CLAUDE.md — straight to your IDE or clipboard.',
+    description: 'Markdown, JSON, .cursorrules, CLAUDE.md. Straight to your IDE or clipboard.',
   },
   {
     icon: LayoutTemplate,

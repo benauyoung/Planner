@@ -589,8 +589,8 @@ export function HeroSectionNew() {
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto">
-            Describe what you want to build. AI generates a complete project plan — goals, features,
-            tasks, timelines, dependencies, PRDs, and implementation prompts — all connected,
+            Describe what you want to build. AI generates a complete project plan: goals, features,
+            tasks, timelines, dependencies, PRDs, and implementation prompts. All connected,
             all ready to execute. Then hand the wheel to AI and ship.
           </p>
 
@@ -599,7 +599,7 @@ export function HeroSectionNew() {
               href="/login"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30"
             >
-              Start Planning — Free
+              Start Planning for Free
               <ArrowRight className="h-4 w-4" />
             </Link>
             <a
@@ -646,7 +646,7 @@ const PIPELINE_STEPS = [
   {
     icon: MessageSquareText,
     title: 'Describe Your Idea',
-    description: 'One conversation. AI asks the right questions and understands your full vision — scope, audience, constraints.',
+    description: 'One conversation. AI asks the right questions and understands your full vision: scope, audience, constraints.',
     accent: 'text-blue-400',
     bg: 'bg-blue-500/10',
     border: 'border-blue-500/20',
@@ -662,7 +662,7 @@ const PIPELINE_STEPS = [
   {
     icon: Workflow,
     title: 'Everything, Connected',
-    description: 'Timelines, assignments, estimates, PRDs, and implementation prompts — all linked to the same source of truth. One change ripples everywhere.',
+    description: 'Timelines, assignments, estimates, PRDs, and implementation prompts. All linked to the same source of truth. One change ripples everywhere.',
     accent: 'text-amber-400',
     bg: 'bg-amber-500/10',
     border: 'border-amber-500/20',
@@ -670,7 +670,7 @@ const PIPELINE_STEPS = [
   {
     icon: FileCode2,
     title: 'AI Generates the Artifacts',
-    description: 'One click: PRDs, .cursorrules, CLAUDE.md, implementation prompts — all context-aware, ready to paste into your IDE.',
+    description: 'One click: PRDs, .cursorrules, CLAUDE.md, implementation prompts. All context-aware, ready to paste into your IDE.',
     accent: 'text-emerald-400',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/20',
@@ -714,7 +714,7 @@ export function OneShotPipeline() {
             <span className="text-primary">In One Session.</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            VisionPath doesn't just plan — it ties your <em>entire</em> project together.
+            VisionPath doesn't just plan. It ties your <em>entire</em> project together.
             One prompt creates a complete, interconnected plan that AI can execute from start to finish.
           </p>
         </motion.div>
