@@ -24,6 +24,7 @@ import { ViewSwitcher } from '@/components/views/view-switcher'
 import { ListView } from '@/components/views/list-view'
 import { TableView } from '@/components/views/table-view'
 import { BoardView } from '@/components/views/board-view'
+import { TimelineView } from '@/components/views/timeline-view'
 import type { IterationAction } from '@/prompts/iteration-system'
 
 interface ProjectWorkspaceProps {
@@ -446,6 +447,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
             {currentView === 'list' && <ListView />}
             {currentView === 'table' && <TableView />}
             {currentView === 'board' && <BoardView />}
+            {currentView === 'timeline' && <TimelineView />}
           </div>
         </div>
 

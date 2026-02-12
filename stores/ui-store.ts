@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { EdgeType, NodeType, NodeStatus } from '@/types/project'
 
-export type ViewType = 'canvas' | 'list' | 'table' | 'board'
+export type ViewType = 'canvas' | 'list' | 'table' | 'board' | 'timeline'
 
 interface PendingEdge {
   sourceId: string

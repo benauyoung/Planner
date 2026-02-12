@@ -1,6 +1,6 @@
 'use client'
 
-import { LayoutGrid, List, Table2, Columns3, Search, X } from 'lucide-react'
+import { LayoutGrid, List, Table2, Columns3, Search, X, GanttChart } from 'lucide-react'
 import { useUIStore, type ViewType } from '@/stores/ui-store'
 import { NODE_CONFIG } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -11,6 +11,7 @@ const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] 
   { value: 'list', label: 'List', icon: <List className="h-3.5 w-3.5" /> },
   { value: 'table', label: 'Table', icon: <Table2 className="h-3.5 w-3.5" /> },
   { value: 'board', label: 'Board', icon: <Columns3 className="h-3.5 w-3.5" /> },
+  { value: 'timeline', label: 'Timeline', icon: <GanttChart className="h-3.5 w-3.5" /> },
 ]
 
 const TYPE_OPTIONS: { value: NodeType; label: string }[] = [
