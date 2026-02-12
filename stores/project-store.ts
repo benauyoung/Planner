@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -64,6 +64,9 @@ interface ProjectState {
   updateSprint: (sprintId: string, updates: Partial<Pick<Sprint, 'name' | 'startDate' | 'endDate' | 'status'>>) => void
   deleteSprint: (sprintId: string) => void
   assignNodeToSprint: (nodeId: string, sprintId: string | undefined) => void
+  saveVersion: (name: string) => string
+  restoreVersion: (versionId: string) => void
+  deleteVersion: (versionId: string) => void
   undo: () => void
   redo: () => void
 }
@@ -873,6 +876,52 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         )
       }
       commitProjectUpdate({ ...project, nodes: updatedNodes, sprints, updatedAt: Date.now() })
+    },
+
+    saveVersion: (name) => {
+      const project = get().currentProject
+      if (!project) return ''
+      const id = generateId()
+      const version: ProjectVersion = {
+        id,
+        name,
+        snapshot: {
+          nodes: JSON.parse(JSON.stringify(project.nodes)),
+          edges: JSON.parse(JSON.stringify(project.edges)),
+          title: project.title,
+          description: project.description,
+        },
+        parentVersionId: project.currentVersionId,
+        createdAt: Date.now(),
+      }
+      const versions = [...(project.versions || []), version]
+      commitProjectUpdate({ ...project, versions, currentVersionId: id, updatedAt: Date.now() })
+      return id
+    },
+
+    restoreVersion: (versionId) => {
+      const project = get().currentProject
+      if (!project) return
+      const version = (project.versions || []).find((v) => v.id === versionId)
+      if (!version) return
+      const restored = {
+        ...project,
+        nodes: JSON.parse(JSON.stringify(version.snapshot.nodes)),
+        edges: JSON.parse(JSON.stringify(version.snapshot.edges)),
+        title: version.snapshot.title,
+        description: version.snapshot.description,
+        currentVersionId: versionId,
+        updatedAt: Date.now(),
+      }
+      commitProjectUpdate(restored)
+    },
+
+    deleteVersion: (versionId) => {
+      const project = get().currentProject
+      if (!project) return
+      const versions = (project.versions || []).filter((v) => v.id !== versionId)
+      const currentVersionId = project.currentVersionId === versionId ? undefined : project.currentVersionId
+      commitProjectUpdate({ ...project, versions, currentVersionId, updatedAt: Date.now() })
     },
 
     undo: () => {

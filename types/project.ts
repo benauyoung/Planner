@@ -98,6 +98,19 @@ export interface ProjectEdge {
   label?: string
 }
 
+export interface ProjectVersion {
+  id: string
+  name: string
+  snapshot: {
+    nodes: PlanNode[]
+    edges: ProjectEdge[]
+    title: string
+    description: string
+  }
+  parentVersionId?: string
+  createdAt: number
+}
+
 export interface Project {
   id: string
   userId: string
@@ -113,4 +126,6 @@ export interface Project {
   team?: TeamMember[]
   activity?: ActivityEvent[]
   sprints?: Sprint[]
+  versions?: ProjectVersion[]
+  currentVersionId?: string
 }
