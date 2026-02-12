@@ -116,7 +116,7 @@ function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): {
       id: `hierarchy-${node.parentId}-${node.id}`,
       source: node.parentId!,
       target: node.id,
-      type: 'bezier',
+      type: 'default',
       animated: false,
       style: { strokeDasharray: '6 4', strokeWidth: 1.5 },
     }))
@@ -131,7 +131,7 @@ function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): {
         id: e.id,
         source: e.source,
         target: e.target,
-        type: 'bezier',
+        type: 'default',
         animated: style.animated,
         label: e.label || (edgeType === 'blocks' ? 'blocks' : edgeType === 'depends_on' ? 'depends on' : undefined),
         style: {
