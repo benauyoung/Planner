@@ -91,7 +91,14 @@ const EDGE_STYLES: Record<EdgeType, { strokeDasharray?: string; stroke: string; 
   supersedes: { strokeDasharray: '3 3', stroke: 'hsl(0 70% 55%)', animated: false },
 }
 
-function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
+function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = [], existingFlowNodes?: FlowNode[]): { flowNodes: FlowNode[]; flowEdges: FlowEdge[] } {
+  const positionMap = new Map<string, { x: number; y: number }>()
+  if (existingFlowNodes) {
+    for (const fn of existingFlowNodes) {
+      positionMap.set(fn.id, fn.position)
+    }
+  }
+
   const flowNodes: FlowNode[] = nodes
     .filter((node) => {
       if (!node.parentId) return true
@@ -101,7 +108,7 @@ function planNodesToFlow(nodes: PlanNode[], projectEdges: ProjectEdge[] = []): {
     .map((node) => ({
       id: node.id,
       type: node.type,
-      position: { x: 0, y: 0 },
+      position: positionMap.get(node.id) || { x: 0, y: 0 },
       data: {
         label: node.title,
         description: node.description,
@@ -180,7 +187,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     const undoStack = prev
       ? [...get()._undoStack, prev].slice(-MAX_UNDO_STACK)
       : get()._undoStack
-    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes, updatedProject.edges)
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes, updatedProject.edges, get().flowNodes)
     set({
       currentProject: updatedProject,
       flowNodes,
@@ -194,7 +201,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
 
   /** Apply project without pushing to undo (for view-only changes like collapse) */
   function applyWithoutUndo(updatedProject: Project) {
-    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes, updatedProject.edges)
+    const { flowNodes, flowEdges } = planNodesToFlow(updatedProject.nodes, updatedProject.edges, get().flowNodes)
     set({ currentProject: updatedProject, flowNodes, flowEdges })
   }
 
@@ -1059,7 +1066,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         ? [..._redoStack, currentProject]
         : _redoStack
 
-      const { flowNodes, flowEdges } = planNodesToFlow(previous.nodes, previous.edges)
+      const { flowNodes, flowEdges } = planNodesToFlow(previous.nodes, previous.edges, get().flowNodes)
       set({
         currentProject: previous,
         flowNodes,
@@ -1081,7 +1088,7 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         ? [..._undoStack, currentProject]
         : _undoStack
 
-      const { flowNodes, flowEdges } = planNodesToFlow(next.nodes, next.edges)
+      const { flowNodes, flowEdges } = planNodesToFlow(next.nodes, next.edges, get().flowNodes)
       set({
         currentProject: next,
         flowNodes,
