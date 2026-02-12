@@ -17,6 +17,7 @@ import { PrioritySelector } from '@/components/ui/priority-badge'
 import { AssigneePicker } from '@/components/ui/assignee-picker'
 import { TagInput } from '@/components/ui/tag-input'
 import { CommentThread } from '@/components/comments/comment-thread'
+import { BlockEditor } from '@/components/editor/block-editor'
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
   { value: 'not_started', label: 'Not Started' },
@@ -387,6 +388,20 @@ export function NodeDetailPanel() {
                 tags={node.tags || []}
                 onChange={(tags) => setNodeTags(node.id, tags)}
               />
+            </div>
+
+            {/* Document */}
+            <div className="mt-4">
+              <label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
+                <FileText className="h-3.5 w-3.5" />
+                Document
+              </label>
+              <div className="border rounded-lg p-3 bg-muted/10">
+                <BlockEditor
+                  nodeId={node.id}
+                  blocks={node.document?.blocks || []}
+                />
+              </div>
             </div>
 
             {/* Comments */}

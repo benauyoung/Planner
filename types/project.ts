@@ -66,6 +66,20 @@ export interface Sprint {
   status: SprintStatus
 }
 
+export type DocumentBlock =
+  | { id: string; type: 'heading'; level: 1 | 2 | 3; content: string }
+  | { id: string; type: 'paragraph'; content: string }
+  | { id: string; type: 'code'; language: string; content: string }
+  | { id: string; type: 'checklist'; items: { text: string; checked: boolean }[] }
+  | { id: string; type: 'divider' }
+  | { id: string; type: 'callout'; emoji: string; content: string }
+
+export interface NodeDocument {
+  id: string
+  blocks: DocumentBlock[]
+  updatedAt: number
+}
+
 export interface PlanNode {
   id: string
   type: NodeType
@@ -86,6 +100,7 @@ export interface PlanNode {
   tags?: string[]
   comments?: NodeComment[]
   sprintId?: string
+  document?: NodeDocument
 }
 
 export type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'

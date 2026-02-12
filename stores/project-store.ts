@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -67,6 +67,7 @@ interface ProjectState {
   saveVersion: (name: string) => string
   restoreVersion: (versionId: string) => void
   deleteVersion: (versionId: string) => void
+  updateNodeDocument: (nodeId: string, blocks: DocumentBlock[]) => void
   undo: () => void
   redo: () => void
 }
@@ -922,6 +923,19 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const versions = (project.versions || []).filter((v) => v.id !== versionId)
       const currentVersionId = project.currentVersionId === versionId ? undefined : project.currentVersionId
       commitProjectUpdate({ ...project, versions, currentVersionId, updatedAt: Date.now() })
+    },
+
+    updateNodeDocument: (nodeId, blocks) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) => {
+        if (n.id !== nodeId) return n
+        const doc: NodeDocument = n.document
+          ? { ...n.document, blocks, updatedAt: Date.now() }
+          : { id: generateId(), blocks, updatedAt: Date.now() }
+        return { ...n, document: doc }
+      })
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
     },
 
     undo: () => {
