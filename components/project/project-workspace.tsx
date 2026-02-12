@@ -3,7 +3,7 @@
 import { useEffect, useCallback, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageSquare, PanelLeftClose, Users, Lightbulb, History } from 'lucide-react'
+import { MessageSquare, PanelLeftClose, Users, Lightbulb, History, Plug } from 'lucide-react'
 import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
@@ -28,6 +28,7 @@ import { TimelineView } from '@/components/views/timeline-view'
 import { SprintBoard } from '@/components/sprints/sprint-board'
 import { SmartSuggestionsPanel } from '@/components/ai/smart-suggestions-panel'
 import { VersionHistory } from '@/components/versions/version-history'
+import { IntegrationSettings } from '@/components/integrations/integration-settings'
 import { useAISuggestions } from '@/hooks/use-ai-suggestions'
 import type { IterationAction } from '@/prompts/iteration-system'
 
@@ -50,6 +51,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const [teamManagerOpen, setTeamManagerOpen] = useState(false)
   const [smartPanelOpen, setSmartPanelOpen] = useState(false)
   const [versionHistoryOpen, setVersionHistoryOpen] = useState(false)
+  const [integrationsOpen, setIntegrationsOpen] = useState(false)
   const { suggestions: smartSuggestions, loading: smartLoading, error: smartError, analyze: smartAnalyze, dismiss: smartDismiss, clear: smartClear } = useAISuggestions()
   const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set())
   const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set())
@@ -463,6 +465,14 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                   >
                     <History className="h-4 w-4" />
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setIntegrationsOpen(true)}
+                    title="Integrations"
+                  >
+                    <Plug className="h-4 w-4" />
+                  </Button>
                   <ShareButton />
                 </div>
               </>
@@ -521,6 +531,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
       <VersionHistory
         open={versionHistoryOpen}
         onClose={() => setVersionHistoryOpen(false)}
+      />
+      <IntegrationSettings
+        open={integrationsOpen}
+        onClose={() => setIntegrationsOpen(false)}
       />
     </ReactFlowProvider>
   )
