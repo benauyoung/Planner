@@ -1,6 +1,6 @@
 # VisionPath Implementation Plan
 
-> Living checklist reflecting actual implementation status as of February 2026.
+> Living checklist reflecting actual implementation status as of February 12, 2026.
 
 ---
 
@@ -212,6 +212,35 @@
 
 ---
 
+## Phase 12: Landing Page & Route Restructure ✅
+
+### 12.1 Route Groups
+- [x] Create `app/(marketing)/` route group for public pages
+- [x] Create `app/(app)/` route group for authenticated pages
+- [x] Strip root `app/layout.tsx` to html/body/fonts only
+- [x] `app/(app)/layout.tsx` — AuthProvider + Header + ErrorBoundary
+- [x] `app/(marketing)/layout.tsx` — LandingNavBar + Footer
+- [x] Move dashboard from `/` to `/dashboard`
+- [x] Move login, project, share routes under `(app)` group
+- [x] Update all auth redirects (`/` → `/dashboard`)
+- [x] Update header logo link to `/dashboard`
+
+### 12.2 Landing Page
+- [x] `components/landing/nav-bar.tsx` — Sticky nav, transparent → blur on scroll, mobile hamburger
+- [x] `components/landing/hero-section.tsx` — Split screen: headline + CTA / animated mockup
+- [x] `components/landing/hero-mockup.tsx` — SVG/CSS animated canvas nodes + dashed edges
+- [x] `components/landing/trust-bar.tsx` — "Station 8 Developed", "Pioneers VC Approved"
+- [x] `components/landing/how-it-works.tsx` — 3-step workflow
+- [x] `components/landing/features-grid.tsx` — 6-card feature showcase
+- [x] `components/landing/cta-banner.tsx` — Full-width gradient CTA section
+- [x] `components/landing/footer.tsx` — 4-column footer with social icons
+
+### 12.3 Dashboard Loading & Persistence
+- [x] `components/dashboard/dashboard-loader.tsx` — Animated loader (floating nodes, spinning compass)
+- [x] `services/persistence.ts` — Runtime Firestore → localStorage failover via `withFallback()`
+
+---
+
 ## Future Work
 
 ### Real-Time Collaboration
@@ -239,7 +268,9 @@
 
 ## Notes
 
-- Firebase is optional — all env vars guarded at init
+- Firebase is optional — all env vars guarded at init; runtime failover to localStorage
+- Route groups: `(marketing)` public, `(app)` authenticated; root layout is minimal
+- Landing page is public at `/`; dashboard at `/dashboard`
 - Images stored as base64 data URLs (no external storage needed)
 - PRDs and prompts designed for copy-paste into IDE workflows
 - Smart mapping uses `PARENT_TYPE_MAP` hierarchy + Euclidean distance
@@ -248,3 +279,4 @@
 - Export supports 7 formats: JSON, Full Plan MD, Tasks MD, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - Markdown import maps heading levels: # → goal, ## → subgoal, ### → feature, #### → task
 - 3 seed templates available: SaaS Auth, REST API, Landing Page
+- Animated dashboard loader with floating nodes and spinning compass icon

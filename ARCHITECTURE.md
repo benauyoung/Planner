@@ -1,6 +1,6 @@
 # VisionPath Architecture
 
-> Source of truth for how VisionPath is built. Reflects the **actual implemented codebase** as of February 2026.
+> Source of truth for how VisionPath is built. Reflects the **actual implemented codebase** as of February 12, 2026.
 
 ---
 
@@ -20,14 +20,15 @@
 │  └──────────────────────────────────────┘                    │
 ├──────────────────────────────────────────────────────────────┤
 │                    Next.js App Router                         │
+│  Route Groups: (marketing) public │ (app) authenticated      │
 │              API Routes: /api/ai/chat                         │
 │              API Routes: /api/ai/suggest-features             │
 │              API Routes: /api/ai/generate-prd                 │
 │              API Routes: /api/ai/generate-prompt              │
 │              API Routes: /api/ai/generate-questions           │
 ├──────────────────────────────────────────────────────────────┤
-│              Firebase (Optional, guarded)                     │
-│              Auth + Firestore                                 │
+│         Firebase (Optional, guarded, runtime failover)        │
+│              Auth + Firestore → localStorage fallback         │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -242,6 +243,15 @@ The `planNodesToFlow(nodes, projectEdges)` function converts `PlanNode[]` + `Pro
 
 ```
 components/
+├── landing/                            # Public landing page (marketing)
+│   ├── nav-bar.tsx                     # Sticky nav, blur on scroll, mobile menu
+│   ├── hero-section.tsx                # Split-screen hero: headline + CTA / mockup
+│   ├── hero-mockup.tsx                 # SVG animated canvas mockup (nodes + edges)
+│   ├── trust-bar.tsx                   # Social proof badges
+│   ├── how-it-works.tsx                # 3-step workflow
+│   ├── features-grid.tsx               # 6-card feature showcase
+│   ├── cta-banner.tsx                  # Full-width gradient CTA
+│   └── footer.tsx                      # 4-column footer with social icons
 ├── canvas/
 │   ├── graph-canvas.tsx              # Main ReactFlow wrapper (blast radius, typed edges)
 │   ├── canvas-toolbar.tsx            # Export dropdown, blast radius toggle, undo/redo
@@ -277,6 +287,7 @@ components/
 ├── dashboard/
 │   ├── project-list.tsx              # Project cards grid
 │   ├── project-card.tsx              # Single project card
+│   ├── dashboard-loader.tsx          # Animated loading screen (floating nodes, compass)
 │   ├── create-project-button.tsx     # New project button
 │   ├── import-project-button.tsx     # JSON import button
 │   ├── import-markdown-modal.tsx     # Markdown import modal with preview
@@ -285,7 +296,7 @@ components/
 │   ├── share-button.tsx              # Share popover (public/private toggle, copy link)
 │   └── shared-plan-view.tsx          # Read-only canvas for shared plans
 ├── layout/
-│   ├── header.tsx                    # Top navigation bar
+│   ├── header.tsx                    # App header (logo → /dashboard)
 │   ├── theme-toggle.tsx              # Dark/light toggle
 │   └── user-menu.tsx                 # User avatar/menu
 └── ui/                               # Reusable primitives
@@ -301,6 +312,14 @@ components/
 ---
 
 ## Key Flows
+
+### 0. Landing → Login → Dashboard
+```
+User → / (public landing page)
+  → Clicks "Get Started" → /login
+  → Signs in (email/password or Google)
+  → Redirect to /dashboard → DashboardLoader → ProjectList
+```
 
 ### 1. Project Creation
 ```
@@ -400,16 +419,21 @@ const NODE_CONFIG = {
 
 ---
 
-## Firebase (Optional, Guarded)
+## Firebase & Persistence (Optional, Guarded, Failover)
 
 All Firebase usage is null-guarded so the app works without credentials:
 - `services/firebase.ts` — Initializes only if env vars present
 - `services/firestore.ts` — Returns early if `db` is null
 - `services/auth.ts` — Returns early if `auth` is null
-- `services/persistence.ts` — Persistence abstraction layer
+- `services/persistence.ts` — Persistence abstraction with runtime failover
 - `services/local-storage.ts` — localStorage fallback for offline persistence
 
-Without Firebase, the app persists state to localStorage as a fallback. If neither Firebase nor localStorage is available, Zustand state resets on refresh.
+**Three persistence scenarios:**
+1. Firebase not configured (no env vars) → uses localStorage from the start
+2. Firebase configured and working → uses Firestore
+3. Firebase configured but unavailable (e.g. database not provisioned) → tries Firestore, catches error, permanently falls back to localStorage
+
+The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automatically. Without Firebase or localStorage, Zustand state resets on refresh.
 
 ---
 
@@ -440,3 +464,7 @@ Without Firebase, the app persists state to localStorage as a fallback. If neith
 | 2026-02 | Markdown import | Parse structured markdown into plan DAG with heading hierarchy |
 | 2026-02 | Shareable plans | Public toggle with read-only share URL |
 | 2026-02 | Template library | Pre-built seed plans for common project patterns |
+| 2026-02 | Landing page | Public marketing page with hero, trust bar, features, CTA, footer |
+| 2026-02 | Route groups | (marketing) for public pages, (app) for authenticated pages |
+| 2026-02 | Persistence failover | Runtime Firestore → localStorage fallback on error |
+| 2026-02 | Dashboard loader | Animated loading screen with floating nodes + spinning compass |

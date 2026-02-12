@@ -1,6 +1,6 @@
 # VisionPath Roadmap
 
-> Milestone tracking. Updated February 2026 to reflect actual progress.
+> Milestone tracking. Updated February 12, 2026 to reflect actual progress.
 
 ---
 
@@ -125,7 +125,21 @@
 
 ---
 
-### M10: Advanced Polish 🟡
+### M10: Landing Page & Route Restructure ✅
+**Status**: Complete
+
+**Delivered**:
+- Public landing page at `/` with hero, trust bar, how-it-works, features grid, CTA, footer
+- 8 new components in `components/landing/`
+- Next.js route groups: `(marketing)` for public, `(app)` for authenticated
+- Dashboard moved to `/dashboard` with animated loading screen
+- Root layout stripped to html/body/fonts only
+- Auth redirects updated for new `/dashboard` path
+- Firestore runtime failover to localStorage via `withFallback()` in persistence.ts
+
+---
+
+### M11: Advanced Polish 🟡
 **Status**: Partially Complete
 
 **Delivered**:
@@ -159,6 +173,8 @@
 - Typed edges & blast radius ✅ (blocks/depends_on edges, blast radius preview)
 - Shareable plans ✅ (public toggle, share URL, read-only view)
 - Template library ✅ (3 seed templates, gallery UI, new project chooser)
+- Landing page ✅ (public marketing page, route groups, animated dashboard loader)
+- Persistence failover ✅ (runtime Firestore → localStorage fallback)
 
 ### v1.0.0 - Launch (Planned)
 - Real-time collaboration
@@ -177,3 +193,6 @@
 | 2026-02-10 | Added M7.5: AI-powered PRD and prompt generation from node hierarchy context |
 | 2026-02-11 | M8 Persistence verified complete; added JSON export/import; began MVP gap-fill sprint |
 | 2026-02-11 | v0.5.0 Beta complete: context export, markdown import, typed edges, blast radius, sharing, templates |
+| 2026-02-11 | Landing page + route restructure: (marketing)/(app) route groups, 8 landing components |
+| 2026-02-11 | Firestore runtime failover + animated dashboard loader |
+| 2026-02-12 | Full project handoff documentation update |

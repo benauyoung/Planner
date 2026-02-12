@@ -1,6 +1,6 @@
 # AI Agent Onboarding
 
-> **Read this document FIRST before doing any work on VisionPath.** Updated February 2026.
+> **Read this document FIRST before doing any work on VisionPath.** Updated February 12, 2026.
 
 ---
 
@@ -53,6 +53,9 @@ You are working on **VisionPath**, a visual DAG-based project planning tool buil
 
 ## Current State Summary (v0.5.0 Beta ✅)
 
+- **Landing page**: public marketing page at `/` with hero, trust bar, features, CTA, footer
+- **Route groups**: `(marketing)` for public pages, `(app)` for authenticated pages
+- **Dashboard**: at `/dashboard` with animated loading screen (floating nodes, spinning compass)
 - **7 node types**: goal, subgoal, feature, task, moodboard, notes, connector
 - **Rich content**: images (base64), rich text (Tiptap), PRDs, IDE prompts
 - **AI integration**: onboarding questionnaire + chat planning via Gemini
@@ -63,7 +66,7 @@ You are working on **VisionPath**, a visual DAG-based project planning tool buil
 - **Import**: JSON projects, Markdown specs (paste/upload with preview)
 - **Shareable plans**: public toggle + read-only share URL
 - **Template library**: 3 seed templates (Auth System, CRUD API, Landing Page)
-- **Persistence**: Firebase Firestore + localStorage fallback
+- **Persistence**: Firebase Firestore with runtime failover to localStorage
 
 ---
 
