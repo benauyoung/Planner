@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -60,6 +60,10 @@ interface ProjectState {
   addNodeComment: (nodeId: string, authorName: string, authorColor: string, content: string) => void
   deleteNodeComment: (nodeId: string, commentId: string) => void
   addActivityEvent: (event: Omit<ActivityEvent, 'id' | 'timestamp'>) => void
+  createSprint: (name: string, startDate: number, endDate: number) => string
+  updateSprint: (sprintId: string, updates: Partial<Pick<Sprint, 'name' | 'startDate' | 'endDate' | 'status'>>) => void
+  deleteSprint: (sprintId: string) => void
+  assignNodeToSprint: (nodeId: string, sprintId: string | undefined) => void
   undo: () => void
   redo: () => void
 }
@@ -819,6 +823,56 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       }
       const updatedActivity = [...(project.activity || []), full]
       commitProjectUpdate({ ...project, activity: updatedActivity, updatedAt: Date.now() })
+    },
+
+    createSprint: (name, startDate, endDate) => {
+      const project = get().currentProject
+      if (!project) return ''
+      const id = generateId()
+      const sprint: Sprint = { id, name, startDate, endDate, nodeIds: [], status: 'planning' }
+      const sprints = [...(project.sprints || []), sprint]
+      commitProjectUpdate({ ...project, sprints, updatedAt: Date.now() })
+      return id
+    },
+
+    updateSprint: (sprintId, updates) => {
+      const project = get().currentProject
+      if (!project) return
+      const sprints = (project.sprints || []).map((s) =>
+        s.id === sprintId ? { ...s, ...updates } : s
+      )
+      commitProjectUpdate({ ...project, sprints, updatedAt: Date.now() })
+    },
+
+    deleteSprint: (sprintId) => {
+      const project = get().currentProject
+      if (!project) return
+      const sprints = (project.sprints || []).filter((s) => s.id !== sprintId)
+      const updatedNodes = project.nodes.map((n) =>
+        n.sprintId === sprintId ? { ...n, sprintId: undefined } : n
+      )
+      commitProjectUpdate({ ...project, sprints, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
+    assignNodeToSprint: (nodeId, sprintId) => {
+      const project = get().currentProject
+      if (!project) return
+      const updatedNodes = project.nodes.map((n) =>
+        n.id === nodeId ? { ...n, sprintId } : n
+      )
+      let sprints = [...(project.sprints || [])]
+      // Remove from old sprint nodeIds
+      sprints = sprints.map((s) => ({
+        ...s,
+        nodeIds: s.nodeIds.filter((id) => id !== nodeId),
+      }))
+      // Add to new sprint nodeIds
+      if (sprintId) {
+        sprints = sprints.map((s) =>
+          s.id === sprintId ? { ...s, nodeIds: [...s.nodeIds, nodeId] } : s
+        )
+      }
+      commitProjectUpdate({ ...project, nodes: updatedNodes, sprints, updatedAt: Date.now() })
     },
 
     undo: () => {

@@ -55,6 +55,17 @@ export interface ActivityEvent {
   timestamp: number
 }
 
+export type SprintStatus = 'planning' | 'active' | 'completed'
+
+export interface Sprint {
+  id: string
+  name: string
+  startDate: number
+  endDate: number
+  nodeIds: string[]
+  status: SprintStatus
+}
+
 export interface PlanNode {
   id: string
   type: NodeType
@@ -74,6 +85,7 @@ export interface PlanNode {
   estimatedHours?: number
   tags?: string[]
   comments?: NodeComment[]
+  sprintId?: string
 }
 
 export type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
@@ -100,4 +112,5 @@ export interface Project {
   shareId?: string
   team?: TeamMember[]
   activity?: ActivityEvent[]
+  sprints?: Sprint[]
 }
