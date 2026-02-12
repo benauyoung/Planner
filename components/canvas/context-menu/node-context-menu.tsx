@@ -20,6 +20,7 @@ import {
   Download,
   Ban,
   ArrowRight,
+  Sparkles,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG, NODE_CHILD_TYPE, STATUS_COLORS } from '@/lib/constants'
@@ -382,6 +383,47 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         <Download className="h-4 w-4" />
         <span>Export as Markdown</span>
       </button>
+
+      <div className="h-px bg-border mx-2 my-1" />
+
+      {/* AI Actions */}
+      <div className="px-3 py-1 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+        AI Actions
+      </div>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'break_down', nodeId } })); onClose() }}
+        onMouseEnter={handleItemHover}
+      >
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>AI: Break Down</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'rewrite', nodeId } })); onClose() }}
+        onMouseEnter={handleItemHover}
+      >
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>AI: Rewrite</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'estimate', nodeId } })); onClose() }}
+        onMouseEnter={handleItemHover}
+      >
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>AI: Estimate</span>
+      </button>
+      <button
+        className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+        onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'suggest_deps', nodeId } })); onClose() }}
+        onMouseEnter={handleItemHover}
+      >
+        <Sparkles className="h-4 w-4 text-primary" />
+        <span>AI: Suggest Dependencies</span>
+      </button>
+
+      <div className="h-px bg-border mx-2 my-1" />
 
       {/* Duplicate */}
       <button

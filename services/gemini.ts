@@ -111,3 +111,66 @@ export const promptGenerationSchema: Schema = {
   },
   required: ['title', 'content'],
 }
+
+export const iterationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    message: { type: SchemaType.STRING, description: 'Brief explanation of what the AI did' },
+    suggestions: {
+      type: SchemaType.ARRAY,
+      description: 'List of suggested changes to the plan',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          id: { type: SchemaType.STRING, description: 'Unique suggestion ID' },
+          type: {
+            type: SchemaType.STRING,
+            enum: ['add_node', 'update_node', 'delete_node', 'add_edge', 'estimate'],
+            description: 'Type of change suggested',
+          },
+          targetNodeId: {
+            type: SchemaType.STRING,
+            description: 'ID of the node being modified (for update/delete/estimate)',
+            nullable: true,
+          },
+          node: {
+            type: SchemaType.OBJECT,
+            description: 'Node data (for add_node and update_node)',
+            nullable: true,
+            properties: {
+              id: { type: SchemaType.STRING },
+              type: {
+                type: SchemaType.STRING,
+                enum: ['goal', 'subgoal', 'feature', 'task'],
+              },
+              title: { type: SchemaType.STRING },
+              description: { type: SchemaType.STRING },
+              parentId: { type: SchemaType.STRING, nullable: true },
+            },
+            required: ['id', 'type', 'title', 'description', 'parentId'],
+          },
+          edge: {
+            type: SchemaType.OBJECT,
+            description: 'Edge data (for add_edge)',
+            nullable: true,
+            properties: {
+              source: { type: SchemaType.STRING },
+              target: { type: SchemaType.STRING },
+              edgeType: { type: SchemaType.STRING, enum: ['blocks', 'depends_on'] },
+            },
+            required: ['source', 'target', 'edgeType'],
+          },
+          estimatedHours: {
+            type: SchemaType.NUMBER,
+            description: 'Estimated hours (for estimate type)',
+            nullable: true,
+          },
+          reason: { type: SchemaType.STRING, description: 'Why this change is suggested' },
+          confidence: { type: SchemaType.NUMBER, description: 'Confidence 0.0-1.0' },
+        },
+        required: ['id', 'type', 'reason', 'confidence'],
+      },
+    },
+  },
+  required: ['message', 'suggestions'],
+}

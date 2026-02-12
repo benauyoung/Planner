@@ -184,6 +184,61 @@ export function buildCommands(ctx: CommandContext): Command[] {
     })
   }
 
+  // ── AI Actions ────────────────────────────────
+  if (ctx.hasProject) {
+    commands.push({
+      id: 'ai:audit',
+      label: 'AI: Audit Plan for Gaps',
+      shortcut: '',
+      category: 'ai',
+      when: 'has-project',
+      action: () => window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'audit', nodeId: ctx.selectedNodeId || '' } })),
+    })
+    commands.push({
+      id: 'ai:risk',
+      label: 'AI: Risk Assessment',
+      shortcut: '',
+      category: 'ai',
+      when: 'has-project',
+      action: () => window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'risk', nodeId: ctx.selectedNodeId || '' } })),
+    })
+    commands.push({
+      id: 'ai:suggest-deps',
+      label: 'AI: Suggest Dependencies',
+      shortcut: '',
+      category: 'ai',
+      when: 'has-project',
+      action: () => window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'suggest_deps', nodeId: ctx.selectedNodeId || '' } })),
+    })
+  }
+  if (ctx.hasSelection && ctx.selectedNodeId) {
+    const nodeId = ctx.selectedNodeId
+    commands.push({
+      id: 'ai:break-down',
+      label: 'AI: Break Down Selected Node',
+      shortcut: '',
+      category: 'ai',
+      when: 'has-selection',
+      action: () => window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'break_down', nodeId } })),
+    })
+    commands.push({
+      id: 'ai:rewrite',
+      label: 'AI: Rewrite Selected Node',
+      shortcut: '',
+      category: 'ai',
+      when: 'has-selection',
+      action: () => window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'rewrite', nodeId } })),
+    })
+    commands.push({
+      id: 'ai:estimate',
+      label: 'AI: Estimate Selected Node',
+      shortcut: '',
+      category: 'ai',
+      when: 'has-selection',
+      action: () => window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'estimate', nodeId } })),
+    })
+  }
+
   // ── Jump to node (search) ─────────────────────
   for (const node of ctx.allNodes) {
     commands.push({

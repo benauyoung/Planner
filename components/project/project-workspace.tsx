@@ -17,6 +17,9 @@ import { TimelineBar } from '@/components/canvas/timeline-bar'
 import { ShareButton } from '@/components/share/share-button'
 import { CommandPalette } from '@/components/ui/command-palette'
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
+import { AISuggestionsPanel } from '@/components/ai/ai-suggestions-panel'
+import { useAIIterate, type AISuggestion } from '@/hooks/use-ai-iterate'
+import type { IterationAction } from '@/prompts/iteration-system'
 
 interface ProjectWorkspaceProps {
   projectId: string
@@ -31,6 +34,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const shortcutsHelpOpen = useUIStore((s) => s.shortcutsHelpOpen)
   const reLayoutRef = useRef<(() => void) | null>(null)
   const fitViewRef = useRef<(() => void) | null>(null)
+  const { iterate, applySuggestion, applyAll, clearResult, loading: aiLoading, result: aiResult, error: aiError } = useAIIterate()
+  const [aiPanelOpen, setAIPanelOpen] = useState(false)
+  const [dismissedSuggestions, setDismissedSuggestions] = useState<Set<string>>(new Set())
+  const [appliedSuggestions, setAppliedSuggestions] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (currentProject) {
@@ -40,6 +47,44 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
     const timer = setTimeout(() => setLoading(false), 3000)
     return () => clearTimeout(timer)
   }, [currentProject])
+
+  // Listen for AI iteration events from context menu
+  useEffect(() => {
+    function handleAIIterate(e: Event) {
+      const detail = (e as CustomEvent).detail as { action: IterationAction; nodeId: string }
+      setAIPanelOpen(true)
+      setDismissedSuggestions(new Set())
+      setAppliedSuggestions(new Set())
+      iterate(detail.action, detail.nodeId)
+    }
+    window.addEventListener('ai-iterate', handleAIIterate)
+    return () => window.removeEventListener('ai-iterate', handleAIIterate)
+  }, [iterate])
+
+  const handleApplySuggestion = useCallback((s: AISuggestion) => {
+    applySuggestion(s)
+    setAppliedSuggestions((prev) => new Set(prev).add(s.id))
+  }, [applySuggestion])
+
+  const handleApplyAll = useCallback((suggestions: AISuggestion[]) => {
+    applyAll(suggestions)
+    setAppliedSuggestions((prev) => {
+      const next = new Set(prev)
+      suggestions.forEach((s) => next.add(s.id))
+      return next
+    })
+  }, [applyAll])
+
+  const handleDismissSuggestion = useCallback((id: string) => {
+    setDismissedSuggestions((prev) => new Set(prev).add(id))
+  }, [])
+
+  const handleCloseAIPanel = useCallback(() => {
+    setAIPanelOpen(false)
+    clearResult()
+    setDismissedSuggestions(new Set())
+    setAppliedSuggestions(new Set())
+  }, [clearResult])
 
   // Ensure chat phase is 'greeting' (not 'onboarding') for saved projects
   useEffect(() => {
@@ -311,6 +356,19 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
             </div>
           </div>
           <NodeDetailPanel />
+          {aiPanelOpen && (
+            <AISuggestionsPanel
+              result={aiResult}
+              loading={aiLoading}
+              error={aiError}
+              onApply={handleApplySuggestion}
+              onApplyAll={handleApplyAll}
+              onDismiss={handleDismissSuggestion}
+              onClose={handleCloseAIPanel}
+              dismissed={dismissedSuggestions}
+              applied={appliedSuggestions}
+            />
+          )}
         </div>
         <CommandPalette
           open={commandPaletteOpen}
@@ -370,6 +428,21 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
 
         {/* Detail Panel */}
         <NodeDetailPanel />
+
+        {/* AI Suggestions Panel */}
+        {aiPanelOpen && (
+          <AISuggestionsPanel
+            result={aiResult}
+            loading={aiLoading}
+            error={aiError}
+            onApply={handleApplySuggestion}
+            onApplyAll={handleApplyAll}
+            onDismiss={handleDismissSuggestion}
+            onClose={handleCloseAIPanel}
+            dismissed={dismissedSuggestions}
+            applied={appliedSuggestions}
+          />
+        )}
       </div>
       <CommandPalette
         open={commandPaletteOpen}
