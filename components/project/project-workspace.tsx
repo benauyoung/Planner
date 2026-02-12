@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useCallback, useState } from 'react'
+import { useEffect, useCallback, useRef, useState } from 'react'
 import { ReactFlowProvider } from '@xyflow/react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageSquare, PanelLeftClose } from 'lucide-react'
@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TimelineBar } from '@/components/canvas/timeline-bar'
 import { ShareButton } from '@/components/share/share-button'
+import { CommandPalette } from '@/components/ui/command-palette'
+import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 
 interface ProjectWorkspaceProps {
   projectId: string
@@ -25,6 +27,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const currentProject = useProjectStore((s) => s.currentProject)
   const [chatOpen, setChatOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const commandPaletteOpen = useUIStore((s) => s.commandPaletteOpen)
+  const shortcutsHelpOpen = useUIStore((s) => s.shortcutsHelpOpen)
+  const reLayoutRef = useRef<(() => void) | null>(null)
+  const fitViewRef = useRef<(() => void) | null>(null)
 
   useEffect(() => {
     if (currentProject) {
@@ -46,25 +52,114 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       const target = e.target as HTMLElement
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return
-      // Let contentEditable elements (e.g. TipTap) handle their own undo
-      if (target.isContentEditable) return
+      const isInput = target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable
+      const mod = e.ctrlKey || e.metaKey
 
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+      // Cmd+K — always open command palette
+      if (mod && e.key === 'k') {
+        e.preventDefault()
+        useUIStore.getState().openCommandPalette()
+        return
+      }
+
+      // Don't handle other shortcuts when typing in inputs
+      if (isInput) return
+
+      // ? — shortcuts help
+      if (e.key === '?' && !mod) {
+        e.preventDefault()
+        useUIStore.getState().openShortcutsHelp()
+        return
+      }
+
+      // Escape — close palette/help/detail panel
+      if (e.key === 'Escape') {
+        const ui = useUIStore.getState()
+        if (ui.commandPaletteOpen) { ui.closeCommandPalette(); return }
+        if (ui.shortcutsHelpOpen) { ui.closeShortcutsHelp(); return }
+        ui.closeDetailPanel()
+        return
+      }
+
+      // Undo / Redo
+      if (mod && e.key === 'z' && !e.shiftKey) {
         e.preventDefault()
         useProjectStore.getState().undo()
-      } else if (
-        (e.ctrlKey || e.metaKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')
-      ) {
+        return
+      }
+      if (mod && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
         e.preventDefault()
         useProjectStore.getState().redo()
-      } else if (e.key === 'Escape') {
-        useUIStore.getState().closeDetailPanel()
-      } else if (e.key === 'Delete' || e.key === 'Backspace') {
+        return
+      }
+
+      // Ctrl+E — toggle detail panel
+      if (mod && e.key === 'e') {
+        e.preventDefault()
+        useUIStore.getState().toggleDetailPanel()
+        return
+      }
+
+      // Ctrl+J — toggle chat
+      if (mod && e.key === 'j') {
+        e.preventDefault()
+        setChatOpen((prev) => !prev)
+        return
+      }
+
+      // Ctrl+L — re-layout
+      if (mod && e.key === 'l') {
+        e.preventDefault()
+        reLayoutRef.current?.()
+        return
+      }
+
+      // Ctrl+0 — fit view
+      if (mod && e.key === '0') {
+        e.preventDefault()
+        fitViewRef.current?.()
+        return
+      }
+
+      // Ctrl+B — blast radius
+      if (mod && e.key === 'b') {
+        e.preventDefault()
+        const ui = useUIStore.getState()
+        ui.setBlastRadiusMode(!ui.blastRadiusMode)
+        return
+      }
+
+      // Ctrl+D — duplicate node
+      if (mod && e.key === 'd') {
+        e.preventDefault()
+        const selectedId = useUIStore.getState().selectedNodeId
+        if (selectedId) useProjectStore.getState().duplicateNode(selectedId, false)
+        return
+      }
+
+      // Delete / Backspace — delete selected node
+      if (e.key === 'Delete' || e.key === 'Backspace') {
         const selectedId = useUIStore.getState().selectedNodeId
         if (selectedId) {
           useProjectStore.getState().deleteNode(selectedId)
           useUIStore.getState().closeDetailPanel()
+        }
+        return
+      }
+
+      // 1-4 — set node status
+      const selectedId = useUIStore.getState().selectedNodeId
+      if (selectedId && !mod) {
+        const statusMap: Record<string, 'not_started' | 'in_progress' | 'completed' | 'blocked'> = {
+          '1': 'not_started',
+          '2': 'in_progress',
+          '3': 'completed',
+          '4': 'blocked',
+        }
+        if (statusMap[e.key]) {
+          e.preventDefault()
+          useProjectStore.getState().updateNodeStatus(selectedId, statusMap[e.key])
+          return
         }
       }
     }
@@ -217,6 +312,15 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           </div>
           <NodeDetailPanel />
         </div>
+        <CommandPalette
+          open={commandPaletteOpen}
+          onClose={() => useUIStore.getState().closeCommandPalette()}
+          toggleChat={() => setChatOpen((prev) => !prev)}
+        />
+        <ShortcutsHelp
+          open={shortcutsHelpOpen}
+          onClose={() => useUIStore.getState().closeShortcutsHelp()}
+        />
       </ReactFlowProvider>
     )
   }
@@ -267,6 +371,15 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         {/* Detail Panel */}
         <NodeDetailPanel />
       </div>
+      <CommandPalette
+        open={commandPaletteOpen}
+        onClose={() => useUIStore.getState().closeCommandPalette()}
+        toggleChat={() => setChatOpen((prev) => !prev)}
+      />
+      <ShortcutsHelp
+        open={shortcutsHelpOpen}
+        onClose={() => useUIStore.getState().closeShortcutsHelp()}
+      />
     </ReactFlowProvider>
   )
 }

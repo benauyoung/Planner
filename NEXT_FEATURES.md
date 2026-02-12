@@ -1,0 +1,594 @@
+# VisionPath — Next Features Implementation Plan
+
+> Phased roadmap to make VisionPath one of the best project planners on the market.
+> Created February 12, 2026.
+
+---
+
+## Execution Order (12 Phases)
+
+Features are sequenced by: **dependency order → user impact → implementation complexity**.
+
+| Phase | Feature | Impact | Effort | Dependencies |
+|-------|---------|--------|--------|--------------|
+| 1 | Command Palette + Keyboard Shortcuts | High | Small | None |
+| 2 | Multiple Views (List, Table, Board) | High | Medium | None |
+| 3 | Assignees + Priority + Custom Fields | High | Medium | None |
+| 4 | AI Iteration Loops | Very High | Medium | None |
+| 5 | Comments & Activity Feed | High | Medium | Phase 3 (assignees for @mentions) |
+| 6 | Timeline / Gantt View | Very High | Large | Phase 3 (assignees for lane view) |
+| 7 | Sprint / Phase Planning | High | Medium | Phase 3 + 6 |
+| 8 | AI Smart Suggestions | High | Medium | Phase 3 + 4 |
+| 9 | Embedded Docs (Notion-style pages in nodes) | Medium | Medium | None |
+| 10 | Version History & Plan Branching | Very High | Large | None |
+| 11 | Real-Time Collaboration | Very High | Very Large | Phase 3 + 5 |
+| 12 | Integrations (GitHub, Slack, Linear) | High | Large | Phase 3 + 11 |
+
+---
+
+## Phase 1: Command Palette + Keyboard Shortcuts
+
+### Goal
+Power-user keyboard-first experience. `Cmd+K` opens a fuzzy-search command palette. Global shortcuts for all common actions.
+
+### Data Model Changes
+None — purely UI.
+
+### New Files
+- `components/ui/command-palette.tsx` — Modal with fuzzy search input, categorized command list, keyboard navigation
+- `hooks/use-keyboard-shortcuts.ts` — Global keydown listener, shortcut registry, context-aware commands
+- `lib/commands.ts` — Command definitions: { id, label, shortcut, category, action, when? }
+
+### Modified Files
+- `app/(app)/layout.tsx` — Mount `<CommandPalette />` and `useKeyboardShortcuts()`
+- `components/canvas/graph-canvas.tsx` — Canvas-specific shortcuts (Delete, Escape, Cmd+A)
+- `stores/ui-store.ts` — Add `commandPaletteOpen` state
+
+### Command Categories
+| Category | Commands |
+|----------|----------|
+| Navigation | Go to Dashboard, Go to Canvas, Go to Chat |
+| Node | Add Child, Delete Node, Duplicate, Change Status, Change Type |
+| Canvas | Re-layout, Toggle Blast Radius, Zoom to Fit, Toggle Minimap |
+| Project | Save, Export (JSON/MD), Share, Undo, Redo |
+| View | Toggle Detail Panel, Toggle Chat, Toggle Theme |
+| Search | Search Nodes (by title), Search Commands |
+
+### Keyboard Shortcuts
+| Shortcut | Action |
+|----------|--------|
+| `Cmd+K` | Open command palette |
+| `Cmd+S` | Save project |
+| `Cmd+Z` / `Cmd+Shift+Z` | Undo / Redo |
+| `Delete` / `Backspace` | Delete selected node |
+| `Cmd+D` | Duplicate selected node |
+| `Escape` | Close panel / deselect / close palette |
+| `Cmd+E` | Toggle detail panel |
+| `Cmd+B` | Toggle blast radius |
+| `Cmd+L` | Re-layout canvas |
+| `1-4` | Set status (not_started / in_progress / completed / blocked) |
+| `Tab` | Cycle through nodes |
+| `/` | Focus search in command palette |
+| `?` | Show keyboard shortcut help overlay |
+
+### Success Criteria
+- [ ] Cmd+K opens command palette with fuzzy search
+- [ ] All shortcuts work on canvas view
+- [ ] `?` shows help overlay with all shortcuts
+- [ ] Commands are context-aware (node commands only when node selected)
+
+---
+
+## Phase 2: Multiple Views (List, Table, Board)
+
+### Goal
+Users can switch between 4 views of the same project data: Canvas (existing), List, Table, and Board (Kanban).
+
+### Data Model Changes
+Add to `Project`:
+```typescript
+interface Project {
+  // ... existing fields
+  defaultView?: 'canvas' | 'list' | 'table' | 'board'
+}
+```
+
+### New Files
+- `components/views/view-switcher.tsx` — Tab bar to switch between Canvas / List / Table / Board
+- `components/views/list-view.tsx` — Hierarchical indented list (like a file tree), expandable, drag-to-reorder
+- `components/views/table-view.tsx` — Spreadsheet-style grid: columns = Title, Type, Status, Assignee, Priority, Description. Sortable, filterable
+- `components/views/board-view.tsx` — Kanban columns by status (Not Started / In Progress / Completed / Blocked). Cards are draggable between columns
+- `components/views/view-filters.tsx` — Filter bar: by type, status, assignee, search text
+- `hooks/use-filtered-nodes.ts` — Shared filtering/sorting logic used by all views
+
+### Modified Files
+- `components/project/project-workspace.tsx` — Replace direct canvas render with `<ViewSwitcher>` wrapper
+- `stores/ui-store.ts` — Add `currentView`, `filters`, `sortBy`, `searchQuery` state
+- `components/canvas/graph-canvas.tsx` — Wrap in a view container that `ViewSwitcher` controls
+
+### View Features
+| Feature | Canvas | List | Table | Board |
+|---------|--------|------|-------|-------|
+| See all nodes | ✓ | ✓ | ✓ | ✓ |
+| Edit inline | Click node | Click row | Click cell | Click card |
+| Drag to reorder | ✓ (free) | ✓ (hierarchy) | ✗ | ✓ (status change) |
+| Filter by type/status | Blast radius | ✓ | ✓ | N/A (status columns) |
+| Sort | N/A | ✓ | ✓ | ✓ (within column) |
+| Bulk select | ✗ (future) | ✓ | ✓ | ✓ |
+| Detail panel | ✓ | ✓ | ✓ | ✓ |
+
+### Success Criteria
+- [ ] View switcher shows 4 view options with icons
+- [ ] List view shows hierarchical tree with expand/collapse
+- [ ] Table view shows sortable/filterable grid
+- [ ] Board view shows Kanban by status with drag-and-drop
+- [ ] All views share the same underlying data (mutations reflect everywhere)
+- [ ] Filters and search work across all views
+- [ ] Detail panel works from any view
+
+---
+
+## Phase 3: Assignees + Priority + Custom Fields
+
+### Goal
+Assign team members to nodes, set priority levels, and support custom metadata. Enables workload tracking, sprint planning, and filtering.
+
+### Data Model Changes
+```typescript
+// New types
+type Priority = 'critical' | 'high' | 'medium' | 'low' | 'none'
+
+interface TeamMember {
+  id: string
+  name: string
+  email: string
+  avatar?: string           // URL or initials
+  color: string             // For avatar badge
+}
+
+// Updated PlanNode
+interface PlanNode {
+  // ... existing fields
+  assigneeId?: string       // Team member ID
+  priority?: Priority
+  dueDate?: number          // Unix timestamp
+  estimatedHours?: number
+  tags?: string[]           // Free-form labels
+}
+
+// Updated Project
+interface Project {
+  // ... existing fields
+  team?: TeamMember[]       // Project-level team roster
+}
+```
+
+### New Files
+- `components/ui/assignee-picker.tsx` — Dropdown with team member list, avatar, search
+- `components/ui/priority-badge.tsx` — Color-coded priority indicator (🔴🟠🟡🔵⚪)
+- `components/ui/date-picker.tsx` — Simple date input for due dates
+- `components/ui/tag-input.tsx` — Tag chips with autocomplete
+- `components/project/team-manager.tsx` — Modal to add/edit team members
+- `components/dashboard/workload-bar.tsx` — Visual bar showing task distribution per member
+
+### Modified Files
+- `types/project.ts` — Add Priority, TeamMember, new PlanNode fields
+- `stores/project-store.ts` — Add mutations: `setNodeAssignee`, `setNodePriority`, `setNodeDueDate`, `setNodeTags`, `addTeamMember`, `removeTeamMember`
+- `components/panels/node-detail-panel.tsx` — Add assignee picker, priority selector, due date, tags
+- `components/canvas/nodes/base-plan-node.tsx` — Show assignee avatar + priority dot on node
+- `components/views/table-view.tsx` — Add assignee/priority/due date columns
+- `components/views/board-view.tsx` — Show assignee avatar on cards
+
+### Success Criteria
+- [ ] Team members can be added to a project
+- [ ] Nodes can be assigned to team members
+- [ ] Priority levels display on nodes and in all views
+- [ ] Due dates are visible and sortable
+- [ ] Tags are searchable and filterable
+- [ ] Workload distribution is visible per team member
+
+---
+
+## Phase 4: AI Iteration Loops
+
+### Goal
+Move beyond one-shot AI generation into continuous AI refinement of individual nodes and subtrees. Users can ask AI to break down, audit, estimate, and improve their plan at any level.
+
+### New AI Actions
+| Action | Trigger | What AI Does |
+|--------|---------|-------------|
+| **Break Down** | Right-click node → "AI: Break down" | Splits a feature/task into 3-5 subtasks with descriptions |
+| **Audit / Gap Analysis** | Command palette → "AI: Audit plan" | Reviews entire plan, suggests missing features, risks, gaps |
+| **Estimate** | Select nodes → "AI: Estimate" | Suggests hours/days for each selected node based on description + complexity |
+| **Simplify** | Right-click node → "AI: Simplify" | Merges or removes redundant child nodes |
+| **Rewrite** | Right-click node → "AI: Rewrite" | Improves title + description for clarity |
+| **Suggest Dependencies** | Command palette → "AI: Find dependencies" | Analyzes plan and suggests `blocks`/`depends_on` edges |
+| **Risk Assessment** | Command palette → "AI: Risk assessment" | Identifies high-risk nodes, suggests mitigations |
+
+### New Files
+- `app/api/ai/iterate/route.ts` — POST endpoint for all iteration actions
+- `prompts/iteration-system.ts` — System prompts for each iteration action type
+- `components/ai/ai-action-menu.tsx` — Floating menu of AI actions (contextual to selection)
+- `components/ai/ai-audit-panel.tsx` — Side panel showing audit results with accept/dismiss per suggestion
+- `hooks/use-ai-iterate.ts` — Hook: `{ iterate, isLoading }` for calling iteration actions
+
+### Modified Files
+- `components/canvas/context-menu/node-context-menu.tsx` — Add "AI Actions" submenu
+- `stores/project-store.ts` — Add `applyAISuggestions(suggestions)` bulk mutation
+- `lib/commands.ts` — Add AI commands to command palette
+
+### AI Response Schema
+```typescript
+interface AIIterationResult {
+  action: 'break_down' | 'audit' | 'estimate' | 'simplify' | 'rewrite' | 'suggest_deps' | 'risk'
+  suggestions: AISuggestion[]
+}
+
+interface AISuggestion {
+  id: string
+  type: 'add_node' | 'update_node' | 'delete_node' | 'add_edge' | 'update_field'
+  targetNodeId?: string
+  data: Partial<PlanNode> | ProjectEdge
+  reason: string            // Why AI suggests this
+  confidence: number        // 0-1
+}
+```
+
+### Success Criteria
+- [ ] "Break down" splits a node into 3-5 children
+- [ ] "Audit" produces a list of gaps/suggestions with accept/dismiss
+- [ ] "Estimate" adds hour estimates to nodes
+- [ ] "Suggest dependencies" proposes edges that users can accept
+- [ ] All AI actions show loading state with preview before applying
+- [ ] Users can accept individual suggestions or all at once
+
+---
+
+## Phase 5: Comments & Activity Feed
+
+### Goal
+Threaded comments on any node, @mentions for team members, and a project-level activity timeline.
+
+### Data Model Changes
+```typescript
+interface Comment {
+  id: string
+  nodeId: string
+  authorId: string          // TeamMember ID or userId
+  authorName: string
+  content: string           // Markdown
+  createdAt: number
+  updatedAt?: number
+  parentCommentId?: string  // For threading
+  mentions?: string[]       // TeamMember IDs
+  resolved?: boolean
+}
+
+interface ActivityEvent {
+  id: string
+  type: 'node_created' | 'node_updated' | 'status_changed' | 'comment_added' | 'assignee_changed' | 'edge_created'
+  actorId: string
+  actorName: string
+  nodeId?: string
+  data: Record<string, unknown>
+  timestamp: number
+}
+
+interface Project {
+  // ... existing
+  comments?: Comment[]
+  activity?: ActivityEvent[]
+}
+```
+
+### New Files
+- `components/comments/comment-thread.tsx` — Threaded comment display with reply
+- `components/comments/comment-input.tsx` — Markdown input with @mention autocomplete
+- `components/activity/activity-feed.tsx` — Chronological timeline of all project events
+- `components/activity/activity-item.tsx` — Single event display (icon + actor + action + timestamp)
+
+### Modified Files
+- `types/project.ts` — Add Comment, ActivityEvent types
+- `stores/project-store.ts` — Add `addComment`, `resolveComment`, `logActivity` mutations
+- `components/panels/node-detail-panel.tsx` — Add Comments tab
+- `components/project/project-workspace.tsx` — Add Activity Feed toggle
+
+### Success Criteria
+- [ ] Users can add comments to any node
+- [ ] Comments support threading (replies)
+- [ ] @mentions autocomplete with team members
+- [ ] Activity feed shows all project changes chronologically
+- [ ] Comments show in the detail panel
+
+---
+
+## Phase 6: Timeline / Gantt View
+
+### Goal
+Auto-generate a timeline from node due dates and dependency edges. Drag to reschedule. Critical path highlighting.
+
+### New Files
+- `components/views/timeline-view.tsx` — Horizontal Gantt chart with swimlanes
+- `components/views/timeline-bar-item.tsx` — Single task bar (draggable, resizable)
+- `components/views/timeline-header.tsx` — Date scale header (day/week/month zoom)
+- `lib/critical-path.ts` — Algorithm to find longest dependency chain
+- `hooks/use-timeline-layout.ts` — Compute bar positions from dates + dependencies
+
+### Features
+- Horizontal bars per node, colored by type
+- Swimlanes by assignee or by goal
+- Drag bars to change due date
+- Resize bars to change duration
+- Dependency arrows between bars
+- Critical path highlighted in red
+- Today line
+- Zoom: day / week / month / quarter
+
+### Modified Files
+- `components/views/view-switcher.tsx` — Add Timeline view option
+- `stores/ui-store.ts` — Add `timelineZoom` state
+
+### Success Criteria
+- [ ] Timeline shows all nodes with due dates as horizontal bars
+- [ ] Dependency edges render as arrows between bars
+- [ ] Drag to reschedule updates due date
+- [ ] Critical path is highlighted
+- [ ] Zoom levels work (day/week/month)
+
+---
+
+## Phase 7: Sprint / Phase Planning
+
+### Goal
+Group tasks into sprints or phases, track velocity, visualize progress.
+
+### Data Model Changes
+```typescript
+interface Sprint {
+  id: string
+  name: string              // "Sprint 1", "Phase A", etc.
+  startDate: number
+  endDate: number
+  nodeIds: string[]         // Nodes assigned to this sprint
+  status: 'planning' | 'active' | 'completed'
+}
+
+interface Project {
+  // ... existing
+  sprints?: Sprint[]
+}
+```
+
+### New Files
+- `components/sprints/sprint-board.tsx` — Sprint overview with progress bars
+- `components/sprints/sprint-planner.tsx` — Drag nodes into sprints
+- `components/sprints/sprint-burndown.tsx` — Burndown chart (estimated vs actual)
+- `components/sprints/velocity-chart.tsx` — Velocity tracking across sprints
+
+### Success Criteria
+- [ ] Users can create sprints with start/end dates
+- [ ] Nodes can be assigned to sprints (drag or picker)
+- [ ] Sprint board shows progress per sprint
+- [ ] Burndown chart shows daily progress
+- [ ] Velocity chart shows sprint-over-sprint trend
+
+---
+
+## Phase 8: AI Smart Suggestions
+
+### Goal
+Ambient intelligence that proactively notices patterns, gaps, and issues in the plan.
+
+### New Files
+- `components/ai/suggestion-panel.tsx` — Side panel with proactive AI suggestions
+- `components/ai/suggestion-card.tsx` — Individual suggestion with accept/dismiss/details
+- `hooks/use-ai-suggestions.ts` — Background analysis that generates suggestions
+- `prompts/suggestion-system.ts` — System prompt for ambient analysis
+- `app/api/ai/analyze/route.ts` — POST endpoint for plan analysis
+
+### Suggestion Types
+| Type | Example |
+|------|---------|
+| Missing testing | "Feature X has no test tasks — add QA?" |
+| Orphan nodes | "3 tasks have no parent — assign them?" |
+| Bottleneck | "All 5 features depend on Auth — consider parallelizing" |
+| Stale items | "Task Y has been 'in_progress' for 14 days" |
+| Unbalanced workload | "Alice has 12 tasks, Bob has 2" |
+| Missing dependencies | "Deploy depends on CI/CD but no edge exists" |
+| Estimation gap | "This subtree has no time estimates" |
+
+### Success Criteria
+- [ ] Suggestions panel shows 5-10 proactive insights
+- [ ] Each suggestion has accept/dismiss action
+- [ ] Suggestions refresh when plan changes significantly
+- [ ] Low-confidence suggestions are shown but dimmed
+
+---
+
+## Phase 9: Embedded Docs (Notion-style)
+
+### Goal
+Full rich documents inside nodes — not just title/description, but structured pages with headings, code blocks, tables, checklists, embeds.
+
+### Data Model Changes
+```typescript
+interface PlanNode {
+  // ... existing
+  document?: NodeDocument   // Full Notion-like page
+}
+
+interface NodeDocument {
+  id: string
+  blocks: DocumentBlock[]
+  updatedAt: number
+}
+
+type DocumentBlock =
+  | { type: 'heading'; level: 1 | 2 | 3; content: string }
+  | { type: 'paragraph'; content: string }
+  | { type: 'code'; language: string; content: string }
+  | { type: 'checklist'; items: { text: string; checked: boolean }[] }
+  | { type: 'table'; headers: string[]; rows: string[][] }
+  | { type: 'image'; url: string; caption?: string }
+  | { type: 'divider' }
+  | { type: 'callout'; emoji: string; content: string }
+```
+
+### New Files
+- `components/editor/block-editor.tsx` — Block-based editor (Tiptap or custom)
+- `components/editor/blocks/*.tsx` — Individual block type renderers
+- `components/panels/node-document-panel.tsx` — Full-page document view
+
+### Success Criteria
+- [ ] Nodes can have full documents with multiple block types
+- [ ] Block editor supports headings, paragraphs, code, checklists, tables
+- [ ] Documents render beautifully in the detail panel
+- [ ] Documents are included in exports
+
+---
+
+## Phase 10: Version History & Plan Branching
+
+### Goal
+"What if" scenarios: branch a plan, try a different architecture, compare approaches, merge back. Full version history with diff view.
+
+### Data Model Changes
+```typescript
+interface ProjectVersion {
+  id: string
+  projectId: string
+  name: string              // "v1.0", "Alternative approach", etc.
+  snapshot: Project         // Full project state
+  parentVersionId?: string  // For branching
+  createdAt: number
+  createdBy: string
+}
+
+interface Project {
+  // ... existing
+  versions?: ProjectVersion[]
+  currentVersionId?: string
+}
+```
+
+### New Files
+- `components/versions/version-history.tsx` — Timeline of versions with diff preview
+- `components/versions/version-diff.tsx` — Side-by-side or inline diff of two versions
+- `components/versions/branch-manager.tsx` — Branch from current, merge, switch between branches
+- `lib/plan-diff.ts` — Algorithm to diff two Project states (added/removed/modified nodes)
+
+### Success Criteria
+- [ ] Users can save named versions (snapshots)
+- [ ] Version history shows timeline with restore/compare
+- [ ] Diff view highlights added/removed/modified nodes
+- [ ] Users can branch a plan and switch between branches
+- [ ] Merge brings selected changes from one branch to another
+
+---
+
+## Phase 11: Real-Time Collaboration
+
+### Goal
+Multiple users editing the same project simultaneously with live cursors, presence, and conflict-free merging.
+
+### Technology
+- **Yjs** for CRDT-based conflict-free sync
+- **PartyKit** or **Liveblocks** for WebSocket transport
+- **Awareness protocol** for cursors and presence
+
+### New Files
+- `services/collaboration.ts` — Yjs document setup, sync provider, awareness
+- `components/collaboration/presence-cursors.tsx` — Live cursor rendering on canvas
+- `components/collaboration/presence-avatars.tsx` — Who's online indicator
+- `hooks/use-collaboration.ts` — Connect to room, sync state, manage awareness
+
+### Modified Files
+- `stores/project-store.ts` — Sync mutations through Yjs shared document
+- `components/canvas/graph-canvas.tsx` — Render presence cursors
+- `components/layout/header.tsx` — Show online collaborators
+
+### Success Criteria
+- [ ] Multiple users can edit the same project simultaneously
+- [ ] Live cursors show where others are working
+- [ ] Changes merge without conflicts (CRDT)
+- [ ] Presence indicator shows who's online
+- [ ] Offline edits sync when reconnected
+
+---
+
+## Phase 12: Integrations
+
+### Goal
+Connect VisionPath to the tools teams already use: GitHub, Slack, Linear.
+
+### GitHub Integration
+- Create GitHub issues from task nodes (one-click)
+- Sync issue status back to VisionPath
+- Link PRs to task nodes
+- Auto-update task status when PR merges
+
+### Slack Integration
+- Post project updates to a Slack channel
+- Receive notifications for comments, assignments, status changes
+- `/visionpath` slash command to check project status
+
+### Linear Integration
+- Bidirectional sync: VisionPath tasks ↔ Linear issues
+- Import Linear projects into VisionPath canvas
+- Push VisionPath plan to Linear backlog
+
+### New Files
+- `app/api/integrations/github/route.ts` — GitHub OAuth + webhook handler
+- `app/api/integrations/slack/route.ts` — Slack OAuth + event handler
+- `app/api/integrations/linear/route.ts` — Linear API sync
+- `components/integrations/integration-settings.tsx` — Settings panel for connected services
+- `services/integrations/*.ts` — Service-specific API clients
+
+### Success Criteria
+- [ ] GitHub: Create issue from node, see PR status on node
+- [ ] Slack: Post updates, receive notifications
+- [ ] Linear: Bidirectional task sync
+
+---
+
+## Implementation Priority Summary
+
+### Build First (Highest ROI, Lowest Dependency)
+1. **Command Palette** — Quick win, 1-2 hours, massive UX improvement
+2. **AI Iteration Loops** — Uses existing Gemini infra, very high wow factor
+3. **Multiple Views** — Transforms the product from canvas-only to full PM tool
+4. **Assignees + Priority** — Foundation for team features
+
+### Build Next (Medium Effort, Multiplier Features)
+5. **Comments & Activity** — Team collaboration basics
+6. **Timeline / Gantt** — PM's favorite view
+7. **AI Smart Suggestions** — Ambient intelligence differentiator
+8. **Sprint Planning** — Execution tracking
+
+### Build Last (High Effort, Requires Infrastructure)
+9. **Embedded Docs** — Rich content expansion
+10. **Version History** — Complex but unique
+11. **Real-Time Collab** — Requires CRDT infrastructure
+12. **Integrations** — Requires OAuth flows and webhook handlers
+
+---
+
+## Technical Decisions
+
+| Decision | Choice | Rationale |
+|----------|--------|-----------|
+| Command palette | Custom (no dependency) | Keep bundle small, simple fuzzy match |
+| Table view | Custom with CSS Grid | No heavy table library needed for our use case |
+| Board view | Native drag-and-drop API | Avoid dnd-kit dependency, keep it simple |
+| Timeline view | Custom SVG | No good lightweight Gantt library for React 19 |
+| Block editor | Extend existing Tiptap | Already have @tiptap/react installed |
+| Real-time sync | Yjs + PartyKit | Best CRDT library + serverless WebSocket |
+| Integrations | Next.js API routes + OAuth | No separate backend needed |
+
+---
+
+## Getting Started
+
+To begin implementation, start with **Phase 1: Command Palette** — it's the quickest win and immediately makes the app feel professional. Then move to **Phase 4: AI Iteration** for the biggest wow factor, followed by **Phase 2: Multiple Views** to transform the product.
+
+Run: `npm run dev` and start building Phase 1.
