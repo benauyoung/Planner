@@ -1,5 +1,7 @@
 import { create } from 'zustand'
-import type { EdgeType } from '@/types/project'
+import type { EdgeType, NodeType, NodeStatus } from '@/types/project'
+
+export type ViewType = 'canvas' | 'list' | 'table' | 'board'
 
 interface PendingEdge {
   sourceId: string
@@ -15,6 +17,10 @@ interface UIState {
   pendingEdge: PendingEdge | null
   commandPaletteOpen: boolean
   shortcutsHelpOpen: boolean
+  currentView: ViewType
+  searchQuery: string
+  filterType: NodeType | null
+  filterStatus: NodeStatus | null
   setTheme: (theme: 'light' | 'dark') => void
   selectNode: (nodeId: string | null) => void
   openDetailPanel: () => void
@@ -28,6 +34,11 @@ interface UIState {
   closeCommandPalette: () => void
   openShortcutsHelp: () => void
   closeShortcutsHelp: () => void
+  setCurrentView: (view: ViewType) => void
+  setSearchQuery: (query: string) => void
+  setFilterType: (type: NodeType | null) => void
+  setFilterStatus: (status: NodeStatus | null) => void
+  clearFilters: () => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -39,6 +50,10 @@ export const useUIStore = create<UIState>((set) => ({
   pendingEdge: null,
   commandPaletteOpen: false,
   shortcutsHelpOpen: false,
+  currentView: 'canvas' as ViewType,
+  searchQuery: '',
+  filterType: null,
+  filterStatus: null,
   setTheme: (theme) => set({ theme }),
   selectNode: (nodeId) =>
     set({ selectedNodeId: nodeId, detailPanelOpen: nodeId !== null }),
@@ -56,4 +71,9 @@ export const useUIStore = create<UIState>((set) => ({
   closeCommandPalette: () => set({ commandPaletteOpen: false }),
   openShortcutsHelp: () => set({ shortcutsHelpOpen: true, commandPaletteOpen: false }),
   closeShortcutsHelp: () => set({ shortcutsHelpOpen: false }),
+  setCurrentView: (view) => set({ currentView: view }),
+  setSearchQuery: (query) => set({ searchQuery: query }),
+  setFilterType: (type) => set({ filterType: type }),
+  setFilterStatus: (status) => set({ filterStatus: status }),
+  clearFilters: () => set({ searchQuery: '', filterType: null, filterStatus: null }),
 }))

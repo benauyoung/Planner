@@ -184,6 +184,54 @@ export function buildCommands(ctx: CommandContext): Command[] {
     })
   }
 
+  // ── View Switching ────────────────────────────
+  if (ctx.hasProject) {
+    commands.push({
+      id: 'view:canvas',
+      label: 'Switch to Canvas View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        useUIStore.getState().setCurrentView('canvas')
+      },
+    })
+    commands.push({
+      id: 'view:list',
+      label: 'Switch to List View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        useUIStore.getState().setCurrentView('list')
+      },
+    })
+    commands.push({
+      id: 'view:table',
+      label: 'Switch to Table View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        useUIStore.getState().setCurrentView('table')
+      },
+    })
+    commands.push({
+      id: 'view:board',
+      label: 'Switch to Board View (Kanban)',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        useUIStore.getState().setCurrentView('board')
+      },
+    })
+  }
+
   // ── AI Actions ────────────────────────────────
   if (ctx.hasProject) {
     commands.push({

@@ -19,6 +19,10 @@ import { CommandPalette } from '@/components/ui/command-palette'
 import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 import { AISuggestionsPanel } from '@/components/ai/ai-suggestions-panel'
 import { useAIIterate, type AISuggestion } from '@/hooks/use-ai-iterate'
+import { ViewSwitcher } from '@/components/views/view-switcher'
+import { ListView } from '@/components/views/list-view'
+import { TableView } from '@/components/views/table-view'
+import { BoardView } from '@/components/views/board-view'
 import type { IterationAction } from '@/prompts/iteration-system'
 
 interface ProjectWorkspaceProps {
@@ -32,6 +36,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const [loading, setLoading] = useState(true)
   const commandPaletteOpen = useUIStore((s) => s.commandPaletteOpen)
   const shortcutsHelpOpen = useUIStore((s) => s.shortcutsHelpOpen)
+  const currentView = useUIStore((s) => s.currentView)
   const reLayoutRef = useRef<(() => void) | null>(null)
   const fitViewRef = useRef<(() => void) | null>(null)
   const { iterate, applySuggestion, applyAll, clearResult, loading: aiLoading, result: aiResult, error: aiError } = useAIIterate()
@@ -403,26 +408,34 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           )}
         </AnimatePresence>
 
-        {/* Canvas */}
+        {/* Main content area */}
         <div className="flex-1 flex flex-col min-h-0">
+          <ViewSwitcher />
           <TimelineBar />
           <div className="flex-1 relative">
-            <GraphCanvas />
-            <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setChatOpen(!chatOpen)}
-                title={chatOpen ? 'Close chat' : 'Open chat'}
-              >
-                {chatOpen ? (
-                  <PanelLeftClose className="h-4 w-4" />
-                ) : (
-                  <MessageSquare className="h-4 w-4" />
-                )}
-              </Button>
-              <ShareButton />
-            </div>
+            {currentView === 'canvas' && (
+              <>
+                <GraphCanvas />
+                <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setChatOpen(!chatOpen)}
+                    title={chatOpen ? 'Close chat' : 'Open chat'}
+                  >
+                    {chatOpen ? (
+                      <PanelLeftClose className="h-4 w-4" />
+                    ) : (
+                      <MessageSquare className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <ShareButton />
+                </div>
+              </>
+            )}
+            {currentView === 'list' && <ListView />}
+            {currentView === 'table' && <TableView />}
+            {currentView === 'board' && <BoardView />}
           </div>
         </div>
 
