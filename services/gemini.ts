@@ -200,6 +200,86 @@ export const pageEditSchema: Schema = {
   required: ['html', 'summary'],
 }
 
+export const backendGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    architecture: { type: SchemaType.STRING, description: 'Brief summary of the backend architecture and tech choices' },
+    modules: {
+      type: SchemaType.ARRAY,
+      description: 'Backend architecture modules',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          id: { type: SchemaType.STRING, description: 'Unique module identifier (e.g. mod-users-endpoint)' },
+          type: {
+            type: SchemaType.STRING,
+            enum: ['endpoint', 'model', 'service', 'middleware', 'database', 'auth', 'config'],
+            description: 'Module type',
+          },
+          title: { type: SchemaType.STRING, description: 'Module name' },
+          description: { type: SchemaType.STRING, description: 'What this module does' },
+          code: { type: SchemaType.STRING, description: 'TypeScript code for this module' },
+          linkedNodeIds: {
+            type: SchemaType.ARRAY,
+            description: 'Project node IDs this module relates to',
+            items: { type: SchemaType.STRING },
+          },
+          method: {
+            type: SchemaType.STRING,
+            enum: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
+            description: 'HTTP method (endpoints only)',
+            nullable: true,
+          },
+          path: { type: SchemaType.STRING, description: 'Route path (endpoints only)', nullable: true },
+          fields: {
+            type: SchemaType.ARRAY,
+            description: 'Data model fields (models only)',
+            nullable: true,
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                name: { type: SchemaType.STRING },
+                type: { type: SchemaType.STRING },
+                required: { type: SchemaType.BOOLEAN },
+              },
+              required: ['name', 'type', 'required'],
+            },
+          },
+        },
+        required: ['id', 'type', 'title', 'description', 'code', 'linkedNodeIds'],
+      },
+    },
+    edges: {
+      type: SchemaType.ARRAY,
+      description: 'Relationships between modules',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          source: { type: SchemaType.STRING, description: 'Source module ID' },
+          target: { type: SchemaType.STRING, description: 'Target module ID' },
+          label: { type: SchemaType.STRING, description: 'Relationship label' },
+          edgeType: {
+            type: SchemaType.STRING,
+            enum: ['uses', 'returns', 'stores', 'middleware', 'depends_on'],
+            description: 'Type of relationship',
+          },
+        },
+        required: ['source', 'target', 'label', 'edgeType'],
+      },
+    },
+  },
+  required: ['architecture', 'modules', 'edges'],
+}
+
+export const backendEditSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    code: { type: SchemaType.STRING, description: 'Updated complete TypeScript code for the module' },
+    summary: { type: SchemaType.STRING, description: 'Brief summary of what was changed' },
+  },
+  required: ['code', 'summary'],
+}
+
 export const iterationSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {

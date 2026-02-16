@@ -24,6 +24,7 @@ import { BoardView } from '@/components/views/board-view'
 import { TimelineView } from '@/components/views/timeline-view'
 import { SprintBoard } from '@/components/sprints/sprint-board'
 import { PagesView } from '@/components/views/pages-view'
+import { BackendView } from '@/components/views/backend-view'
 import { SmartSuggestionsPanel } from '@/components/ai/smart-suggestions-panel'
 import { VersionHistory } from '@/components/versions/version-history'
 import { IntegrationSettings } from '@/components/integrations/integration-settings'
@@ -400,6 +401,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
               {currentView === 'timeline' && <TimelineView />}
               {currentView === 'sprints' && <SprintBoard />}
               {currentView === 'pages' && <PagesView />}
+              {currentView === 'backend' && <BackendView />}
             </div>
           </div>
 

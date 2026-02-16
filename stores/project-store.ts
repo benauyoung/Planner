@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge, BackendModule, BackendEdge } from '@/types/project'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -82,6 +82,12 @@ interface ProjectState {
   addPageEdge: (source: string, target: string, label?: string) => void
   removePageEdge: (edgeId: string) => void
   removePage: (pageId: string) => void
+  setBackendModules: (modules: BackendModule[], edges?: BackendEdge[]) => void
+  updateBackendModule: (moduleId: string, updates: Partial<BackendModule>) => void
+  updateBackendModulePosition: (moduleId: string, position: { x: number; y: number }) => void
+  removeBackendModule: (moduleId: string) => void
+  addBackendEdge: (source: string, target: string, label?: string, edgeType?: BackendEdge['edgeType']) => void
+  removeBackendEdge: (edgeId: string) => void
   undo: () => void
   redo: () => void
 }
@@ -1101,6 +1107,47 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const pages = (p.pages || []).filter((pg) => pg.id !== pageId)
       const pageEdges = (p.pageEdges || []).filter((e) => e.source !== pageId && e.target !== pageId)
       commitProjectUpdate({ ...p, updatedAt: Date.now(), pages, pageEdges })
+    },
+
+    setBackendModules: (modules, edges) => {
+      const p = get().currentProject
+      if (!p) return
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), backendModules: modules, backendEdges: edges || p.backendEdges || [] })
+    },
+
+    updateBackendModule: (moduleId, updates) => {
+      const p = get().currentProject
+      if (!p) return
+      const modules = (p.backendModules || []).map((m) => m.id === moduleId ? { ...m, ...updates } : m)
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), backendModules: modules })
+    },
+
+    updateBackendModulePosition: (moduleId, position) => {
+      const p = get().currentProject
+      if (!p) return
+      const modules = (p.backendModules || []).map((m) => m.id === moduleId ? { ...m, position } : m)
+      applyWithoutUndo({ ...p, backendModules: modules })
+    },
+
+    removeBackendModule: (moduleId) => {
+      const p = get().currentProject
+      if (!p) return
+      const modules = (p.backendModules || []).filter((m) => m.id !== moduleId)
+      const edges = (p.backendEdges || []).filter((e) => e.source !== moduleId && e.target !== moduleId)
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), backendModules: modules, backendEdges: edges })
+    },
+
+    addBackendEdge: (source, target, label, edgeType) => {
+      const p = get().currentProject
+      if (!p) return
+      const edge: BackendEdge = { id: generateId(), source, target, label, edgeType }
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), backendEdges: [...(p.backendEdges || []), edge] })
+    },
+
+    removeBackendEdge: (edgeId) => {
+      const p = get().currentProject
+      if (!p) return
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), backendEdges: (p.backendEdges || []).filter((e) => e.id !== edgeId) })
     },
 
     undo: () => {

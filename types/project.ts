@@ -142,6 +142,31 @@ export interface PageEdge {
   label?: string
 }
 
+export type BackendModuleType = 'endpoint' | 'model' | 'service' | 'middleware' | 'database' | 'auth' | 'config'
+
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+export interface BackendModule {
+  id: string
+  type: BackendModuleType
+  title: string
+  description: string
+  code: string
+  linkedNodeIds: string[]
+  position: { x: number; y: number }
+  method?: HttpMethod
+  path?: string
+  fields?: { name: string; type: string; required: boolean }[]
+}
+
+export interface BackendEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
+  edgeType?: 'uses' | 'returns' | 'stores' | 'middleware' | 'depends_on'
+}
+
 export interface ProjectVersion {
   id: string
   name: string
@@ -174,4 +199,6 @@ export interface Project {
   currentVersionId?: string
   pages?: ProjectPage[]
   pageEdges?: PageEdge[]
+  backendModules?: BackendModule[]
+  backendEdges?: BackendEdge[]
 }
