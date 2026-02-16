@@ -48,14 +48,7 @@ const TAILWIND_CDN = `<script src="https://cdn.tailwindcss.com"></script>`
 // ─── Iframe Page Card ───────────────────────────────────────
 
 function PageIframe({ html }: { html: string }) {
-  const iframeRef = useRef<HTMLIFrameElement>(null)
-
-  useEffect(() => {
-    if (!iframeRef.current) return
-    const doc = iframeRef.current.contentDocument
-    if (!doc) return
-    doc.open()
-    doc.write(`<!DOCTYPE html>
+  const srcDoc = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -66,13 +59,11 @@ function PageIframe({ html }: { html: string }) {
   </style>
 </head>
 <body>${html}</body>
-</html>`)
-    doc.close()
-  }, [html])
+</html>`
 
   return (
     <iframe
-      ref={iframeRef}
+      srcDoc={srcDoc}
       title="Page preview"
       className="pointer-events-none border-0"
       style={{
