@@ -144,4 +144,4 @@ npm run build       # Must compile successfully
 
 - API keys in `.env.local` only, never committed
 - Firebase fully null-guarded — app works without keys
-- No `dangerouslySetInnerHTML` — all content rendered via React components
+- Minimal `dangerouslySetInnerHTML` — only for Tiptap-rendered HTML in `notes-node.tsx`; all other content rendered via React components

@@ -1,6 +1,6 @@
 # AI Agent Onboarding
 
-> **Read this document FIRST before doing any work on VisionPath.** Updated February 12, 2026.
+> **Read this document FIRST before doing any work on VisionPath.** Updated February 16, 2026.
 
 ---
 
@@ -38,7 +38,7 @@ You are working on **VisionPath**, a visual DAG-based project planning tool buil
 | `stores/project-store.ts` | All state mutations — the heart of the app |
 | `components/canvas/graph-canvas.tsx` | Main canvas with context menus, onConnect, layout |
 | `components/panels/node-detail-panel.tsx` | Detail panel with PRDs, prompts, images |
-| `lib/constants.ts` | NODE_CONFIG for all 7 node types |
+| `lib/constants.ts` | NODE_CONFIG for all 12 node types |
 
 ---
 
@@ -51,22 +51,26 @@ You are working on **VisionPath**, a visual DAG-based project planning tool buil
 
 ---
 
-## Current State Summary (v0.5.0 Beta ✅)
+## Current State Summary (v0.9.6 ✅)
 
-- **Landing page**: public marketing page at `/` with hero, trust bar, features, CTA, footer
-- **Route groups**: `(marketing)` for public pages, `(app)` for authenticated pages
-- **Dashboard**: at `/dashboard` with animated loading screen (floating nodes, spinning compass)
-- **7 node types**: goal, subgoal, feature, task, moodboard, notes, connector
-- **Rich content**: images (base64), rich text (Tiptap), PRDs, IDE prompts
-- **AI integration**: onboarding questionnaire + chat planning via Gemini
-- **Smart mapping**: auto-suggest parent nodes by hierarchy + proximity
-- **Typed edges**: `blocks` (red dashed) and `depends_on` (blue dashed) dependency edges
-- **Blast radius**: select a node to see all downstream-affected nodes highlighted
-- **Export**: JSON, Markdown (full plan, tasks), .cursorrules, CLAUDE.md, clipboard
+- **12 node types**: goal, subgoal, feature, task, moodboard, notes, connector, spec, prd, schema, prompt, reference
+- **7 views**: Canvas, List, Table, Board (Kanban), Timeline (interactive Gantt), Sprints, Pages (AI-generated UI previews)
+- **8 edge types**: hierarchy, blocks, depends_on, informs, defines, implements, references, supersedes
+- **AI features**: onboarding, chat planning, PRD/prompt generation, iteration loops, smart suggestions, page generation
+- **Rich content**: images (base64), rich text (Tiptap), PRDs, IDE prompts, Notion-style embedded docs
+- **Team features**: assignees, priority, due dates, estimates, tags, comments, activity feed
+- **Sprint planning**: create sprints, drag tasks from backlog, progress tracking
+- **Version history**: save/restore named snapshots with branch support
+- **Collaboration infra**: presence avatars, live cursors (local mock, Yjs-ready)
+- **Integrations**: GitHub, Slack, Linear service clients + settings UI
+- **Command palette**: Cmd+K fuzzy search with keyboard shortcuts
+- **Export**: JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - **Import**: JSON projects, Markdown specs (paste/upload with preview)
 - **Shareable plans**: public toggle + read-only share URL
 - **Template library**: 3 seed templates (Auth System, CRUD API, Landing Page)
 - **Persistence**: Firebase Firestore with runtime failover to localStorage
+- **Landing page**: interactive showcase, one-shot pipeline section
+- **Unified toolbar**: project name, save status, view tabs, action icons
 
 ---
 

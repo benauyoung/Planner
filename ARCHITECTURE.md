@@ -1,6 +1,6 @@
 # VisionPath Architecture
 
-> Source of truth for how VisionPath is built. Reflects the **actual implemented codebase** as of February 12, 2026.
+> Source of truth for how VisionPath is built. Reflects the **actual implemented codebase** as of February 16, 2026.
 
 ---
 
@@ -28,6 +28,8 @@
 │              API Routes: /api/ai/generate-questions           │
 │              API Routes: /api/ai/iterate                      │
 │              API Routes: /api/ai/analyze                      │
+│              API Routes: /api/ai/generate-pages               │
+│              API Routes: /api/ai/edit-page                    │
 ├──────────────────────────────────────────────────────────────┤
 │         Firebase (Optional, guarded, runtime failover)        │
 │              Auth + Firestore → localStorage fallback         │
@@ -64,7 +66,10 @@
 ## Data Models (Actual — from `types/project.ts`)
 
 ```typescript
-type NodeType = 'goal' | 'subgoal' | 'feature' | 'task' | 'moodboard' | 'notes' | 'connector'
+type NodeType =
+  | 'goal' | 'subgoal' | 'feature' | 'task'
+  | 'moodboard' | 'notes' | 'connector'
+  | 'spec' | 'prd' | 'schema' | 'prompt' | 'reference'
 
 type NodeStatus = 'not_started' | 'in_progress' | 'completed' | 'blocked'
 
@@ -113,9 +118,19 @@ interface PlanNode {
   comments?: NodeComment[]
   sprintId?: string
   document?: NodeDocument // Notion-style block document
+  // Document node fields (spec, prd, schema, prompt, reference)
+  version?: string
+  schemaType?: 'data_model' | 'api_contract' | 'database' | 'other'
+  promptType?: 'implementation' | 'refactor' | 'test' | 'review'
+  targetTool?: 'cursor' | 'windsurf' | 'claude' | 'generic'
+  referenceType?: 'link' | 'file' | 'image'
+  url?: string
+  acceptanceCriteria?: string[]
 }
 
-type EdgeType = 'hierarchy' | 'blocks' | 'depends_on'
+type EdgeType =
+  | 'hierarchy' | 'blocks' | 'depends_on'
+  | 'informs' | 'defines' | 'implements' | 'references' | 'supersedes'
 
 interface ProjectEdge {
   id: string
@@ -142,6 +157,24 @@ interface Project {
   sprints?: Sprint[]
   versions?: ProjectVersion[]
   currentVersionId?: string
+  pages?: ProjectPage[]       // AI-generated page previews
+  pageEdges?: PageEdge[]      // Navigation flow between pages
+}
+
+interface ProjectPage {
+  id: string
+  title: string
+  route: string
+  html: string
+  linkedNodeIds: string[]
+  position: { x: number; y: number }
+}
+
+interface PageEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
 }
 
 // Supporting types
@@ -170,6 +203,14 @@ interface PlanNodeData {
   images?: string[]
   prds?: NodePRD[]
   prompts?: NodePrompt[]
+  version?: string
+  schemaType?: string
+  promptType?: string
+  targetTool?: string
+  referenceType?: string
+  url?: string
+  acceptanceCriteria?: string[]
+  [key: string]: unknown
 }
 
 type FlowNode = Node<PlanNodeData>
@@ -263,6 +304,16 @@ interface ProjectState {
 
   // Documents
   updateNodeDocument
+  updateNodeVersion, updateNodeSchemaType, updateNodePromptType
+  updateNodeTargetTool, updateNodeReferenceType, updateNodeUrl
+  updateNodeAcceptanceCriteria
+
+  // Project
+  updateProjectTitle
+
+  // Pages
+  setPages, updatePageHtml, updatePagePosition
+  addPageEdge, removePageEdge, removePage
 
   // Sharing
   toggleShareProject: () => string | null
@@ -275,11 +326,12 @@ interface ProjectState {
 
 ### planNodesToFlow Conversion
 
-The `planNodesToFlow(nodes, projectEdges)` function converts `PlanNode[]` + `ProjectEdge[]` → `{ FlowNode[], FlowEdge[] }`:
+The `planNodesToFlow(nodes, projectEdges, existingFlowNodes?)` function converts `PlanNode[]` + `ProjectEdge[]` → `{ FlowNode[], FlowEdge[] }`:
 - Filters out children of collapsed nodes
+- Preserves existing node positions when `existingFlowNodes` is provided
 - Generates hierarchy edges from `parentId` relationships
-- Generates typed dependency edges from `project.edges[]` with visual styles (red dashed for `blocks`, blue dashed for `depends_on`)
-- Passes all data (content, images, prds, prompts) to flow node data
+- Generates typed dependency edges from `project.edges[]` with visual styles (red dashed for `blocks`, blue dashed for `depends_on`, plus styles for `informs`, `defines`, `implements`, `references`, `supersedes`)
+- Passes all data (content, images, prds, prompts, document node fields) to flow node data
 
 ---
 
@@ -291,6 +343,7 @@ components/
 │   ├── nav-bar.tsx                     # Sticky nav, blur on scroll, mobile menu
 │   ├── hero-section.tsx                # Split-screen hero: headline + CTA / mockup
 │   ├── hero-mockup.tsx                 # SVG animated canvas mockup (nodes + edges)
+│   ├── interactive-showcase.tsx        # Animated canvas, task table, Gantt demos
 │   ├── trust-bar.tsx                   # Social proof badges
 │   ├── how-it-works.tsx                # 3-step workflow
 │   ├── features-grid.tsx               # 6-card feature showcase
@@ -305,7 +358,7 @@ components/
 │   │   ├── pane-context-menu.tsx     # Right-click on empty canvas (smart mapping)
 │   │   └── context-submenu.tsx       # Submenu helper
 │   └── nodes/
-│       ├── node-types.ts             # nodeTypes registry (7 types)
+│       ├── node-types.ts             # nodeTypes registry (12 types)
 │       ├── base-plan-node.tsx        # Shared node layout (goal/subgoal/feature/task)
 │       ├── goal-node.tsx             # Goal wrapper
 │       ├── subgoal-node.tsx          # Subgoal wrapper
@@ -314,6 +367,11 @@ components/
 │       ├── moodboard-node.tsx        # Image grid node
 │       ├── notes-node.tsx            # Rich text node
 │       ├── connector-node.tsx        # Compact status waypoint
+│       ├── spec-node.tsx             # Specification document node
+│       ├── prd-node.tsx              # PRD document node
+│       ├── schema-node.tsx           # Data model / API contract node
+│       ├── prompt-node.tsx           # AI/IDE prompt template node
+│       ├── reference-node.tsx        # External link / file reference node
 │       └── node-toolbar.tsx          # Hover toolbar (edit, status, collapse, add child)
 ├── chat/
 │   ├── planning-chat.tsx             # AI chat panel
@@ -321,11 +379,12 @@ components/
 │   ├── chat-message.tsx              # Message bubble
 │   └── typing-indicator.tsx          # AI typing dots
 ├── views/                             # Multiple view components
-│   ├── view-switcher.tsx              # Tab bar: Canvas / List / Table / Board / Timeline / Sprints
+│   ├── view-switcher.tsx              # Tab bar: Canvas / List / Table / Board / Timeline / Sprints / Pages
 │   ├── list-view.tsx                  # Hierarchical tree with expand/collapse
 │   ├── table-view.tsx                 # Sortable/filterable grid
 │   ├── board-view.tsx                 # Kanban by status with drag-and-drop
-│   └── timeline-view.tsx              # Gantt chart with day grid, status bars
+│   ├── timeline-view.tsx              # Interactive Gantt chart with drag-to-move/resize
+│   └── pages-view.tsx                 # AI-generated page previews on zoomable canvas with inline chat
 ├── sprints/
 │   └── sprint-board.tsx               # Sprint overview: create, drag backlog, progress bars
 ├── ai/
@@ -349,6 +408,7 @@ components/
 │   └── rich-text-editor.tsx           # Tiptap rich text editor
 ├── project/
 │   ├── project-workspace.tsx          # Canvas + views + chat + panels + modals
+│   ├── project-toolbar.tsx            # Unified toolbar: back, title, save status, view tabs, actions
 │   └── team-manager.tsx               # Modal to add/remove team members
 ├── onboarding/
 │   ├── project-onboarding.tsx        # Multi-step questionnaire (7 steps + summary)
@@ -476,13 +536,18 @@ User clicks "Create New" → NewProjectChooser (3 options)
 ```typescript
 // Each entry also has bgClass, borderClass, textClass, badgeClass, icon
 const NODE_CONFIG = {
-  goal:      { label: 'Goal',       color: 'hsl(var(--node-goal))',      icon: 'Target',     width: 280, height: 120 },
-  subgoal:   { label: 'Subgoal',    color: 'hsl(var(--node-subgoal))',   icon: 'Flag',       width: 260, height: 110 },
-  feature:   { label: 'Feature',    color: 'hsl(var(--node-feature))',   icon: 'Puzzle',     width: 240, height: 100 },
-  task:      { label: 'Task',       color: 'hsl(var(--node-task))',      icon: 'CheckSquare',width: 220, height: 90  },
-  moodboard: { label: 'Mood Board', color: 'hsl(var(--node-moodboard))', icon: 'ImagePlus',  width: 300, height: 250 },
-  notes:     { label: 'Notes',      color: 'hsl(var(--node-notes))',     icon: 'FileText',   width: 320, height: 200 },
-  connector: { label: 'Connector',  color: 'hsl(var(--node-connector))', icon: 'Circle',     width: 120, height: 40  },
+  goal:      { label: 'Goal',          color: 'hsl(var(--node-goal))',      icon: 'Target',       width: 280, height: 120 },
+  subgoal:   { label: 'Subgoal',       color: 'hsl(var(--node-subgoal))',   icon: 'Flag',         width: 260, height: 110 },
+  feature:   { label: 'Feature',       color: 'hsl(var(--node-feature))',   icon: 'Puzzle',       width: 240, height: 100 },
+  task:      { label: 'Task',          color: 'hsl(var(--node-task))',      icon: 'CheckSquare',  width: 220, height: 90  },
+  moodboard: { label: 'Mood Board',    color: 'hsl(var(--node-moodboard))', icon: 'ImagePlus',   width: 300, height: 250 },
+  notes:     { label: 'Notes',         color: 'hsl(var(--node-notes))',     icon: 'FileText',    width: 320, height: 200 },
+  connector: { label: 'Connector',     color: 'hsl(var(--node-connector))', icon: 'Circle',      width: 120, height: 40  },
+  spec:      { label: 'Specification', color: 'hsl(var(--node-spec))',      icon: 'ScrollText',  width: 300, height: 140 },
+  prd:       { label: 'PRD',           color: 'hsl(var(--node-prd))',       icon: 'ClipboardList',width: 280, height: 130 },
+  schema:    { label: 'Schema',        color: 'hsl(var(--node-schema))',    icon: 'Braces',      width: 260, height: 120 },
+  prompt:    { label: 'Prompt',        color: 'hsl(var(--node-prompt))',    icon: 'Terminal',    width: 240, height: 110 },
+  reference: { label: 'Reference',     color: 'hsl(var(--node-reference))', icon: 'ExternalLink',width: 200, height: 80  },
 }
 ```
 
@@ -510,7 +575,7 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 
 1. **API Keys**: Stored in `.env.local`, never committed (`.gitignore`)
 2. **Firebase guarded**: App doesn't crash without Firebase keys
-3. **No `dangerouslySetInnerHTML`**: All content rendered through React components
+3. **Minimal `dangerouslySetInnerHTML`**: Only used for Tiptap-rendered HTML in `notes-node.tsx`; all other content rendered through React components
 4. **Gemini key**: `NEXT_PUBLIC_` prefix means client-exposed — acceptable for this use case
 
 ---
@@ -522,7 +587,7 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2025-01 | React Flow over D3.js | Built-in interactions, better React integration |
 | 2025-01 | Zustand over Redux | Simpler API, sufficient for project scale |
 | 2025-01 | Dagre over d3-force | Deterministic hierarchy layout vs physics jitter |
-| 2026-02 | 7 node types over 4 | Moodboard/notes/connector needed for rich canvas vision |
+| 2026-02 | 12 node types | 7 base + 5 document types (spec, prd, schema, prompt, reference) |
 | 2026-02 | PRDs + Prompts on nodes | Users need to attach IDE-ready content to plan nodes |
 | 2026-02 | Smart mapping | Auto-suggest parent by hierarchy rules + proximity |
 | 2026-02 | Firebase guarded | App must work without database for local dev |
@@ -538,7 +603,7 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2026-02 | Persistence failover | Runtime Firestore → localStorage fallback on error |
 | 2026-02 | Dashboard loader | Animated loading screen with floating nodes + spinning compass |
 | 2026-02 | Command palette | Cmd+K fuzzy search + keyboard shortcuts for power users |
-| 2026-02 | Multiple views | 6 views: Canvas, List, Table, Board, Timeline, Sprints |
+| 2026-02 | Multiple views | 7 views: Canvas, List, Table, Board, Timeline, Sprints, Pages |
 | 2026-02 | Team features | Assignees, priority, due dates, comments, activity feed |
 | 2026-02 | AI iteration | Break down, audit, estimate, suggest deps — accept/dismiss |
 | 2026-02 | Sprint planning | Create sprints, drag backlog, progress bars |
@@ -547,3 +612,8 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2026-02 | Embedded docs | Notion-style block editor for node documents |
 | 2026-02 | Collaboration | Pluggable provider, presence avatars, live cursors |
 | 2026-02 | Integrations | GitHub, Slack, Linear service clients + settings UI |
+| 2026-02 | 8 edge types | hierarchy + 7 dependency types for rich relationship modeling |
+| 2026-02 | Unified toolbar | Single bar: back, title, save status, view tabs, action icons |
+| 2026-02 | Interactive Gantt | Drag-to-move bars, edge-resize durations, snap-to-day |
+| 2026-02 | Pages View | AI-generated Tailwind page previews on zoomable canvas |
+| 2026-02 | Inline page chat | Click page, describe changes, AI regenerates HTML |

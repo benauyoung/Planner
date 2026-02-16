@@ -110,22 +110,31 @@ Nodes float freely with spring physics. No forced grids. Projects grow like orga
 
 ---
 
-## Current State (February 2026)
+## Current State (v0.9.6, February 2026)
 
 ### Delivered ✅
-- Infinite canvas with 7 node types (goal, subgoal, feature, task, moodboard, notes, connector)
-- AI-powered plan generation via Gemini 2.0 Flash
-- Rich content: images, PRDs, IDE prompts on any node
+- Infinite canvas with 12 node types and 8 typed edge types
+- AI-powered plan generation, iteration, smart suggestions, and page preview generation
+- 7 views: Canvas, List, Table, Board, Timeline (interactive Gantt), Sprints, Pages
+- Rich content: images, PRDs, IDE prompts, Notion-style embedded docs
+- Team management: assignees, priority, due dates, estimates, tags
+- Comments, activity feed, sprint planning, version history
+- Typed dependency edges with blast radius analysis
 - Smart mapping: auto-suggest parent nodes by hierarchy + proximity
-- Manual edge connections between nodes
-- Guided onboarding questionnaire
+- Command palette (Cmd+K) with keyboard shortcuts
+- Export (JSON, Markdown, .cursorrules, CLAUDE.md) and import (JSON, Markdown)
+- Shareable plans via public read-only URL
+- Template library (3 seed templates)
+- Firebase persistence with runtime failover to localStorage
+- Collaboration infrastructure (presence avatars, live cursors, pluggable provider)
+- Integration clients (GitHub, Slack, Linear) + settings UI
+- Public landing page with interactive showcase
 
-### Next Up
-- Persistent storage (Firebase/localStorage)
-- Real-time collaboration
-- VS Code extension (sync active file to node)
-- GitHub integration (issues as nodes)
-- Template library (starter project canvases)
+### Next Up (v1.0)
+- Production WebSocket backend for real-time collaboration
+- OAuth flows for GitHub/Slack/Linear
+- Territory file sync (canvas to Markdown bidirectional)
+- Image compression and performance polish
 
 ---
 

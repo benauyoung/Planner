@@ -1,6 +1,6 @@
 # VisionPath — Full AI Handoff Document
 
-> Complete codebase reference. Updated February 12, 2026.
+> Complete codebase reference. Updated February 16, 2026.
 
 ---
 
@@ -199,7 +199,7 @@ Planner/
 │   │   │   ├── notes-node.tsx          # Rich text node
 │   │   │   ├── connector-node.tsx      # Compact status waypoint
 │   │   │   ├── node-toolbar.tsx        # Hover toolbar (edit, status, collapse, add child)
-│   │   │   └── node-types.ts           # nodeTypes registry (7 types)
+│   │   │   └── node-types.ts           # nodeTypes registry (12 types)
 │   │   └── context-menu/
 │   │       ├── node-context-menu.tsx   # Right-click node (+ dependency edge creation)
 │   │       ├── pane-context-menu.tsx   # Right-click canvas (add node + smart mapping)
@@ -301,7 +301,7 @@ Planner/
 │   ├── page-generation.ts             # AI page preview generation system prompt
 │   └── refinement-system.ts           # Refinement prompt (unused)
 ├── lib/
-│   ├── constants.ts                   # NODE_CONFIG (7 types), NODE_CHILD_TYPE, DAGRE_CONFIG
+│   ├── constants.ts                   # NODE_CONFIG (12 types), NODE_CHILD_TYPE, DAGRE_CONFIG
 │   ├── commands.ts                    # Command palette command definitions
 │   ├── node-context.ts                # buildNodeContext() — hierarchy context for AI generation
 │   ├── export-import.ts               # JSON export/import with download/read helpers
@@ -579,7 +579,7 @@ This replaces the old skeleton card placeholders for a more branded experience.
 1. **Route groups** — `(marketing)` for public pages, `(app)` for authenticated pages; root layout is minimal (html/body/fonts only)
 2. **All shared state in Zustand** — component-local state only for UI
 3. **`planNodesToFlow(nodes, edges)`** — always called after node mutations to sync React Flow (hierarchy + typed edges)
-4. **Dagre for layout** — `useAutoLayout` hook, TB direction, triggered on node count change
+4. **Dagre for layout** — `useAutoLayout` hook, LR direction (left-to-right), triggered on node count change
 5. **AI responses are structured JSON** — Gemini uses `responseSchema` for typed output
 6. **AI generation uses full context** — `buildNodeContext()` gathers parent chain, Q&A, siblings, children
 7. **Merge by ID** — `mergeNodes()` upserts; same ID = update, new ID = add

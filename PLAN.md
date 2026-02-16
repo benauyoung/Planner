@@ -1,6 +1,6 @@
 # VisionPath Implementation Plan
 
-> Living checklist reflecting actual implementation status as of February 12, 2026.
+> Living checklist reflecting actual implementation status as of February 16, 2026.
 
 ---
 
@@ -21,7 +21,7 @@
 - [x] TypeScript strict mode, path aliases (`@/*`)
 
 ### 1.2 Type Definitions
-- [x] `types/project.ts` — NodeType (7 types), NodeStatus, PlanNode, NodePRD, NodePrompt, Project
+- [x] `types/project.ts` — NodeType (12 types), NodeStatus, PlanNode, NodePRD, NodePrompt, Project
 - [x] `types/canvas.ts` — PlanNodeData, FlowNode, FlowEdge
 - [x] `types/chat.ts` — ChatMessage, AIPlanNode
 
@@ -244,9 +244,10 @@
 ## Future Work
 
 ### Real-Time Collaboration
+- [x] Pluggable collaboration provider (local mock)
+- [x] Presence avatars + live cursors (local mock)
 - [ ] Yjs CRDT integration
-- [ ] WebSocket sync (PartyKit or similar)
-- [ ] Presence cursors
+- [ ] Production WebSocket backend (PartyKit or Liveblocks)
 
 ### Advanced Canvas
 - [ ] Spring physics (d3-force)
@@ -259,10 +260,11 @@
 - [ ] YAML frontmatter serialization
 
 ### Polish
-- [ ] Keyboard shortcut discoverability (help overlay)
 - [ ] Edge deletion UI (click edge to select, then delete)
 - [ ] Image compression / size limits
 - [ ] `changeNodeType` hierarchy validation
+- [ ] Move `/share/[id]` out of `(app)` route group
+- [ ] Middleware auth enforcement (currently client-side only)
 
 ---
 
