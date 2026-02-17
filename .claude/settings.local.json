@@ -58,7 +58,9 @@
       "Bash(npm config:*)",
       "Bash(printf:*)",
       "Bash(npx vercel:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "mcp__claude_ai_Vercel__deploy_to_vercel",
+      "mcp__claude_ai_Vercel__list_deployments"
     ]
   }
 }

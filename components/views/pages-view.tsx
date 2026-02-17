@@ -365,11 +365,12 @@ export function PagesView() {
   const [nodes, setNodes] = useState<Node[]>(flowNodes)
   const [edges, setEdges] = useState<Edge[]>(flowEdges)
 
-  // Sync when pages change
+  // Sync when pages change (updatedAt changes on any edit including HTML updates)
+  const updatedAt = currentProject?.updatedAt
   useEffect(() => {
     setNodes(flowNodes)
     setEdges(flowEdges)
-  }, [pages.length, pageEdges.length])
+  }, [updatedAt])
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
