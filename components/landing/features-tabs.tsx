@@ -120,16 +120,16 @@ function PlanningDemo() {
       if (msg.role === 'ai') {
         timers.push(setTimeout(() => {
           setVisibleStep(msg.step)
-        }, 400))
+        }, 200))
       }
 
       // Schedule next message
-      const delay = msg.role === 'user' ? 1800 : 2200
+      const delay = msg.role === 'user' ? 900 : 1100
       timers.push(setTimeout(showNext, delay))
     }
 
     // Start after a brief delay
-    timers.push(setTimeout(showNext, 800))
+    timers.push(setTimeout(showNext, 400))
 
     return () => timers.forEach(clearTimeout)
   }, [])
@@ -618,8 +618,8 @@ interface PagesChatMsg {
 }
 
 const PAGES_CHAT_SEQUENCE: { msg: PagesChatMsg; delayAfter: number; action?: 'change-pink' }[] = [
-  { msg: { role: 'user', text: 'Can you change the accent color to pink across all pages?' }, delayAfter: 1500 },
-  { msg: { role: 'ai', text: 'Updating the accent color to pink on all 6 pages...' }, delayAfter: 800, action: 'change-pink' },
+  { msg: { role: 'user', text: 'Can you change the accent color to pink across all pages?' }, delayAfter: 1000 },
+  { msg: { role: 'ai', text: 'Updating the accent color to pink on all 6 pages...' }, delayAfter: 600, action: 'change-pink' },
   { msg: { role: 'ai', text: 'Done! All pages now use a pink accent. The buttons, highlights, and icons have been updated.' }, delayAfter: 0 },
 ]
 
@@ -646,7 +646,7 @@ function PagesDemo() {
       if (entry.action === 'change-pink') {
         timers.push(setTimeout(() => {
           setAccentOverride('hsl(330, 80%, 60%)')
-        }, 500))
+        }, 350))
       }
 
       if (entry.delayAfter > 0) {
@@ -660,7 +660,7 @@ function PagesDemo() {
     timers.push(setTimeout(() => {
       setChatPhase('playing')
       playNext()
-    }, 3000))
+    }, 2000))
 
     return () => timers.forEach(clearTimeout)
   }, [])
