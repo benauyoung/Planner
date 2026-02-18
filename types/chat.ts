@@ -1,4 +1,4 @@
-export type ChatPhase = 'onboarding' | 'greeting' | 'planning' | 'done'
+export type ChatPhase = 'onboarding' | 'greeting' | 'refining' | 'planning' | 'done'
 
 export interface OnboardingAnswers {
   description: string
@@ -36,4 +36,20 @@ export interface AIProgressiveResponse {
   nodes: AIPlanNode[]
   suggestedTitle?: string | null
   done: boolean
+}
+
+export type RefinementCategory = 'scope' | 'technical' | 'priority' | 'audience' | 'timeline'
+
+export interface AIRefinementQuestion {
+  id: string
+  question: string
+  options: string[]
+  category: RefinementCategory
+}
+
+export interface AIRefinementResponse {
+  message: string
+  questions: AIRefinementQuestion[]
+  readyToBuild: boolean
+  suggestedTitle?: string | null
 }

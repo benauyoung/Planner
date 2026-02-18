@@ -35,4 +35,12 @@ Guidelines:
 - Write in markdown format
 - Generate a concise, descriptive title for this PRD
 
-Return a JSON object with "title" (short descriptive title) and "content" (the full PRD in markdown).`
+Cross-Reference Guidelines:
+- If "Related PRDs" are provided in the context, actively reference them in this PRD
+- Use the format "See [PRD Title] (in [Node Title])" when referring to another PRD
+- In the Dependencies section, list specific PRD dependencies by name
+- If you detect conflicts between this PRD and a related PRD, note the conflict explicitly
+- Return the compound keys (format "nodeId:prdId") of all related PRDs you actually referenced in the "referencedPrdIds" array
+- Only include PRDs you genuinely referenced — do not include all related PRDs blindly
+
+Return a JSON object with "title" (short descriptive title), "content" (the full PRD in markdown), and optionally "referencedPrdIds" (array of compound keys of PRDs you referenced).`

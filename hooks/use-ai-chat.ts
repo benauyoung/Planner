@@ -4,7 +4,7 @@ import { useCallback } from 'react'
 import { useChatStore } from '@/stores/chat-store'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
-import type { AIProgressiveResponse } from '@/types/chat'
+import type { AIProgressiveResponse, AIRefinementResponse } from '@/types/chat'
 import { formatOnboardingMessage } from '@/lib/onboarding-message'
 
 export function useAIChat() {
@@ -13,10 +13,14 @@ export function useAIChat() {
     phase,
     isLoading,
     error,
+    refinementQuestions,
+    refinementAnswers,
     addMessage,
     setPhase,
     setLoading,
     setError,
+    setRefinementQuestions,
+    clearRefinementState,
   } = useChatStore()
 
   const { mergeNodes } = useProjectStore()
@@ -41,6 +45,121 @@ export function useAIChat() {
     [addMessage, mergeNodes, setPhase, phase]
   )
 
+  const transitionToPlanning = useCallback(
+    async () => {
+      // Send the full conversation (with all Q&A rounds) to the planning endpoint
+      clearRefinementState()
+      setPhase('planning')
+      setLoading(true)
+      setError(null)
+
+      try {
+        const allMessages = useChatStore.getState().messages
+        const apiMessages = allMessages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
+
+        const res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              ...apiMessages,
+              { role: 'user', content: 'All my answers are above. Now build the full project plan based on everything discussed.' },
+            ],
+          }),
+        })
+
+        if (!res.ok) throw new Error('Failed to get AI response')
+
+        const data: AIProgressiveResponse = await res.json()
+        addMessage('assistant', data.message)
+
+        if (data.nodes && data.nodes.length > 0) {
+          mergeNodes(data.nodes, data.suggestedTitle)
+        }
+
+        if (data.done) {
+          setPhase('done')
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to start planning')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [addMessage, mergeNodes, setPhase, setLoading, setError, clearRefinementState]
+  )
+
+  const handleRefinementResponse = useCallback(
+    (data: AIRefinementResponse) => {
+      addMessage('assistant', data.message)
+
+      if (data.readyToBuild) {
+        // AI says we have enough context — transition to planning
+        transitionToPlanning()
+      } else if (data.questions && data.questions.length > 0) {
+        setRefinementQuestions(data.questions)
+        setPhase('refining')
+      }
+    },
+    [addMessage, setPhase, setRefinementQuestions, transitionToPlanning]
+  )
+
+  const submitRefinementAnswers = useCallback(
+    async () => {
+      const questions = useChatStore.getState().refinementQuestions
+      const answers = useChatStore.getState().refinementAnswers
+
+      // Format selected answers as a user message
+      const answeredLines = questions
+        .filter((q) => answers[q.id])
+        .map((q) => `${q.question}: ${answers[q.id]}`)
+
+      if (answeredLines.length === 0) return
+
+      const answerMessage = answeredLines.join('\n')
+      addMessage('user', answerMessage)
+      clearRefinementState()
+      setLoading(true)
+      setError(null)
+
+      try {
+        const allMessages = useChatStore.getState().messages
+        const apiMessages = allMessages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
+
+        const res = await fetch('/api/ai/refine', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: apiMessages }),
+        })
+
+        if (!res.ok) throw new Error('Failed to get AI response')
+
+        const data: AIRefinementResponse = await res.json()
+        handleRefinementResponse(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Something went wrong')
+      } finally {
+        setLoading(false)
+      }
+    },
+    [addMessage, setLoading, setError, clearRefinementState, handleRefinementResponse]
+  )
+
+  const skipRefinement = useCallback(
+    async () => {
+      addMessage('user', 'Just build the plan with what you have.')
+      clearRefinementState()
+      transitionToPlanning()
+    },
+    [addMessage, clearRefinementState, transitionToPlanning]
+  )
+
   const sendMessage = useCallback(
     async (content: string) => {
       if (!content.trim() || isLoading) return
@@ -50,6 +169,8 @@ export function useAIChat() {
       setError(null)
 
       try {
+        const currentPhase = useChatStore.getState().phase
+
         // Build enriched message with node context if a node is selected
         let enrichedContent = content
         const selectedNodeId = useUIStore.getState().selectedNodeId
@@ -72,25 +193,37 @@ export function useAIChat() {
             : { role: m.role, content: m.content }
         )
 
-        const res = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            messages: apiMessages,
-          }),
-        })
+        // Route to correct endpoint based on current phase
+        if (currentPhase === 'refining') {
+          const res = await fetch('/api/ai/refine', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: apiMessages }),
+          })
 
-        if (!res.ok) throw new Error('Failed to get AI response')
+          if (!res.ok) throw new Error('Failed to get AI response')
 
-        const data: AIProgressiveResponse = await res.json()
-        handleResponse(data)
+          const data: AIRefinementResponse = await res.json()
+          handleRefinementResponse(data)
+        } else {
+          const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ messages: apiMessages }),
+          })
+
+          if (!res.ok) throw new Error('Failed to get AI response')
+
+          const data: AIProgressiveResponse = await res.json()
+          handleResponse(data)
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Something went wrong')
       } finally {
         setLoading(false)
       }
     },
-    [isLoading, addMessage, setLoading, setError, handleResponse]
+    [isLoading, addMessage, setLoading, setError, handleResponse, handleRefinementResponse]
   )
 
   const initChat = useCallback(async () => {
@@ -107,7 +240,8 @@ export function useAIChat() {
 
     setLoading(true)
     try {
-      const res = await fetch('/api/ai/chat', {
+      // Route initial message to refinement endpoint
+      const res = await fetch('/api/ai/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -117,27 +251,69 @@ export function useAIChat() {
 
       if (!res.ok) throw new Error('Failed to get AI response')
 
-      const data: AIProgressiveResponse = await res.json()
-      addMessage('assistant', data.message)
+      const data: AIRefinementResponse = await res.json()
 
-      if (data.nodes && data.nodes.length > 0) {
-        mergeNodes(data.nodes, data.suggestedTitle)
+      if (data.readyToBuild) {
+        // Very detailed prompt — skip refinement, go straight to planning
+        addMessage('assistant', data.message)
+        clearRefinementState()
+        setPhase('planning')
+
+        // Now send to planning endpoint with the full conversation
+        const allMessages = useChatStore.getState().messages
+        const apiMessages = allMessages.map((m) => ({
+          role: m.role,
+          content: m.content,
+        }))
+
+        const planRes = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: [
+              ...apiMessages,
+              { role: 'user', content: 'Build the full project plan based on the context above.' },
+            ],
+          }),
+        })
+
+        if (!planRes.ok) throw new Error('Failed to get planning response')
+
+        const planData: AIProgressiveResponse = await planRes.json()
+        addMessage('assistant', planData.message)
+
+        if (planData.nodes && planData.nodes.length > 0) {
+          mergeNodes(planData.nodes, planData.suggestedTitle)
+        }
+
+        if (planData.done) {
+          setPhase('done')
+        }
+      } else {
+        // Needs refinement — show question cards
+        addMessage('assistant', data.message)
+        if (data.questions && data.questions.length > 0) {
+          setRefinementQuestions(data.questions)
+        }
+        setPhase('refining')
       }
-
-      setPhase('planning')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start chat')
     } finally {
       setLoading(false)
     }
-  }, [messages.length, addMessage, mergeNodes, setPhase, setLoading, setError])
+  }, [messages.length, addMessage, mergeNodes, setPhase, setLoading, setError, setRefinementQuestions, clearRefinementState])
 
   return {
     messages,
     phase,
     isLoading,
     error,
+    refinementQuestions,
+    refinementAnswers,
     sendMessage,
     initChat,
+    submitRefinementAnswers,
+    skipRefinement,
   }
 }

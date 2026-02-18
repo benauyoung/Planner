@@ -54,6 +54,11 @@ DOCUMENT NODES:
 - Doc nodes use the same node format but convey documentation intent through their type.
 - Use spec for high-level architecture/vision docs, prd for feature requirements, schema for data/API definitions, prompt for AI coding instructions, reference for external links.
 
+REFINEMENT CONTEXT:
+- If the conversation history contains Q&A refinement rounds (questions with selected answers), treat ALL answered decisions as firm constraints when building the plan.
+- Do not re-ask questions that were already answered during refinement.
+- Incorporate every answered decision into the plan structure, node descriptions, and suggested approaches.
+
 RULES:
 - ALWAYS include the nodes array (empty [] if no nodes to add yet)
 - ALWAYS include done (false until plan is comprehensive)

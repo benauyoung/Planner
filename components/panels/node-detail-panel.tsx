@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, Send, PenLine } from 'lucide-react'
+import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, Send, PenLine, AlertTriangle } from 'lucide-react'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
 import { Button } from '@/components/ui/button'
@@ -191,7 +191,7 @@ export function NodeDetailPanel() {
       if (!res.ok) throw new Error('Failed to generate PRD')
       const data = await res.json()
       if (data.error) throw new Error(data.error)
-      addNodePRD(node.id, data.title, data.content)
+      addNodePRD(node.id, data.title, data.content, data.referencedPrdIds)
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : 'Failed to generate PRD')
     } finally {
@@ -276,7 +276,7 @@ export function NodeDetailPanel() {
       if (prdData.error) throw new Error(prdData.error)
       if (promptData.error) throw new Error(promptData.error)
 
-      addNodePRD(node.id, prdData.title, prdData.content)
+      addNodePRD(node.id, prdData.title, prdData.content, prdData.referencedPrdIds)
       addNodePrompt(node.id, promptData.title, promptData.content)
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : 'Failed to generate from answers')
@@ -948,9 +948,20 @@ export function NodeDetailPanel() {
                 </div>
               </div>
               {(node.prds || []).map((prd) => (
-                <div key={prd.id} className="mb-2 rounded-lg border bg-card">
+                <div key={prd.id} className={cn('mb-2 rounded-lg border bg-card', prd.isStale && 'border-amber-500/50')}>
                   <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm font-medium truncate flex-1">{prd.title}</span>
+                    <div className="flex items-center gap-1.5 truncate flex-1">
+                      <span className="text-sm font-medium truncate">{prd.title}</span>
+                      {prd.isStale && (
+                        <span
+                          className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0"
+                          title={prd.staleReason || 'A referenced PRD was updated'}
+                        >
+                          <AlertTriangle className="h-2.5 w-2.5" />
+                          Stale
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1 shrink-0 ml-2">
                       <button
                         onClick={async () => {
@@ -1026,6 +1037,27 @@ export function NodeDetailPanel() {
                       <pre className="text-xs text-muted-foreground mt-2 whitespace-pre-wrap font-mono max-h-24 overflow-y-auto">
                         {prd.content.length > 200 ? prd.content.slice(0, 200) + '...' : prd.content}
                       </pre>
+                      {prd.referencedPrdIds && prd.referencedPrdIds.length > 0 && currentProject && (
+                        <div className="mt-2 flex items-center gap-1 flex-wrap text-[10px]">
+                          <span className="text-muted-foreground font-medium">References:</span>
+                          {prd.referencedPrdIds.map((compoundKey) => {
+                            const [refNodeId, refPrdId] = compoundKey.split(':')
+                            const refNode = currentProject.nodes.find((n) => n.id === refNodeId)
+                            const refPrd = refNode?.prds?.find((p) => p.id === refPrdId)
+                            if (!refNode || !refPrd) return null
+                            return (
+                              <button
+                                key={compoundKey}
+                                onClick={() => useUIStore.getState().selectNode(refNodeId)}
+                                className="text-primary hover:underline truncate max-w-[140px]"
+                                title={`${refPrd.title} in ${refNode.title}`}
+                              >
+                                {refPrd.title}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

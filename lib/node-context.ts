@@ -1,4 +1,4 @@
-import type { Project, PlanNode } from '@/types/project'
+import type { Project, PlanNode, NodePRD } from '@/types/project'
 
 /**
  * Builds a structured markdown context string for a node,
@@ -137,7 +137,78 @@ export function buildNodeContext(nodeId: string, project: Project): string {
     }
   }
 
+  // Related PRDs from connected nodes
+  const relatedPRDs = gatherRelatedPRDs(nodeId, project)
+  if (relatedPRDs.length > 0) {
+    sections.push('### Related PRDs')
+    for (const { nodeTitle, prd, compoundKey } of relatedPRDs) {
+      const truncated = prd.content.length > 1500
+        ? prd.content.slice(0, 1500) + '...'
+        : prd.content
+      sections.push(`#### ${prd.title} (in ${nodeTitle}) [${compoundKey}]`)
+      sections.push(truncated)
+    }
+  }
+
   return sections.join('\n')
+}
+
+/**
+ * Gathers PRDs from related nodes: parent chain, siblings, children, and edge-connected nodes.
+ * Returns up to 10 related PRDs with truncated content.
+ */
+export function gatherRelatedPRDs(
+  nodeId: string,
+  project: Project
+): { nodeId: string; nodeTitle: string; prd: NodePRD; compoundKey: string }[] {
+  const node = project.nodes.find((n) => n.id === nodeId)
+  if (!node) return []
+
+  const relatedNodeIds = new Set<string>()
+
+  // Parent chain
+  const parentChain = getParentChain(node, project.nodes)
+  for (const p of parentChain) relatedNodeIds.add(p.id)
+
+  // Siblings
+  if (node.parentId) {
+    for (const n of project.nodes) {
+      if (n.parentId === node.parentId && n.id !== nodeId) relatedNodeIds.add(n.id)
+    }
+  }
+
+  // Children
+  for (const n of project.nodes) {
+    if (n.parentId === nodeId) relatedNodeIds.add(n.id)
+  }
+
+  // Edge-connected nodes
+  for (const e of project.edges) {
+    if (e.source === nodeId) relatedNodeIds.add(e.target)
+    if (e.target === nodeId) relatedNodeIds.add(e.source)
+  }
+
+  // Remove self
+  relatedNodeIds.delete(nodeId)
+
+  // Collect PRDs from related nodes, capped at 10
+  const results: { nodeId: string; nodeTitle: string; prd: NodePRD; compoundKey: string }[] = []
+  for (const relId of relatedNodeIds) {
+    if (results.length >= 10) break
+    const relNode = project.nodes.find((n) => n.id === relId)
+    if (!relNode?.prds) continue
+    for (const prd of relNode.prds) {
+      if (results.length >= 10) break
+      results.push({
+        nodeId: relId,
+        nodeTitle: relNode.title,
+        prd,
+        compoundKey: `${relId}:${prd.id}`,
+      })
+    }
+  }
+
+  return results
 }
 
 function getParentChain(node: PlanNode, nodes: PlanNode[]): PlanNode[] {

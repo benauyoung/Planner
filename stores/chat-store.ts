@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ChatMessage, ChatPhase, OnboardingAnswers } from '@/types/chat'
+import type { ChatMessage, ChatPhase, OnboardingAnswers, AIRefinementQuestion } from '@/types/chat'
 import { generateId } from '@/lib/id'
 
 interface ChatState {
@@ -8,11 +8,16 @@ interface ChatState {
   isLoading: boolean
   error: string | null
   onboardingAnswers: OnboardingAnswers | null
+  refinementQuestions: AIRefinementQuestion[]
+  refinementAnswers: Record<string, string>
   addMessage: (role: 'user' | 'assistant', content: string) => void
   setPhase: (phase: ChatPhase) => void
   setLoading: (loading: boolean) => void
   setError: (error: string | null) => void
   setOnboardingAnswers: (answers: OnboardingAnswers) => void
+  setRefinementQuestions: (questions: AIRefinementQuestion[]) => void
+  answerRefinementQuestion: (questionId: string, answer: string) => void
+  clearRefinementState: () => void
   reset: () => void
 }
 
@@ -22,6 +27,8 @@ export const useChatStore = create<ChatState>((set) => ({
   isLoading: false,
   error: null,
   onboardingAnswers: null,
+  refinementQuestions: [],
+  refinementAnswers: {},
   addMessage: (role, content) =>
     set((state) => ({
       messages: [
@@ -33,6 +40,12 @@ export const useChatStore = create<ChatState>((set) => ({
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
   setOnboardingAnswers: (answers) => set({ onboardingAnswers: answers }),
+  setRefinementQuestions: (questions) => set({ refinementQuestions: questions }),
+  answerRefinementQuestion: (questionId, answer) =>
+    set((state) => ({
+      refinementAnswers: { ...state.refinementAnswers, [questionId]: answer },
+    })),
+  clearRefinementState: () => set({ refinementQuestions: [], refinementAnswers: {} }),
   reset: () =>
     set({
       messages: [],
@@ -40,5 +53,7 @@ export const useChatStore = create<ChatState>((set) => ({
       isLoading: false,
       error: null,
       onboardingAnswers: null,
+      refinementQuestions: [],
+      refinementAnswers: {},
     }),
 }))

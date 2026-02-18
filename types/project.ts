@@ -30,6 +30,9 @@ export interface NodePRD {
   title: string
   content: string
   updatedAt: number
+  referencedPrdIds?: string[]
+  isStale?: boolean
+  staleReason?: string
 }
 
 export interface NodePrompt {

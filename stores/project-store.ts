@@ -41,8 +41,8 @@ interface ProjectState {
   addDependencyEdge: (sourceId: string, targetId: string, edgeType: EdgeType) => void
   removeDependencyEdge: (edgeId: string) => void
   setNodeParent: (nodeId: string, parentId: string | null) => void
-  addNodePRD: (nodeId: string, title: string, content: string) => string | null
-  updateNodePRD: (nodeId: string, prdId: string, title: string, content: string) => void
+  addNodePRD: (nodeId: string, title: string, content: string, referencedPrdIds?: string[]) => string | null
+  updateNodePRD: (nodeId: string, prdId: string, title: string, content: string, referencedPrdIds?: string[]) => void
   removeNodePRD: (nodeId: string, prdId: string) => void
   addNodePrompt: (nodeId: string, title: string, content: string) => string | null
   updateNodePrompt: (nodeId: string, promptId: string, title: string, content: string) => void
@@ -694,11 +694,11 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
     },
 
-    addNodePRD: (nodeId, title, content) => {
+    addNodePRD: (nodeId, title, content, referencedPrdIds) => {
       const project = get().currentProject
       if (!project) return null
       const id = generateId()
-      const prd: NodePRD = { id, title, content, updatedAt: Date.now() }
+      const prd: NodePRD = { id, title, content, updatedAt: Date.now(), referencedPrdIds }
       const updatedNodes = project.nodes.map((n) =>
         n.id === nodeId ? { ...n, prds: [...(n.prds || []), prd] } : n
       )
@@ -706,14 +706,36 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       return id
     },
 
-    updateNodePRD: (nodeId, prdId, title, content) => {
+    updateNodePRD: (nodeId, prdId, title, content, referencedPrdIds) => {
       const project = get().currentProject
       if (!project) return
-      const updatedNodes = project.nodes.map((n) =>
-        n.id === nodeId
-          ? { ...n, prds: (n.prds || []).map((p) => p.id === prdId ? { ...p, title, content, updatedAt: Date.now() } : p) }
-          : n
-      )
+      const compoundKey = `${nodeId}:${prdId}`
+      // Update the target PRD and propagate staleness to dependents
+      const updatedNodes = project.nodes.map((n) => {
+        // Update the PRD itself
+        if (n.id === nodeId) {
+          return {
+            ...n,
+            prds: (n.prds || []).map((p) =>
+              p.id === prdId
+                ? { ...p, title, content, updatedAt: Date.now(), referencedPrdIds: referencedPrdIds ?? p.referencedPrdIds, isStale: false, staleReason: undefined }
+                : p
+            ),
+          }
+        }
+        // Flag dependent PRDs as stale
+        if (n.prds && n.prds.some((p) => p.referencedPrdIds?.includes(compoundKey))) {
+          return {
+            ...n,
+            prds: n.prds.map((p) =>
+              p.referencedPrdIds?.includes(compoundKey)
+                ? { ...p, isStale: true, staleReason: `Referenced PRD "${title}" (in ${project.nodes.find((x) => x.id === nodeId)?.title || nodeId}) was updated` }
+                : p
+            ),
+          }
+        }
+        return n
+      })
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
     },
 

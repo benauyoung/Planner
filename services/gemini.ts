@@ -71,6 +71,45 @@ export const progressiveChatSchema: Schema = {
   required: ['message', 'nodes', 'done'],
 }
 
+export const refinementChatSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    message: { type: SchemaType.STRING, description: 'Brief analysis of what was understood and what needs clarification' },
+    questions: {
+      type: SchemaType.ARRAY,
+      description: 'Clarifying multiple-choice questions to refine the project scope',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          id: { type: SchemaType.STRING, description: 'Unique question ID (e.g. q1, q2)' },
+          question: { type: SchemaType.STRING, description: 'A specific, decision-oriented clarifying question' },
+          options: {
+            type: SchemaType.ARRAY,
+            description: '3-5 concrete answer options',
+            items: { type: SchemaType.STRING },
+          },
+          category: {
+            type: SchemaType.STRING,
+            enum: ['scope', 'technical', 'priority', 'audience', 'timeline'],
+            description: 'Question category',
+          },
+        },
+        required: ['id', 'question', 'options', 'category'],
+      },
+    },
+    readyToBuild: {
+      type: SchemaType.BOOLEAN,
+      description: 'True when enough context has been gathered to build the plan',
+    },
+    suggestedTitle: {
+      type: SchemaType.STRING,
+      description: 'Suggested project title if clear enough, null otherwise',
+      nullable: true,
+    },
+  },
+  required: ['message', 'questions', 'readyToBuild'],
+}
+
 export const questionGenerationSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
@@ -99,6 +138,11 @@ export const prdGenerationSchema: Schema = {
   properties: {
     title: { type: SchemaType.STRING, description: 'Short descriptive title for the PRD' },
     content: { type: SchemaType.STRING, description: 'Full PRD content in markdown format' },
+    referencedPrdIds: {
+      type: SchemaType.ARRAY,
+      description: 'Compound keys of related PRDs referenced in this PRD (format: "nodeId:prdId")',
+      items: { type: SchemaType.STRING },
+    },
   },
   required: ['title', 'content'],
 }
