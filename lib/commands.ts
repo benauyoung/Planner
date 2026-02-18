@@ -187,47 +187,101 @@ export function buildCommands(ctx: CommandContext): Command[] {
   // ── View Switching ────────────────────────────
   if (ctx.hasProject) {
     commands.push({
-      id: 'view:canvas',
-      label: 'Switch to Canvas View',
+      id: 'view:plan',
+      label: 'Switch to Plan View',
       shortcut: '',
       category: 'view',
       when: 'has-project',
       action: () => {
         const { useUIStore } = require('@/stores/ui-store')
-        useUIStore.getState().setCurrentView('canvas')
+        useUIStore.getState().setCurrentView('plan')
       },
     })
     commands.push({
       id: 'view:list',
-      label: 'Switch to List View',
+      label: 'Switch to Manage: List View',
       shortcut: '',
       category: 'view',
       when: 'has-project',
       action: () => {
         const { useUIStore } = require('@/stores/ui-store')
-        useUIStore.getState().setCurrentView('list')
+        const store = useUIStore.getState()
+        store.setCurrentView('manage')
+        store.setManageSubView('list')
       },
     })
     commands.push({
       id: 'view:table',
-      label: 'Switch to Table View',
+      label: 'Switch to Manage: Table View',
       shortcut: '',
       category: 'view',
       when: 'has-project',
       action: () => {
         const { useUIStore } = require('@/stores/ui-store')
-        useUIStore.getState().setCurrentView('table')
+        const store = useUIStore.getState()
+        store.setCurrentView('manage')
+        store.setManageSubView('table')
       },
     })
     commands.push({
       id: 'view:board',
-      label: 'Switch to Board View (Kanban)',
+      label: 'Switch to Manage: Board View',
       shortcut: '',
       category: 'view',
       when: 'has-project',
       action: () => {
         const { useUIStore } = require('@/stores/ui-store')
-        useUIStore.getState().setCurrentView('board')
+        const store = useUIStore.getState()
+        store.setCurrentView('manage')
+        store.setManageSubView('board')
+      },
+    })
+    commands.push({
+      id: 'view:timeline',
+      label: 'Switch to Manage: Timeline View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        const store = useUIStore.getState()
+        store.setCurrentView('manage')
+        store.setManageSubView('timeline')
+      },
+    })
+    commands.push({
+      id: 'view:sprints',
+      label: 'Switch to Manage: Sprints View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        const store = useUIStore.getState()
+        store.setCurrentView('manage')
+        store.setManageSubView('sprints')
+      },
+    })
+    commands.push({
+      id: 'view:pages',
+      label: 'Switch to Pages View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        useUIStore.getState().setCurrentView('pages')
+      },
+    })
+    commands.push({
+      id: 'view:backend',
+      label: 'Switch to Backend View',
+      shortcut: '',
+      category: 'view',
+      when: 'has-project',
+      action: () => {
+        const { useUIStore } = require('@/stores/ui-store')
+        useUIStore.getState().setCurrentView('backend')
       },
     })
   }

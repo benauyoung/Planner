@@ -26,7 +26,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ShareButton } from '@/components/share/share-button'
 import { useProjectStore } from '@/stores/project-store'
-import { useUIStore, type ViewType } from '@/stores/ui-store'
+import { useUIStore, type ViewType, type ManageSubView } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG } from '@/lib/constants'
 import type { PlanNode, NodeType, NodeStatus } from '@/types/project'
@@ -47,14 +47,18 @@ function getGoalProgress(goal: PlanNode, allNodes: PlanNode[]) {
 }
 
 const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] = [
-  { value: 'canvas', label: 'Canvas', icon: <LayoutGrid className="h-3.5 w-3.5" /> },
+  { value: 'plan', label: 'Plan', icon: <LayoutGrid className="h-3.5 w-3.5" /> },
+  { value: 'manage', label: 'Manage', icon: <List className="h-3.5 w-3.5" /> },
+  { value: 'pages', label: 'Pages', icon: <AppWindow className="h-3.5 w-3.5" /> },
+  { value: 'backend', label: 'Backend', icon: <Server className="h-3.5 w-3.5" /> },
+]
+
+const MANAGE_SUB_OPTIONS: { value: ManageSubView; label: string; icon: React.ReactNode }[] = [
   { value: 'list', label: 'List', icon: <List className="h-3.5 w-3.5" /> },
   { value: 'table', label: 'Table', icon: <Table2 className="h-3.5 w-3.5" /> },
   { value: 'board', label: 'Board', icon: <Columns3 className="h-3.5 w-3.5" /> },
   { value: 'timeline', label: 'Timeline', icon: <GanttChart className="h-3.5 w-3.5" /> },
   { value: 'sprints', label: 'Sprints', icon: <Zap className="h-3.5 w-3.5" /> },
-  { value: 'pages', label: 'Pages', icon: <AppWindow className="h-3.5 w-3.5" /> },
-  { value: 'backend', label: 'Backend', icon: <Server className="h-3.5 w-3.5" /> },
 ]
 
 const TYPE_OPTIONS: { value: NodeType; label: string }[] = [
@@ -98,6 +102,8 @@ export function ProjectToolbar({
   const selectNode = useUIStore((s) => s.selectNode)
   const currentView = useUIStore((s) => s.currentView)
   const setCurrentView = useUIStore((s) => s.setCurrentView)
+  const manageSubView = useUIStore((s) => s.manageSubView)
+  const setManageSubView = useUIStore((s) => s.setManageSubView)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
   const filterType = useUIStore((s) => s.filterType)
@@ -109,6 +115,8 @@ export function ProjectToolbar({
   const inputRef = useRef<HTMLInputElement>(null)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const prevProjectRef = useRef<string>('')
+  const [manageDropdownOpen, setManageDropdownOpen] = useState(false)
+  const manageDropdownRef = useRef<HTMLDivElement>(null)
 
   const hasFilters = searchQuery || filterType || filterStatus
 
@@ -131,6 +139,17 @@ export function ProjectToolbar({
   useEffect(() => {
     if (editing) inputRef.current?.focus()
   }, [editing])
+
+  useEffect(() => {
+    if (!manageDropdownOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (manageDropdownRef.current && !manageDropdownRef.current.contains(e.target as Node)) {
+        setManageDropdownOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [manageDropdownOpen])
 
   const handleSaveTitle = () => {
     setEditing(false)
@@ -208,8 +227,44 @@ export function ProjectToolbar({
           ))}
         </div>
 
-        {/* Filters (non-canvas views) */}
-        {currentView !== 'canvas' && (
+        {/* Manage sub-view dropdown */}
+        {currentView === 'manage' && (
+          <>
+            <div className="w-px h-5 bg-border shrink-0" />
+            <div className="relative" ref={manageDropdownRef}>
+              <button
+                onClick={() => setManageDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium bg-muted hover:bg-accent transition-colors"
+              >
+                {MANAGE_SUB_OPTIONS.find((o) => o.value === manageSubView)?.icon}
+                <span>{MANAGE_SUB_OPTIONS.find((o) => o.value === manageSubView)?.label}</span>
+                <svg className="h-3 w-3 ml-0.5 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </button>
+              {manageDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 bg-popover border rounded-md shadow-md py-1 z-50 min-w-[140px]">
+                  {MANAGE_SUB_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setManageSubView(opt.value); setManageDropdownOpen(false) }}
+                      className={cn(
+                        'flex items-center gap-2 w-full px-3 py-1.5 text-[11px] font-medium transition-colors',
+                        manageSubView === opt.value
+                          ? 'bg-accent text-foreground'
+                          : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                      )}
+                    >
+                      {opt.icon}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Filters (manage views only) */}
+        {currentView === 'manage' && (
           <>
             <div className="w-px h-5 bg-border shrink-0" />
             <div className="relative flex items-center">
@@ -237,7 +292,7 @@ export function ProjectToolbar({
                 <option key={t.value} value={t.value}>{t.label}</option>
               ))}
             </select>
-            {currentView !== 'board' && (
+            {manageSubView !== 'board' && (
               <select
                 value={filterStatus || ''}
                 onChange={(e) => setFilterStatus((e.target.value || null) as NodeStatus | null)}

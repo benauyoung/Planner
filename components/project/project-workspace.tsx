@@ -43,6 +43,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const commandPaletteOpen = useUIStore((s) => s.commandPaletteOpen)
   const shortcutsHelpOpen = useUIStore((s) => s.shortcutsHelpOpen)
   const currentView = useUIStore((s) => s.currentView)
+  const manageSubView = useUIStore((s) => s.manageSubView)
   const reLayoutRef = useRef<(() => void) | null>(null)
   const fitViewRef = useRef<(() => void) | null>(null)
   const { iterate, applySuggestion, applyAll, clearResult, loading: aiLoading, result: aiResult, error: aiError } = useAIIterate()
@@ -381,7 +382,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
           {/* Main content area */}
           <div className="flex-1 flex flex-col min-h-0">
             <div className="flex-1 relative">
-              {currentView === 'canvas' && (
+              {currentView === 'plan' && (
                 currentProject.nodes.length === 0 ? (
                   <div className="h-full flex items-center justify-center">
                     <div className="text-center text-muted-foreground">
@@ -395,11 +396,15 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                   <GraphCanvas />
                 )
               )}
-              {currentView === 'list' && <ListView />}
-              {currentView === 'table' && <TableView />}
-              {currentView === 'board' && <BoardView />}
-              {currentView === 'timeline' && <TimelineView />}
-              {currentView === 'sprints' && <SprintBoard />}
+              {currentView === 'manage' && (
+                <>
+                  {manageSubView === 'list' && <ListView />}
+                  {manageSubView === 'table' && <TableView />}
+                  {manageSubView === 'board' && <BoardView />}
+                  {manageSubView === 'timeline' && <TimelineView />}
+                  {manageSubView === 'sprints' && <SprintBoard />}
+                </>
+              )}
               {currentView === 'pages' && <PagesView />}
               {currentView === 'backend' && <BackendView />}
             </div>

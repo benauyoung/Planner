@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import type { EdgeType, NodeType, NodeStatus } from '@/types/project'
 
-export type ViewType = 'canvas' | 'list' | 'table' | 'board' | 'timeline' | 'sprints' | 'pages' | 'backend'
+export type ViewType = 'plan' | 'manage' | 'pages' | 'backend'
+export type ManageSubView = 'list' | 'table' | 'board' | 'timeline' | 'sprints'
 
 interface PendingEdge {
   sourceId: string
@@ -18,6 +19,7 @@ interface UIState {
   commandPaletteOpen: boolean
   shortcutsHelpOpen: boolean
   currentView: ViewType
+  manageSubView: ManageSubView
   searchQuery: string
   filterType: NodeType | null
   filterStatus: NodeStatus | null
@@ -35,6 +37,7 @@ interface UIState {
   openShortcutsHelp: () => void
   closeShortcutsHelp: () => void
   setCurrentView: (view: ViewType) => void
+  setManageSubView: (sub: ManageSubView) => void
   setSearchQuery: (query: string) => void
   setFilterType: (type: NodeType | null) => void
   setFilterStatus: (status: NodeStatus | null) => void
@@ -50,7 +53,8 @@ export const useUIStore = create<UIState>((set) => ({
   pendingEdge: null,
   commandPaletteOpen: false,
   shortcutsHelpOpen: false,
-  currentView: 'canvas' as ViewType,
+  currentView: 'plan' as ViewType,
+  manageSubView: 'list' as ManageSubView,
   searchQuery: '',
   filterType: null,
   filterStatus: null,
@@ -72,6 +76,7 @@ export const useUIStore = create<UIState>((set) => ({
   openShortcutsHelp: () => set({ shortcutsHelpOpen: true, commandPaletteOpen: false }),
   closeShortcutsHelp: () => set({ shortcutsHelpOpen: false }),
   setCurrentView: (view) => set({ currentView: view }),
+  setManageSubView: (sub) => set({ manageSubView: sub }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setFilterType: (type) => set({ filterType: type }),
   setFilterStatus: (status) => set({ filterStatus: status }),
