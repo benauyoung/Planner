@@ -33,9 +33,6 @@ export function LandingNavBar() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
-            <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              How It Works
-            </a>
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Features
             </a>
@@ -73,13 +70,6 @@ export function LandingNavBar() {
             className="md:hidden bg-background/95 backdrop-blur-md border-b overflow-hidden"
           >
             <div className="px-4 py-4 space-y-3">
-              <a
-                href="#how-it-works"
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                How It Works
-              </a>
               <a
                 href="#features"
                 onClick={() => setMobileOpen(false)}

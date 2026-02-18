@@ -1,0 +1,1009 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  Workflow,
+  FileText,
+  Database,
+  Target,
+  Flag,
+  Puzzle,
+  CheckSquare,
+  ArrowRight,
+  Plus,
+  Code2,
+  Table2,
+  Shield,
+  Globe,
+  Layers,
+  Settings,
+  Eye,
+  Pencil,
+  MessageSquare,
+  Bot,
+  User,
+  Send,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+import Link from 'next/link'
+
+// ─── Types ───────────────────────────────────────────────────
+
+type FeatureTab = 'planning' | 'pages' | 'backend'
+
+const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description: string }[] = [
+  {
+    key: 'planning',
+    label: 'Planning',
+    icon: Workflow,
+    description: 'Visual project planning with an interactive canvas. Break down goals into features and tasks.',
+  },
+  {
+    key: 'pages',
+    label: 'Pages',
+    icon: FileText,
+    description: 'Design and preview your application pages. Edit content and layout visually.',
+  },
+  {
+    key: 'backend',
+    label: 'Backend',
+    icon: Database,
+    description: 'Define your API routes, database schemas, and server logic all in one place.',
+  },
+]
+
+// ─── Planning Demo ──────────────────────────────────────────
+
+const PLAN_NODES = [
+  { id: 'g1', type: 'goal', title: 'Festival App', x: 30, y: 70, w: 130, color: 'hsl(var(--node-goal))', step: 0 },
+  { id: 's1', type: 'subgoal', title: 'Live Lineup', x: 195, y: 15, w: 120, color: 'hsl(var(--node-subgoal))', step: 1 },
+  { id: 's2', type: 'subgoal', title: 'Social Feed', x: 195, y: 125, w: 120, color: 'hsl(var(--node-subgoal))', step: 1 },
+  { id: 'f1', type: 'feature', title: 'Set Reminders', x: 345, y: 5, w: 115, color: 'hsl(var(--node-feature))', step: 2 },
+  { id: 'f2', type: 'feature', title: 'Stage Map', x: 345, y: 55, w: 115, color: 'hsl(var(--node-feature))', step: 2 },
+  { id: 'f3', type: 'feature', title: 'Photo Wall', x: 345, y: 105, w: 115, color: 'hsl(var(--node-feature))', step: 3 },
+  { id: 't1', type: 'task', title: 'Friend Meetups', x: 345, y: 155, w: 115, color: 'hsl(var(--node-task))', step: 3 },
+  { id: 't2', type: 'task', title: 'Live Chat', x: 345, y: 205, w: 115, color: 'hsl(var(--node-task))', step: 4 },
+]
+
+const PLAN_EDGES = [
+  { from: 'g1', to: 's1', step: 1 },
+  { from: 'g1', to: 's2', step: 1 },
+  { from: 's1', to: 'f1', step: 2 },
+  { from: 's1', to: 'f2', step: 2 },
+  { from: 's2', to: 'f3', step: 3 },
+  { from: 's2', to: 't1', step: 3 },
+  { from: 'f3', to: 't2', step: 4 },
+]
+
+const STATUS_COLORS: Record<string, string> = {
+  goal: '#f97316',
+  subgoal: '#3b82f6',
+  feature: '#22c55e',
+  task: '#8b5cf6',
+}
+
+interface ChatMsg {
+  role: 'ai' | 'user'
+  text: string
+  step: number // which build step this message triggers
+}
+
+const PLANNING_CHAT: ChatMsg[] = [
+  { role: 'user', text: 'I want to build a music festival app', step: 0 },
+  { role: 'ai', text: 'Great idea! I\'ll create a Festival App plan. What are the main areas — lineup, social, or both?', step: 0 },
+  { role: 'user', text: 'Both! Live lineup schedules and a social feed for attendees', step: 1 },
+  { role: 'ai', text: 'Adding Live Lineup and Social Feed as core pillars. Should users set reminders for sets?', step: 1 },
+  { role: 'user', text: 'Yes, and an interactive stage map too', step: 2 },
+  { role: 'ai', text: 'Done — Set Reminders and Stage Map added. Want a photo sharing feature for the social feed?', step: 2 },
+  { role: 'user', text: 'Definitely, plus friend meetup coordination', step: 3 },
+  { role: 'ai', text: 'Added Photo Wall and Friend Meetups. I\'ll also add a Live Chat for real-time messaging.', step: 4 },
+]
+
+function PlanningDemo() {
+  const nodeMap = Object.fromEntries(PLAN_NODES.map((n) => [n.id, n]))
+  const [visibleStep, setVisibleStep] = useState(-1)
+  const [visibleMsgs, setVisibleMsgs] = useState(0)
+
+  // Auto-play the chat sequence
+  useEffect(() => {
+    let msgIndex = 0
+    const timers: ReturnType<typeof setTimeout>[] = []
+
+    function showNext() {
+      if (msgIndex >= PLANNING_CHAT.length) return
+      msgIndex++
+      setVisibleMsgs(msgIndex)
+
+      const msg = PLANNING_CHAT[msgIndex - 1]
+      // When an AI message appears, update the visible build step
+      if (msg.role === 'ai') {
+        timers.push(setTimeout(() => {
+          setVisibleStep(msg.step)
+        }, 400))
+      }
+
+      // Schedule next message
+      const delay = msg.role === 'user' ? 1800 : 2200
+      timers.push(setTimeout(showNext, delay))
+    }
+
+    // Start after a brief delay
+    timers.push(setTimeout(showNext, 800))
+
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  return (
+    <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
+      {/* Canvas area */}
+      <div className="flex-1 relative overflow-hidden">
+        {/* Dot grid background */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{
+            backgroundImage: 'radial-gradient(circle, hsl(var(--muted-foreground) / 0.3) 1px, transparent 1px)',
+            backgroundSize: '20px 20px',
+          }}
+        />
+
+        {/* Toolbar */}
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+          {['goal', 'subgoal', 'feature', 'task'].map((type) => (
+            <div
+              key={type}
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted/80 backdrop-blur-sm text-[9px] font-medium text-muted-foreground border"
+            >
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[type] }} />
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </div>
+          ))}
+        </div>
+
+        <svg viewBox="0 0 480 250" className="relative w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          {/* Edges */}
+          {PLAN_EDGES.map((edge) => {
+            const from = nodeMap[edge.from]
+            const to = nodeMap[edge.to]
+            const sx = from.x + from.w
+            const sy = from.y + 18
+            const ex = to.x
+            const ey = to.y + 18
+            const mx = (sx + ex) / 2
+            return (
+              <motion.path
+                key={`${edge.from}-${edge.to}`}
+                d={`M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ey}, ${ex} ${ey}`}
+                fill="none"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                strokeDasharray="6 4"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={visibleStep >= edge.step ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              />
+            )
+          })}
+
+          {/* Nodes */}
+          {PLAN_NODES.map((node) => (
+            <motion.g
+              key={node.id}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={visibleStep >= node.step ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }}
+              transition={{ duration: 0.35, type: 'spring', stiffness: 200 }}
+            >
+              <rect
+                x={node.x}
+                y={node.y}
+                width={node.w}
+                height={36}
+                rx={8}
+                fill="hsl(var(--background))"
+                stroke={node.color}
+                strokeWidth={1.5}
+              />
+              <circle cx={node.x + 12} cy={node.y + 18} r={3.5} fill={node.color} />
+              <text
+                x={node.x + 22}
+                y={node.y + 15}
+                fill="hsl(var(--foreground))"
+                fontSize="9"
+                fontWeight="600"
+                fontFamily="system-ui, sans-serif"
+              >
+                {node.title}
+              </text>
+              <text
+                x={node.x + 22}
+                y={node.y + 26}
+                fill="hsl(var(--muted-foreground))"
+                fontSize="7"
+                fontFamily="system-ui, sans-serif"
+              >
+                {node.type}
+              </text>
+            </motion.g>
+          ))}
+        </svg>
+      </div>
+
+      {/* AI Chat sidebar */}
+      <div className="w-52 border-l bg-muted/10 flex flex-col shrink-0">
+        <div className="px-3 py-2 border-b flex items-center gap-1.5">
+          <MessageSquare className="h-3.5 w-3.5 text-primary" />
+          <span className="text-[10px] font-semibold">AI Planner</span>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-2">
+          <AnimatePresence>
+            {PLANNING_CHAT.slice(0, visibleMsgs).map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.25 }}
+                className={cn(
+                  'flex gap-1.5',
+                  msg.role === 'user' ? 'justify-end' : 'justify-start'
+                )}
+              >
+                {msg.role === 'ai' && (
+                  <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bot className="h-2.5 w-2.5 text-primary" />
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    'rounded-lg px-2 py-1 text-[8px] leading-relaxed max-w-[140px]',
+                    msg.role === 'user'
+                      ? 'bg-primary text-primary-foreground'
+                      : 'bg-muted/60 text-foreground'
+                  )}
+                >
+                  {msg.text}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {/* Typing indicator */}
+          {visibleMsgs < PLANNING_CHAT.length && visibleMsgs > 0 && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex gap-1.5 items-center"
+            >
+              <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <Bot className="h-2.5 w-2.5 text-primary" />
+              </div>
+              <div className="flex gap-0.5 px-2 py-1.5">
+                {[0, 1, 2].map((d) => (
+                  <motion.div
+                    key={d}
+                    className="w-1 h-1 rounded-full bg-muted-foreground/40"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: d * 0.2 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+        {/* Input mock */}
+        <div className="px-2 py-2 border-t">
+          <div className="flex items-center gap-1 rounded-md border bg-muted/20 px-2 py-1">
+            <span className="flex-1 text-[8px] text-muted-foreground/50">Ask the AI planner...</span>
+            <Send className="h-2.5 w-2.5 text-muted-foreground/30" />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Pages Demo ─────────────────────────────────────────────
+
+// Helper: convert hsl(h, s%, l%) to hsl(h s% l% / alpha) for transparent variants
+function accentAlpha(hsl: string, alpha: number): string {
+  const m = hsl.match(/hsl\((\d+),?\s*(\d+)%,?\s*(\d+)%\)/)
+  if (!m) return hsl
+  return `hsl(${m[1]} ${m[2]}% ${m[3]}% / ${alpha})`
+}
+
+interface MiniPage {
+  id: string
+  name: string
+  route: string
+  status: 'Live' | 'Draft'
+  icon: typeof Globe
+  accent: string
+}
+
+const MINI_PAGES: MiniPage[] = [
+  { id: 'home', name: 'Home', route: '/', status: 'Live', icon: Globe, accent: 'hsl(280, 80%, 60%)' },
+  { id: 'lineup', name: 'Lineup', route: '/lineup', status: 'Live', icon: Layers, accent: 'hsl(340, 75%, 55%)' },
+  { id: 'map', name: 'Map', route: '/map', status: 'Live', icon: Globe, accent: 'hsl(142, 71%, 45%)' },
+  { id: 'tickets', name: 'Tickets', route: '/tickets', status: 'Live', icon: FileText, accent: 'hsl(25, 95%, 53%)' },
+  { id: 'profile', name: 'Profile', route: '/profile', status: 'Draft', icon: Shield, accent: 'hsl(217, 91%, 60%)' },
+  { id: 'feed', name: 'Feed', route: '/feed', status: 'Draft', icon: Layers, accent: 'hsl(200, 80%, 55%)' },
+]
+
+// Dashed connection lines between pages (simulating page flow / navigation)
+const PAGE_CONNECTIONS = [
+  { from: 'home', to: 'lineup' },
+  { from: 'home', to: 'map' },
+  { from: 'home', to: 'tickets' },
+  { from: 'lineup', to: 'profile' },
+  { from: 'lineup', to: 'feed' },
+]
+
+function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverride }: {
+  page: MiniPage
+  isSelected: boolean
+  isEditing: boolean
+  onClick: () => void
+  delay: number
+  accentOverride?: string | null
+}) {
+  const accent = accentOverride || page.accent
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 15, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, delay }}
+      onClick={(e) => { e.stopPropagation(); onClick() }}
+      className={cn(
+        'rounded-lg overflow-hidden cursor-pointer shadow-sm',
+        isSelected
+          ? 'shadow-lg scale-[1.02]'
+          : 'hover:shadow-md'
+      )}
+      style={{
+        border: `1.5px solid ${accentAlpha(accent, 0.27)}`,
+        boxShadow: isSelected ? `0 0 12px ${accentAlpha(accent, 0.19)}` : undefined,
+        transition: 'border-color 0.6s ease, box-shadow 0.6s ease',
+        backgroundColor: 'hsl(var(--background) / 0.9)',
+      }}
+    >
+      {/* Browser chrome */}
+      <div className="flex items-center gap-1.5 px-2 py-1.5 border-b" style={{ backgroundColor: accentAlpha(accent, 0.04), borderColor: accentAlpha(accent, 0.13), transition: 'all 0.6s ease' }}>
+        <div className="flex gap-1">
+          <div className="w-1.5 h-1.5 rounded-full bg-red-400/60" />
+          <div className="w-1.5 h-1.5 rounded-full bg-yellow-400/60" />
+          <div className="w-1.5 h-1.5 rounded-full bg-green-400/60" />
+        </div>
+        <div className="flex-1 flex items-center gap-1 px-2 py-0.5 rounded text-[7px] font-mono text-muted-foreground" style={{ backgroundColor: accentAlpha(accent, 0.06), transition: 'background-color 0.6s ease' }}>
+          <Globe className="h-2 w-2 shrink-0" style={{ color: accent, transition: 'color 0.6s ease' }} />
+          vibefest.com{page.route}
+        </div>
+        <span className={cn(
+          'text-[6px] font-bold px-1 py-0.5 rounded',
+          page.status === 'Live' ? 'bg-green-500/15 text-green-500' : 'bg-muted text-muted-foreground'
+        )}>
+          {page.status}
+        </span>
+      </div>
+
+      {/* Page content */}
+      {page.id === 'home' && <HomePageContent isEditing={isEditing} accent={accent} />}
+      {page.id === 'lineup' && <LineupPageContent isEditing={isEditing} accent={accent} />}
+      {page.id === 'map' && <MapPageContent isEditing={isEditing} accent={accent} />}
+      {page.id === 'tickets' && <TicketsPageContent isEditing={isEditing} accent={accent} />}
+      {page.id === 'profile' && <ProfilePageContent isEditing={isEditing} accent={accent} />}
+      {page.id === 'feed' && <FeedPageContent isEditing={isEditing} accent={accent} />}
+
+      {/* Page label */}
+      <div className="flex items-center justify-between px-2 py-1 border-t" style={{ backgroundColor: accentAlpha(accent, 0.03), borderColor: accentAlpha(accent, 0.13), transition: 'all 0.6s ease' }}>
+        <div className="flex items-center gap-1">
+          <page.icon className="h-2.5 w-2.5" style={{ color: accent, transition: 'color 0.6s ease' }} />
+          <span className="text-[8px] font-semibold">{page.name}</span>
+        </div>
+        {isEditing && (
+          <span className="text-[7px] text-primary font-medium flex items-center gap-0.5">
+            <Pencil className="h-2 w-2" /> Editing
+          </span>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Individual page content renderers ───────────────────────
+
+function EditableText({ text, isEditing, className }: { text: string; isEditing: boolean; className?: string }) {
+  return isEditing ? (
+    <span className={cn(className, 'border-b border-dashed border-primary/50')}>
+      {text}<span className="animate-pulse text-primary text-[8px]">|</span>
+    </span>
+  ) : (
+    <span className={className}>{text}</span>
+  )
+}
+
+function HomePageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+  return (
+    <div className="p-2 space-y-1.5" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
+      {/* Nav */}
+      <div className="flex items-center justify-between rounded px-1.5 py-0.5" style={{ backgroundColor: accentAlpha(accent, 0.08), transition: 'all 0.6s ease' }}>
+        <span className="text-[8px] font-bold" style={{ color: accent, transition: 'color 0.6s ease' }}>🎵 Vibe Fest</span>
+        <div className="flex gap-1.5">
+          {['Lineup', 'Map', 'Tickets'].map((l) => (
+            <span key={l} className="text-[6px]" style={{ color: accentAlpha(accent, 0.67), transition: 'color 0.6s ease' }}>{l}</span>
+          ))}
+        </div>
+      </div>
+      {/* Hero */}
+      <div className="text-center py-2">
+        <EditableText text="Summer Vibe Fest 2026" isEditing={isEditing} className="text-[10px] font-bold block" />
+        <EditableText text="3 days · 50 artists · 1 unforgettable weekend" isEditing={isEditing} className="text-[7px] text-muted-foreground block mt-0.5" />
+        <div className="mt-1.5 inline-block px-2 py-0.5 rounded text-[7px] font-semibold text-white" style={{ backgroundColor: accent, transition: 'background-color 0.6s ease' }}>
+          Get Tickets
+        </div>
+      </div>
+      {/* Highlights */}
+      <div className="grid grid-cols-3 gap-1">
+        {[{ e: '🎤', t: 'Live Music' }, { e: '🍕', t: 'Food Court' }, { e: '🎨', t: 'Art Walk' }].map((f) => (
+          <div key={f.t} className="rounded p-1 text-center" style={{ border: `1px solid ${accentAlpha(accent, 0.2)}`, backgroundColor: accentAlpha(accent, 0.06), transition: 'all 0.6s ease' }}>
+            <div className="text-[8px]">{f.e}</div>
+            <div className="text-[6px] font-semibold" style={{ color: accent, transition: 'color 0.6s ease' }}>{f.t}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LineupPageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+  return (
+    <div className="p-2 space-y-1.5" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
+      <EditableText text="Lineup" isEditing={isEditing} className="text-[9px] font-bold block" />
+      {/* Day tabs */}
+      <div className="flex gap-1">
+        {['Fri', 'Sat', 'Sun'].map((d, i) => (
+          <div key={d} className={cn('px-2 py-0.5 rounded text-[6px] font-semibold', i !== 0 && 'text-muted-foreground')} style={i === 0 ? { backgroundColor: accent, color: 'white', transition: 'all 0.6s ease' } : { border: `1px solid ${accentAlpha(accent, 0.2)}`, transition: 'all 0.6s ease' }}>{d}</div>
+        ))}
+      </div>
+      {/* Artist list */}
+      <div className="space-y-1">
+        {[
+          { time: '7:00 PM', name: 'Luna Ray', stage: 'Main Stage' },
+          { time: '8:30 PM', name: 'The Neons', stage: 'Echo Tent' },
+          { time: '10:00 PM', name: 'DJ Nova', stage: 'Main Stage' },
+          { time: '11:30 PM', name: 'Dreamwave', stage: 'Sunset Stage' },
+        ].map((a) => (
+          <div key={a.name} className="flex items-center gap-1.5 rounded px-1.5 py-1" style={{ border: `1px solid ${accentAlpha(accent, 0.13)}`, backgroundColor: accentAlpha(accent, 0.03), transition: 'all 0.6s ease' }}>
+            <span className="text-[6px] w-8 shrink-0" style={{ color: accent, transition: 'color 0.6s ease' }}>{a.time}</span>
+            <span className="text-[7px] font-semibold flex-1">{a.name}</span>
+            <span className="text-[5px] text-muted-foreground">{a.stage}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function MapPageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+  return (
+    <div className="p-2 space-y-1.5" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
+      <EditableText text="Festival Map" isEditing={isEditing} className="text-[9px] font-bold block" />
+      {/* Mini map grid */}
+      <div className="rounded p-1.5 grid grid-cols-4 grid-rows-3 gap-1" style={{ minHeight: 70, border: `1px solid ${accentAlpha(accent, 0.13)}`, transition: 'all 0.6s ease' }}>
+        <div className="col-span-2 rounded flex items-center justify-center text-[6px] font-semibold" style={{ backgroundColor: accentAlpha(accent, 0.13), color: accent, transition: 'all 0.6s ease' }}>🎤 Main Stage</div>
+        <div className="rounded flex items-center justify-center text-[5px]" style={{ backgroundColor: accentAlpha(accent, 0.07), color: accent, transition: 'all 0.6s ease' }}>🌳 Chill Zone</div>
+        <div className="rounded flex items-center justify-center text-[5px]" style={{ backgroundColor: accentAlpha(accent, 0.07), color: accent, transition: 'all 0.6s ease' }}>🍕 Food</div>
+        <div className="rounded flex items-center justify-center text-[5px]" style={{ backgroundColor: accentAlpha(accent, 0.07), color: accent, transition: 'all 0.6s ease' }}>🎪 Echo Tent</div>
+        <div className="rounded flex items-center justify-center text-[5px]" style={{ backgroundColor: accentAlpha(accent, 0.07), color: accent, transition: 'all 0.6s ease' }}>🎨 Art Walk</div>
+        <div className="col-span-2 rounded flex items-center justify-center text-[5px]" style={{ backgroundColor: accentAlpha(accent, 0.08), color: accent, transition: 'all 0.6s ease' }}>🌅 Sunset Stage</div>
+      </div>
+      <div className="flex gap-1">
+        <div className="flex-1 rounded p-1 text-center text-[6px]" style={{ border: `1px solid ${accentAlpha(accent, 0.2)}`, color: accent, transition: 'all 0.6s ease' }}>📍 Find Friends</div>
+        <div className="flex-1 rounded p-1 text-center text-[6px]" style={{ border: `1px solid ${accentAlpha(accent, 0.2)}`, color: accent, transition: 'all 0.6s ease' }}>🚻 Facilities</div>
+      </div>
+    </div>
+  )
+}
+
+function TicketsPageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+  return (
+    <div className="p-2 space-y-1.5" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
+      <EditableText text="Tickets" isEditing={isEditing} className="text-[9px] font-bold block" />
+      <div className="grid grid-cols-3 gap-1">
+        {[
+          { name: 'Day Pass', price: '$89', perks: ['1 day access', 'General area'] },
+          { name: 'Weekend', price: '$199', perks: ['Full 3 days', 'VIP lounge'], highlight: true },
+          { name: 'Backstage', price: '$499', perks: ['All access', 'Meet artists'] },
+        ].map((tier) => (
+          <div key={tier.name} className="rounded p-1.5 text-center" style={{ border: `1px solid ${tier.highlight ? accent : accentAlpha(accent, 0.2)}`, backgroundColor: tier.highlight ? accentAlpha(accent, 0.07) : 'transparent', transition: 'all 0.6s ease' }}>
+            <div className="text-[7px] font-semibold" style={{ color: tier.highlight ? accent : undefined, transition: 'color 0.6s ease' }}>{tier.name}</div>
+            <div className="text-[10px] font-bold">{tier.price}</div>
+            {tier.perks.map((p) => (
+              <div key={p} className="text-[5px] text-muted-foreground mt-0.5">{p}</div>
+            ))}
+            <div className="mt-1 rounded py-0.5 text-[5px] font-semibold text-white" style={{ backgroundColor: accent, transition: 'background-color 0.6s ease' }}>
+              {tier.highlight ? 'Best Value' : 'Select'}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function FeedPageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+  return (
+    <div className="p-2 space-y-1.5" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
+      <EditableText text="Live Feed" isEditing={isEditing} className="text-[9px] font-bold block" />
+      {[
+        { user: '📸 Alex', text: 'Luna Ray is KILLING it right now!!', time: '2m ago' },
+        { user: '🎶 Maya', text: 'Heading to Echo Tent, anyone coming?', time: '5m ago' },
+        { user: '🔥 Jake', text: 'This sunset stage view is unreal', time: '8m ago' },
+      ].map((post) => (
+        <div key={post.user} className="rounded p-1.5" style={{ border: `1px solid ${accentAlpha(accent, 0.13)}`, backgroundColor: accentAlpha(accent, 0.03), transition: 'all 0.6s ease' }}>
+          <div className="flex items-center justify-between">
+            <span className="text-[7px] font-semibold" style={{ color: accent, transition: 'color 0.6s ease' }}>{post.user}</span>
+            <span className="text-[5px] text-muted-foreground">{post.time}</span>
+          </div>
+          <div className="text-[6px] text-foreground/80 mt-0.5">{post.text}</div>
+          <div className="flex gap-2 mt-1">
+            <span className="text-[5px]" style={{ color: accent, transition: 'color 0.6s ease' }}>♥ Like</span>
+            <span className="text-[5px]" style={{ color: accent, transition: 'color 0.6s ease' }}>↩ Reply</span>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ProfilePageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+  return (
+    <div className="p-2 space-y-1 text-center" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
+      {/* Avatar */}
+      <div className="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-[10px] border-2" style={{ borderColor: accent, backgroundColor: accentAlpha(accent, 0.13), transition: 'all 0.6s ease' }}>
+        🎧
+      </div>
+      <EditableText text="Alex Rivera" isEditing={isEditing} className="text-[9px] font-bold block" />
+      <EditableText text="Festival Veteran · 5 events" isEditing={isEditing} className="text-[6px] text-muted-foreground block" />
+      <div className="grid grid-cols-3 gap-1 pt-1">
+        {[{ v: '12', l: 'Saved Sets' }, { v: '48', l: 'Photos' }, { v: '8', l: 'Friends' }].map((s) => (
+          <div key={s.l} className="text-center rounded p-0.5" style={{ backgroundColor: accentAlpha(accent, 0.06), transition: 'all 0.6s ease' }}>
+            <div className="text-[8px] font-bold" style={{ color: accent, transition: 'color 0.6s ease' }}>{s.v}</div>
+            <div className="text-[5px] text-muted-foreground">{s.l}</div>
+          </div>
+        ))}
+      </div>
+      <div className="inline-block px-3 py-0.5 rounded text-[6px] font-semibold text-white" style={{ backgroundColor: accent, transition: 'background-color 0.6s ease' }}>Edit Profile</div>
+    </div>
+  )
+}
+
+
+// ─── Canvas connection lines (SVG overlay) ───────────────────
+
+function PageConnectionLines({ pagePositions }: { pagePositions: Map<string, { x: number; y: number; w: number; h: number }> }) {
+  const lines = PAGE_CONNECTIONS.map((conn) => {
+    const from = pagePositions.get(conn.from)
+    const to = pagePositions.get(conn.to)
+    if (!from || !to) return null
+
+    const sx = from.x + from.w
+    const sy = from.y + from.h / 2
+    const ex = to.x
+    const ey = to.y + to.h / 2
+    const mx = (sx + ex) / 2
+
+    return { key: `${conn.from}-${conn.to}`, d: `M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ey}, ${ex} ${ey}` }
+  }).filter(Boolean) as { key: string; d: string }[]
+
+  return (
+    <>
+      {lines.map((line, i) => (
+        <motion.path
+          key={line.key}
+          d={line.d}
+          fill="none"
+          stroke="hsl(var(--muted-foreground) / 0.15)"
+          strokeWidth="1.5"
+          strokeDasharray="4 3"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 1 }}
+          transition={{ duration: 0.6, delay: 0.5 + i * 0.1 }}
+        />
+      ))}
+    </>
+  )
+}
+
+interface PagesChatMsg {
+  role: 'ai' | 'user'
+  text: string
+}
+
+const PAGES_CHAT_SEQUENCE: { msg: PagesChatMsg; delayAfter: number; action?: 'change-pink' }[] = [
+  { msg: { role: 'user', text: 'Can you change the accent color to pink across all pages?' }, delayAfter: 1500 },
+  { msg: { role: 'ai', text: 'Updating the accent color to pink on all 6 pages...' }, delayAfter: 800, action: 'change-pink' },
+  { msg: { role: 'ai', text: 'Done! All pages now use a pink accent. The buttons, highlights, and icons have been updated.' }, delayAfter: 0 },
+]
+
+function PagesDemo() {
+  const [selectedPage, setSelectedPage] = useState<string | null>(null)
+  const [accentOverride, setAccentOverride] = useState<string | null>(null)
+  const [chatMsgs, setChatMsgs] = useState<PagesChatMsg[]>([])
+  const [chatPhase, setChatPhase] = useState<'waiting' | 'playing' | 'done'>('waiting')
+
+  // Auto-play the chat sequence after a delay
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+    let idx = 0
+
+    function playNext() {
+      if (idx >= PAGES_CHAT_SEQUENCE.length) {
+        setChatPhase('done')
+        return
+      }
+      const entry = PAGES_CHAT_SEQUENCE[idx]
+      idx++
+      setChatMsgs((prev) => [...prev, entry.msg])
+
+      if (entry.action === 'change-pink') {
+        timers.push(setTimeout(() => {
+          setAccentOverride('hsl(330, 80%, 60%)')
+        }, 500))
+      }
+
+      if (entry.delayAfter > 0) {
+        timers.push(setTimeout(playNext, entry.delayAfter))
+      } else {
+        setChatPhase('done')
+      }
+    }
+
+    // Start the chat sequence after pages have loaded
+    timers.push(setTimeout(() => {
+      setChatPhase('playing')
+      playNext()
+    }, 3000))
+
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  // Layout: 2 rows x 3 cols grid with known positions for SVG lines
+  const cols = 3
+  const cellW = 195
+  const cellH = 185
+  const gapX = 18
+  const gapY = 14
+  const padX = 8
+  const padY = 8
+
+  const pagePositions = new Map<string, { x: number; y: number; w: number; h: number }>()
+  MINI_PAGES.forEach((page, i) => {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    pagePositions.set(page.id, {
+      x: padX + col * (cellW + gapX),
+      y: padY + row * (cellH + gapY),
+      w: cellW,
+      h: cellH,
+    })
+  })
+
+  const totalW = padX * 2 + cols * cellW + (cols - 1) * gapX
+  const totalH = padY * 2 + 2 * cellH + gapY
+
+  return (
+    <div className="relative w-full rounded-xl border bg-background/60 overflow-hidden">
+      {/* Dot grid background */}
+      <div
+        className="absolute inset-0 opacity-15"
+        style={{
+          backgroundImage: 'radial-gradient(circle, hsl(var(--muted-foreground) / 0.3) 1px, transparent 1px)',
+          backgroundSize: '18px 18px',
+        }}
+      />
+
+      {/* Connection lines SVG overlay */}
+      <svg
+        className="absolute inset-0 w-full h-full pointer-events-none z-0"
+        viewBox={`0 0 ${totalW} ${totalH}`}
+        preserveAspectRatio="xMidYMid meet"
+      >
+        <PageConnectionLines pagePositions={pagePositions} />
+      </svg>
+
+      {/* Page grid */}
+      <div className="relative z-10 grid grid-cols-3 gap-x-[18px] gap-y-[14px] p-[8px]">
+        {MINI_PAGES.map((page, i) => (
+          <MiniWebpage
+            key={page.id}
+            page={page}
+            isSelected={selectedPage === page.id}
+            isEditing={selectedPage === page.id}
+            onClick={() => setSelectedPage(selectedPage === page.id ? null : page.id)}
+            delay={i * 0.08}
+            accentOverride={accentOverride}
+          />
+        ))}
+      </div>
+
+      {/* AI Chat overlay bar */}
+      <AnimatePresence>
+        {chatPhase !== 'waiting' && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="absolute bottom-0 left-0 right-0 z-20 border-t bg-background/95 backdrop-blur-sm"
+          >
+            {/* Chat messages */}
+            <div className="px-4 py-2 space-y-1.5 max-h-24 overflow-y-auto">
+              <AnimatePresence>
+                {chatMsgs.map((msg, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className={cn('flex gap-2 items-start', msg.role === 'user' ? 'justify-end' : 'justify-start')}
+                  >
+                    {msg.role === 'ai' && (
+                      <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                        <Bot className="h-3 w-3 text-primary" />
+                      </div>
+                    )}
+                    <div className={cn(
+                      'rounded-lg px-3 py-1.5 text-[10px] leading-relaxed max-w-[70%]',
+                      msg.role === 'user'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted/60 text-foreground'
+                    )}>
+                      {msg.text}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+              {/* Typing indicator when playing */}
+              {chatPhase === 'playing' && chatMsgs.length < PAGES_CHAT_SEQUENCE.length && (
+                <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2 items-center">
+                  <div className="w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                    <Bot className="h-3 w-3 text-primary" />
+                  </div>
+                  <div className="flex gap-0.5 px-3 py-2">
+                    {[0, 1, 2].map((d) => (
+                      <motion.div
+                        key={d}
+                        className="w-1 h-1 rounded-full bg-muted-foreground/40"
+                        animate={{ opacity: [0.3, 1, 0.3] }}
+                        transition={{ duration: 0.8, repeat: Infinity, delay: d * 0.2 }}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </div>
+            {/* Input bar */}
+            <div className="px-4 py-2 border-t">
+              <div className="flex items-center gap-2 rounded-lg border bg-muted/20 px-3 py-1.5">
+                <span className="flex-1 text-[10px] text-muted-foreground/50">Ask AI to edit your pages...</span>
+                <Send className="h-3 w-3 text-muted-foreground/30" />
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+// ─── Backend Demo ───────────────────────────────────────────
+
+const API_ROUTES = [
+  { method: 'GET', path: '/api/users', status: 'active', description: 'List all users' },
+  { method: 'POST', path: '/api/users', status: 'active', description: 'Create user' },
+  { method: 'GET', path: '/api/projects', status: 'active', description: 'List projects' },
+  { method: 'POST', path: '/api/projects', status: 'draft', description: 'Create project' },
+  { method: 'PUT', path: '/api/projects/:id', status: 'draft', description: 'Update project' },
+  { method: 'DELETE', path: '/api/projects/:id', status: 'draft', description: 'Delete project' },
+]
+
+const METHOD_COLORS: Record<string, string> = {
+  GET: 'bg-green-500/15 text-green-500',
+  POST: 'bg-blue-500/15 text-blue-500',
+  PUT: 'bg-amber-500/15 text-amber-500',
+  DELETE: 'bg-red-500/15 text-red-500',
+}
+
+const SCHEMA_FIELDS = [
+  { name: 'id', type: 'string', required: true },
+  { name: 'name', type: 'string', required: true },
+  { name: 'email', type: 'string', required: true },
+  { name: 'role', type: 'enum', required: false },
+  { name: 'createdAt', type: 'datetime', required: true },
+]
+
+function BackendDemo() {
+  return (
+    <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
+      {/* Left - API Routes */}
+      <div className="flex-1 border-r p-3 overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Code2 className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold">API Routes</span>
+          </div>
+          <button className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
+            <Plus className="h-3 w-3" />
+            Add Route
+          </button>
+        </div>
+
+        <div className="space-y-1.5">
+          {API_ROUTES.map((route, i) => (
+            <motion.div
+              key={`${route.method}-${route.path}`}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: i * 0.06 }}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/10 hover:bg-muted/30 cursor-pointer transition-colors group"
+            >
+              <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-bold', METHOD_COLORS[route.method])}>
+                {route.method}
+              </span>
+              <span className="text-[10px] font-mono text-foreground/80 truncate flex-1">{route.path}</span>
+              <span className={cn(
+                'text-[8px] font-medium px-1.5 py-0.5 rounded-full',
+                route.status === 'active' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+              )}>
+                {route.status}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+
+      {/* Right - Schema Editor */}
+      <div className="w-56 p-3 shrink-0">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Table2 className="h-4 w-4 text-primary" />
+            <span className="text-xs font-semibold">User Schema</span>
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-muted/10 overflow-hidden">
+          <div className="px-2 py-1.5 border-b bg-muted/30">
+            <div className="flex items-center gap-3 text-[9px] font-semibold text-muted-foreground">
+              <span className="flex-1">Field</span>
+              <span className="w-14">Type</span>
+              <span className="w-6">Req</span>
+            </div>
+          </div>
+          {SCHEMA_FIELDS.map((field, i) => (
+            <motion.div
+              key={field.name}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3, delay: 0.2 + i * 0.06 }}
+              className="flex items-center gap-3 px-2 py-1.5 border-b last:border-b-0 text-[10px] hover:bg-muted/20 transition-colors"
+            >
+              <span className="flex-1 font-mono font-medium text-foreground/80">{field.name}</span>
+              <span className="w-14 text-muted-foreground">{field.type}</span>
+              <span className="w-6 text-center">
+                {field.required ? (
+                  <span className="text-primary font-bold">*</span>
+                ) : (
+                  <span className="text-muted-foreground/40">-</span>
+                )}
+              </span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* Mini code preview */}
+        <motion.div
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.5 }}
+          className="mt-3 rounded-lg border bg-[hsl(222_47%_8%)] p-2 font-mono text-[9px] leading-relaxed"
+        >
+          <div><span className="text-violet-400">interface</span> <span className="text-amber-300">User</span> {'{'}</div>
+          <div className="pl-3"><span className="text-blue-300">id</span>: <span className="text-green-300">string</span>;</div>
+          <div className="pl-3"><span className="text-blue-300">name</span>: <span className="text-green-300">string</span>;</div>
+          <div className="pl-3"><span className="text-blue-300">email</span>: <span className="text-green-300">string</span>;</div>
+          <div>{'}'}</div>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Feature Tabs Section ───────────────────────────────────
+
+export function FeaturesTabs() {
+  const [activeTab, setActiveTab] = useState<FeatureTab>('planning')
+  const currentTab = TABS.find((t) => t.key === activeTab)!
+
+  return (
+    <section id="features" className="py-20 sm:py-28 bg-background">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Section header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-12"
+        >
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            Everything You Need to{' '}
+            <span className="text-primary">Ship</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            Plan your architecture, design your pages, and define your backend — all from one place.
+          </p>
+        </motion.div>
+
+        {/* Tab buttons */}
+        <div className="flex justify-center gap-2 mb-4">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={cn(
+                'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
+                activeTab === tab.key
+                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
+                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+              )}
+            >
+              <tab.icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Tab description */}
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={activeTab}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+            className="text-center text-sm text-muted-foreground mb-8 max-w-lg mx-auto"
+          >
+            {currentTab.description}
+          </motion.p>
+        </AnimatePresence>
+
+        {/* Demo area */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+            transition={{ duration: 0.35 }}
+          >
+            {activeTab === 'planning' && <PlanningDemo />}
+            {activeTab === 'pages' && <PagesDemo />}
+            {activeTab === 'backend' && <BackendDemo />}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* CTA below tabs */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="text-center mt-10"
+        >
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          >
+            Try It Free
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </motion.div>
+      </div>
+    </section>
+  )
+}

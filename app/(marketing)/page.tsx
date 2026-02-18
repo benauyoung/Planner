@@ -1,18 +1,14 @@
-import { HeroSectionNew, OneShotPipeline, InteractiveShowcase } from '@/components/landing/interactive-showcase'
+import { HeroPrompt } from '@/components/landing/hero-prompt'
+import { FeaturesTabs } from '@/components/landing/features-tabs'
 import { TrustBar } from '@/components/landing/trust-bar'
-import { FeaturesGrid } from '@/components/landing/features-grid'
 import { CTABanner } from '@/components/landing/cta-banner'
 
 export default function LandingPage() {
   return (
     <>
-      <HeroSectionNew />
+      <HeroPrompt />
       <TrustBar />
-      <OneShotPipeline />
-      <div id="showcase">
-        <InteractiveShowcase />
-      </div>
-      <FeaturesGrid />
+      <FeaturesTabs />
       <CTABanner />
     </>
   )
