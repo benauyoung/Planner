@@ -30,7 +30,7 @@ const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description
     key: 'planning',
     label: 'Planning',
     icon: Workflow,
-    description: 'Visual project planning with an interactive canvas. Break down goals into features and tasks.',
+    description: 'Visual project planning with an interactive canvas. Break down goals into features and tasks. This is the new standard for structuring code.',
   },
   {
     key: 'design',

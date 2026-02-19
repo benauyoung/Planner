@@ -92,38 +92,7 @@ export default function LoginPage() {
             {loading ? 'Loading...' : isSignUp ? 'Create Account' : 'Sign In'}
           </button>
 
-          <p className="text-xs text-center text-muted-foreground">
-            Leave both fields empty to try as a demo user
-          </p>
         </form>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">or</span>
-          </div>
-        </div>
-
-        <button
-          onClick={handleGoogle}
-          disabled={loading}
-          className="w-full py-2 rounded-md border text-sm font-medium hover:bg-muted/50 disabled:opacity-50 transition-colors"
-        >
-          Continue with Google
-        </button>
-
-        <p className="text-center text-sm text-muted-foreground">
-          {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
-          <button
-            type="button"
-            onClick={() => { setIsSignUp(!isSignUp); setError('') }}
-            className="text-primary hover:underline font-medium"
-          >
-            {isSignUp ? 'Sign in' : 'Sign up'}
-          </button>
-        </p>
       </div>
     </div>
   )
