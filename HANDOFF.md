@@ -1,6 +1,6 @@
 # VisionPath — Full AI Handoff Document
 
-> Complete codebase reference. Updated February 16, 2026.
+> Complete codebase reference. Updated February 19, 2026.
 
 ---
 
@@ -179,9 +179,11 @@ Planner/
 │   ├── landing/                        # Landing page components (public)
 │   │   ├── nav-bar.tsx                 # Sticky nav, transparent → blur on scroll, mobile menu
 │   │   ├── hero-section.tsx            # Split-screen hero: headline + CTA / animated mockup
+│   │   ├── hero-prompt.tsx             # Animated prompt input with rotating placeholder ideas + example chips
 │   │   ├── hero-mockup.tsx             # SVG/CSS animated canvas mockup (nodes + edges)
 │   │   ├── trust-bar.tsx               # Social proof badges (Station 8, Pioneers VC)
 │   │   ├── how-it-works.tsx            # 3-step workflow (Describe → Generate → Refine)
+│   │   ├── features-tabs.tsx           # Interactive tabbed demo: Planning (AI chat + graph), Pages (AI color change + image), Backend
 │   │   ├── features-grid.tsx           # 6-card feature showcase
 │   │   ├── cta-banner.tsx              # Full-width gradient CTA section
 │   │   └── footer.tsx                  # 4-column footer with links + social icons
@@ -552,12 +554,16 @@ The landing page lives in the `(marketing)` route group at `/` and is fully publ
 
 ### Sections (top to bottom)
 1. **Nav Bar** (`nav-bar.tsx`) — Sticky, transparent → blurred on scroll, Compass icon + "VisionPath" brand, links to How It Works / Features / Login, "Get Started" CTA, mobile hamburger menu
-2. **Hero** (`hero-section.tsx` + `hero-mockup.tsx`) — Split screen: left side has headline ("See Your Entire Project. At a Glance."), subheadline, "Get Started — Free" CTA; right side has animated SVG canvas mockup with 5 colored nodes, dashed curved edges, hover float effects, Framer Motion entrance animations
+2. **Hero** (`hero-section.tsx` + `hero-prompt.tsx`) — Split screen: left side has headline ("See Your Entire Project. At a Glance."), subheadline, animated prompt input with rotating placeholder ideas and clickable example chips; right side has animated SVG canvas mockup
 3. **Trust Bar** (`trust-bar.tsx`) — Horizontal strip: "Station 8 Developed", "Pioneers VC Approved" with Shield + Award icons
 4. **How It Works** (`how-it-works.tsx`) — 3 steps: Describe Your Idea → AI Generates Your Plan → Refine & Build, each with icon + title + description
-5. **Features Grid** (`features-grid.tsx`) — 6 cards: Visual DAG Canvas, AI Co-Pilot, Rich Content, Dependency Tracking, Export Anywhere, Templates
-6. **CTA Banner** (`cta-banner.tsx`) — Full-width gradient section, "Start planning in 30 seconds" + "Get Started — Free" button
-7. **Footer** (`footer.tsx`) — 4-column layout: brand description, Product links, Company links, Legal links; bottom bar with copyright + social icons (GitHub, Twitter, LinkedIn)
+5. **Features Tabs** (`features-tabs.tsx`) — Interactive tabbed demo with 3 tabs:
+   - **Planning Demo** — AI chat sidebar with progressive conversation that builds a node graph step-by-step (Music Festival App theme). Messages auto-play and nodes appear in sync.
+   - **Pages Demo** — 6 mini-webpage previews (Home, Lineup, Map, Tickets, Profile, Feed) on a canvas with dashed bezier connection lines. AI chat overlay auto-plays two actions: (1) changes accent color to pink across all pages with smooth CSS transitions, (2) adds a concert hero image to the Lineup page.
+   - **Backend Demo** — API endpoint mockup
+6. **Features Grid** (`features-grid.tsx`) — 6 cards: Visual DAG Canvas, AI Co-Pilot, Rich Content, Dependency Tracking, Export Anywhere, Templates
+7. **CTA Banner** (`cta-banner.tsx`) — Full-width gradient section, "Start planning in 30 seconds" + "Get Started — Free" button
+8. **Footer** (`footer.tsx`) — 4-column layout: brand description, Product links, Company links, Legal links; bottom bar with copyright + social icons (GitHub, Twitter, LinkedIn)
 
 ---
 
@@ -666,7 +672,15 @@ npm run type-check  # Alias for tsc --noEmit
 - **Image compression** — resize/compress base64 images to reduce state size
 - **Hierarchy validation** — enforce valid type changes based on position in hierarchy
 
-### Recent Changes (Feb 12, 2026 — Session 3)
+### Recent Changes (Feb 18-19, 2026)
+- **Interactive Feature Demos** — Replaced static features grid with tabbed interactive demos (`features-tabs.tsx`): Planning demo with AI chat sidebar that progressively builds a node graph, Pages demo with 6 mini-webpage previews showing AI-driven color change and image insertion
+- **AI Chat Simulation** — Planning demo auto-plays a conversation where user and AI discuss building a Music Festival App; nodes appear on the graph as the conversation progresses
+- **Pages Demo AI Actions** — Two-step AI interaction: (1) user asks to change accent to pink → all 6 pages smoothly transition colors with 0.6s CSS transitions, (2) user asks to add hero image → concert banner animates into the Lineup page
+- **HSL Alpha Helper** — `accentAlpha()` function for proper HSL color transparency (replaces invalid hex concatenation on HSL strings)
+- **Hero Prompt** — New animated prompt input (`hero-prompt.tsx`) with rotating placeholder ideas and clickable example chips (festival/creative app themed)
+- **Demo Timing** — Optimized animation timing for snappy feel (Planning: ~8s total, Pages: ~6s total)
+
+### Earlier Changes (Feb 12, 2026 — Session 3)
 - **Pages View** — New 7th view: AI auto-scans project plan, identifies all UI pages/screens, generates full-fidelity Tailwind HTML previews rendered in 1280x800 iframes on a zoomable React Flow canvas. Pages are flow-grouped by navigation with animated edges. Inline chat per page for AI-driven edits. Copy HTML to clipboard.
 - **Auto-Layout Fix** — `planNodesToFlow` now preserves existing node positions instead of resetting to (0,0). Nodes no longer stack after content changes.
 - **Goal Progress in Toolbar** — Merged TimelineBar goal progress circles into the ProjectToolbar.

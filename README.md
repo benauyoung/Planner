@@ -23,6 +23,7 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 
 - **12 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
 - **7 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints, Pages (AI-generated UI previews)
+- **Interactive Landing Demos** — Tabbed feature showcase with AI chat simulation (Planning) and live page color/image manipulation (Pages)
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
 - **AI Generation** — One-click PRD and implementation prompt generation
 - **AI Iteration** — Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
@@ -99,7 +100,7 @@ Planner/
 │   │   └── share/[id]/           # Read-only shared plan
 │   └── layout.tsx                # Root layout
 ├── components/
-│   ├── landing/                  # Public landing page (8 components)
+│   ├── landing/                  # Public landing page (10 components incl. interactive demos)
 │   ├── canvas/                   # React Flow canvas + nodes (7 types) + context menus
 │   ├── views/                    # View switcher + List, Table, Board, Timeline, Pages views
 │   ├── sprints/                  # Sprint board with drag-and-drop backlog

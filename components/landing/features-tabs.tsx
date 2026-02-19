@@ -336,13 +336,14 @@ const PAGE_CONNECTIONS = [
   { from: 'lineup', to: 'feed' },
 ]
 
-function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverride }: {
+function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverride, showLineupImage }: {
   page: MiniPage
   isSelected: boolean
   isEditing: boolean
   onClick: () => void
   delay: number
   accentOverride?: string | null
+  showLineupImage?: boolean
 }) {
   const accent = accentOverride || page.accent
   return (
@@ -385,7 +386,7 @@ function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverri
 
       {/* Page content */}
       {page.id === 'home' && <HomePageContent isEditing={isEditing} accent={accent} />}
-      {page.id === 'lineup' && <LineupPageContent isEditing={isEditing} accent={accent} />}
+      {page.id === 'lineup' && <LineupPageContent isEditing={isEditing} accent={accent} showImage={showLineupImage} />}
       {page.id === 'map' && <MapPageContent isEditing={isEditing} accent={accent} />}
       {page.id === 'tickets' && <TicketsPageContent isEditing={isEditing} accent={accent} />}
       {page.id === 'profile' && <ProfilePageContent isEditing={isEditing} accent={accent} />}
@@ -452,10 +453,21 @@ function HomePageContent({ isEditing, accent }: { isEditing: boolean; accent: st
   )
 }
 
-function LineupPageContent({ isEditing, accent }: { isEditing: boolean; accent: string }) {
+function LineupPageContent({ isEditing, accent, showImage }: { isEditing: boolean; accent: string; showImage?: boolean }) {
   return (
     <div className="p-2 space-y-1.5" style={{ minHeight: 120, transition: 'all 0.6s ease' }}>
       <EditableText text="Lineup" isEditing={isEditing} className="text-[9px] font-bold block" />
+      {/* Hero image - appears when AI adds it */}
+      <div className="relative rounded overflow-hidden" style={{ height: showImage ? 48 : 0, opacity: showImage ? 1 : 0, transition: 'height 0.6s ease, opacity 0.6s ease' }}>
+        <img
+          src="https://images.unsplash.com/photo-1493676304819-0d7a8d026dcf?w=400&h=120&fit=crop&crop=center"
+          alt="Concert"
+          className="w-full h-full object-cover"
+          style={{ filter: `saturate(1.2) brightness(0.9)` }}
+        />
+        <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${accentAlpha(accent, 0.6)}, transparent)`, transition: 'background 0.6s ease' }} />
+        <span className="absolute bottom-1 left-1.5 text-[6px] font-bold text-white drop-shadow">🎤 Headliner: Bad Bunny</span>
+      </div>
       {/* Day tabs */}
       <div className="flex gap-1">
         {['Fri', 'Sat', 'Sun'].map((d, i) => (
@@ -617,15 +629,19 @@ interface PagesChatMsg {
   text: string
 }
 
-const PAGES_CHAT_SEQUENCE: { msg: PagesChatMsg; delayAfter: number; action?: 'change-pink' }[] = [
+const PAGES_CHAT_SEQUENCE: { msg: PagesChatMsg; delayAfter: number; action?: 'change-pink' | 'add-image' }[] = [
   { msg: { role: 'user', text: 'Can you change the accent color to pink across all pages?' }, delayAfter: 1000 },
   { msg: { role: 'ai', text: 'Updating the accent color to pink on all 6 pages...' }, delayAfter: 600, action: 'change-pink' },
-  { msg: { role: 'ai', text: 'Done! All pages now use a pink accent. The buttons, highlights, and icons have been updated.' }, delayAfter: 0 },
+  { msg: { role: 'ai', text: 'Done! All pages now use a pink accent.' }, delayAfter: 1200 },
+  { msg: { role: 'user', text: 'Now add a hero image to the Lineup page' }, delayAfter: 1000 },
+  { msg: { role: 'ai', text: 'Adding a concert hero image to the Lineup page...' }, delayAfter: 500, action: 'add-image' },
+  { msg: { role: 'ai', text: 'Done! Added a headliner banner to the Lineup page.' }, delayAfter: 0 },
 ]
 
 function PagesDemo() {
   const [selectedPage, setSelectedPage] = useState<string | null>(null)
   const [accentOverride, setAccentOverride] = useState<string | null>(null)
+  const [showLineupImage, setShowLineupImage] = useState(false)
   const [chatMsgs, setChatMsgs] = useState<PagesChatMsg[]>([])
   const [chatPhase, setChatPhase] = useState<'waiting' | 'playing' | 'done'>('waiting')
 
@@ -646,6 +662,11 @@ function PagesDemo() {
       if (entry.action === 'change-pink') {
         timers.push(setTimeout(() => {
           setAccentOverride('hsl(330, 80%, 60%)')
+        }, 350))
+      }
+      if (entry.action === 'add-image') {
+        timers.push(setTimeout(() => {
+          setShowLineupImage(true)
         }, 350))
       }
 
@@ -720,6 +741,7 @@ function PagesDemo() {
             onClick={() => setSelectedPage(selectedPage === page.id ? null : page.id)}
             delay={i * 0.08}
             accentOverride={accentOverride}
+            showLineupImage={page.id === 'lineup' ? showLineupImage : undefined}
           />
         ))}
       </div>
