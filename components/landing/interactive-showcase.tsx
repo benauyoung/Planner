@@ -714,7 +714,7 @@ export function OneShotPipeline() {
             <span className="text-primary">In One Session.</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            VisionPath doesn't just plan. It ties your <em>entire</em> project together.
+            TinyBaguette doesn't just plan. It ties your <em>entire</em> project together.
             One prompt creates a complete, interconnected plan that AI can execute from start to finish.
           </p>
         </motion.div>

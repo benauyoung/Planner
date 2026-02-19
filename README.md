@@ -1,4 +1,4 @@
-# VisionPath
+# TinyBaguette
 
 > **Visual, AI-powered project planning on an infinite canvas.** Describe your idea, get a DAG of goals, features, and tasks — then refine, connect, and execute.
 
@@ -8,9 +8,9 @@
 
 ---
 
-## What is VisionPath?
+## What is TinyBaguette?
 
-VisionPath is a **visual DAG-based project planning tool** where you:
+TinyBaguette is a **visual DAG-based project planning tool** where you:
 
 1. **Describe** your project idea through a guided onboarding questionnaire
 2. **Generate** a hierarchical plan via AI (Gemini 2.0 Flash)
@@ -22,8 +22,9 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 ### Key Features
 
 - **12 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
-- **7 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints, Pages (AI-generated UI previews)
-- **Interactive Landing Demos** — Tabbed feature showcase with AI chat simulation (Planning) and live page color/image manipulation (Pages)
+- **8 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints, Backend, Design (AI-generated UI previews)
+- **AI Agent Builder** — Create embeddable AI chatbots with persona, knowledge base, behavior rules, theme customization, live preview, and one-click deploy with embed snippet
+- **Interactive Landing Demos** — 4-tab feature showcase: Planning (AI chat + graph), Design (live page editing), Agents (bot builder + deploy animation), Integrations (Supabase + GitHub connection flow)
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
 - **AI Generation** — One-click PRD and implementation prompt generation
 - **AI Iteration** — Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
@@ -43,7 +44,7 @@ VisionPath is a **visual DAG-based project planning tool** where you:
 - **Import** — JSON projects, Markdown specs (paste or file upload with preview)
 - **Shareable Plans** — Toggle public sharing, get a read-only URL for stakeholders
 - **Template Library** — Pre-built plans (Auth System, CRUD API, Landing Page)
-- **Integrations** — GitHub, Slack, Linear service clients + settings UI
+- **Integrations** — GitHub, Slack, Linear service clients + settings UI; landing demo for Supabase + GitHub connection
 - **Collaboration** — Presence avatars, live cursors, pluggable provider (local mock + Yjs-ready)
 - **Dark Theme** — Near-black canvas with dashed bezier curve edges
 - **Interactive Gantt** — Drag bars to move tasks, drag edges to resize durations
@@ -91,6 +92,7 @@ Open [http://localhost:3000](http://localhost:3000) to start planning.
 Planner/
 ├── app/                          # Next.js App Router pages
 │   ├── api/ai/                   # AI routes (chat, iterate, analyze, generate-prd, etc.)
+│   ├── api/agent/                # Agent routes (generate config, chat)
 │   ├── (marketing)/              # Public landing page route group
 │   ├── (app)/                    # Authenticated app route group
 │   │   ├── dashboard/            # Project list dashboard
@@ -102,7 +104,7 @@ Planner/
 ├── components/
 │   ├── landing/                  # Public landing page (10 components incl. interactive demos)
 │   ├── canvas/                   # React Flow canvas + nodes (7 types) + context menus
-│   ├── views/                    # View switcher + List, Table, Board, Timeline, Pages views
+│   ├── views/                    # View switcher + List, Table, Board, Timeline, Design, Agents views
 │   ├── sprints/                  # Sprint board with drag-and-drop backlog
 │   ├── ai/                       # AI suggestion panels (iteration + smart suggestions)
 │   ├── comments/                 # Comment thread + activity feed
@@ -128,11 +130,12 @@ Planner/
 │   ├── persistence.ts            # Firestore → localStorage failover
 │   ├── collaboration.ts          # Pluggable collaboration provider
 │   └── integrations/             # GitHub, Slack, Linear service clients
-├── hooks/                        # AI chat, AI iterate, AI suggestions, collaboration, auto-layout
+├── hooks/                        # AI chat, AI iterate, AI suggestions, agent chat, collaboration, auto-layout
 ├── prompts/                      # AI system prompts (planning, PRD, iteration, suggestion, pages)
 ├── lib/                          # Constants, commands, export/import, blast radius, templates
 ├── types/
-│   ├── project.ts                # PlanNode, ProjectPage, PageEdge, Sprint, ProjectVersion, etc.
+│   ├── project.ts                # PlanNode, ProjectPage, PageEdge, Sprint, ProjectVersion, Agent, etc.
+│   ├── agent.ts                  # Agent, AgentKnowledgeEntry, AgentAction, AgentBehaviorRule, AgentTheme
 │   ├── integrations.ts           # GitHub/Slack/Linear integration types
 │   ├── canvas.ts                 # FlowNode, FlowEdge
 │   └── chat.ts                   # ChatMessage, AIPlanNode
@@ -171,7 +174,7 @@ Every node can have:
 ## Tech Stack
 
 | Layer | Technology | Version |
-|-------|------------|---------|
+|-------|------------|---------|  
 | Framework | Next.js (App Router) | 15.5.12 |
 | Language | TypeScript | 5.x |
 | Canvas | @xyflow/react | 12.3.2 |
@@ -228,4 +231,4 @@ NEXT_PUBLIC_FIREBASE_APP_ID=<id>
 
 ## License
 
-MIT 2026 VisionPath
+MIT 2026 TinyBaguette

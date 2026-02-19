@@ -8,7 +8,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'VisionPath - AI Project Planner',
+  title: 'TinyBaguette - AI Project Planner',
   description: 'Transform your project ideas into visual, actionable plans with AI',
   icons: {
     icon: [

@@ -138,7 +138,7 @@ export function SharedPlanView({ project }: SharedPlanViewProps) {
             href="/"
             className="text-sm text-primary hover:underline"
           >
-            Made with VisionPath
+            Made with TinyBaguette
           </Link>
         </div>
       </div>

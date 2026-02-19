@@ -1,6 +1,6 @@
 import type { Project } from '@/types/project'
 
-const STORAGE_KEY = 'visionpath_projects'
+const STORAGE_KEY = 'tinybaguette_projects'
 const QUOTA_WARNING_BYTES = 4 * 1024 * 1024 // 4 MB
 
 function readAll(): Record<string, Project> {

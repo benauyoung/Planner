@@ -6,9 +6,9 @@ import { CTABanner } from '@/components/landing/cta-banner'
 export default function LandingPage() {
   return (
     <>
+      <FeaturesTabs />
       <HeroPrompt />
       <TrustBar />
-      <FeaturesTabs />
       <CTABanner />
     </>
   )

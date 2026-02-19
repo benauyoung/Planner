@@ -28,7 +28,7 @@ export function LandingNavBar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
             <Compass className="h-7 w-7 text-primary" />
-            <span className="font-bold text-xl">VisionPath</span>
+            <span className="font-bold text-xl">TinyBaguette</span>
           </Link>
 
           {/* Desktop links */}

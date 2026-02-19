@@ -1,4 +1,4 @@
-# VisionPath Vision
+# TinyBaguette Vision
 
 > The North Star document. No technical details here—only the "why" and "where."
 
@@ -8,7 +8,7 @@
 
 **End spatial blindness in software development.**
 
-VisionPath transforms abstract project complexity into a visible, navigable landscape where every goal, feature, and task exists as a tangible object you can see, touch, and connect.
+TinyBaguette transforms abstract project complexity into a visible, navigable landscape where every goal, feature, and task exists as a tangible object you can see, touch, and connect.
 
 ---
 
@@ -35,7 +35,7 @@ Kanban boards force column thinking. Todo lists force linear thinking. Neither m
 
 ### Visual Thinking
 
-Projects are **graphs, not lists**. VisionPath renders your project as an infinite canvas where:
+Projects are **graphs, not lists**. TinyBaguette renders your project as an infinite canvas where:
 - **Nodes** represent thoughts (goals, features, tasks)
 - **Cables** represent dependencies (A must complete before B)
 - **Clusters** form organically as related work groups together
@@ -138,7 +138,7 @@ Nodes float freely with spring physics. No forced grids. Projects grow like orga
 
 ---
 
-## What VisionPath Is NOT
+## What TinyBaguette Is NOT
 
 - ❌ A Kanban board (no columns)
 - ❌ A todo app (no flat lists)
@@ -152,4 +152,4 @@ Nodes float freely with spring physics. No forced grids. Projects grow like orga
 
 > "The future of software development is not just about writing code faster—it's about organizing thought better."
 
-VisionPath gives creators a way to manage complexity that feels **human** rather than mechanical.
+TinyBaguette gives creators a way to manage complexity that feels **human** rather than mechanical.

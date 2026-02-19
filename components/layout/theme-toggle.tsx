@@ -8,7 +8,7 @@ export function ThemeToggle() {
   const { theme, setTheme } = useUIStore()
 
   useEffect(() => {
-    const stored = localStorage.getItem('visionpath-theme') as 'light' | 'dark' | null
+    const stored = localStorage.getItem('tinybaguette-theme') as 'light' | 'dark' | null
     if (stored) {
       setTheme(stored)
     } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -18,7 +18,7 @@ export function ThemeToggle() {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', theme === 'dark')
-    localStorage.setItem('visionpath-theme', theme)
+    localStorage.setItem('tinybaguette-theme', theme)
   }, [theme])
 
   return (

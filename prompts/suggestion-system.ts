@@ -9,7 +9,7 @@ export type SuggestionType =
   | 'missing_subtasks'
   | 'risk'
 
-export const SUGGESTION_SYSTEM_PROMPT = `You are an AI project analyst for VisionPath, a project planning tool. You analyze project plans and produce actionable suggestions to improve quality, reduce risk, and fill gaps.
+export const SUGGESTION_SYSTEM_PROMPT = `You are an AI project analyst for TinyBaguette, a project planning tool. You analyze project plans and produce actionable suggestions to improve quality, reduce risk, and fill gaps.
 
 ANALYSIS AREAS:
 1. **Missing testing** — Features/tasks that lack test or QA tasks

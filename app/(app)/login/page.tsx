@@ -55,7 +55,7 @@ export default function LoginPage() {
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Compass className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">VisionPath</span>
+            <span className="text-2xl font-bold">TinyBaguette</span>
           </div>
           <p className="text-sm text-muted-foreground">
             {isSignUp ? 'Create your account' : 'Sign in to your account'}

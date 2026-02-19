@@ -56,7 +56,7 @@ export function ImportMarkdownModal({ open, onClose }: ImportMarkdownModalProps)
     try {
       const text = await readFileAsText(file)
 
-      // Check if it's a JSON file (VisionPath export)
+      // Check if it's a JSON file (TinyBaguette export)
       if (file.name.endsWith('.json')) {
         setImporting(true)
         const project = importProjectFromJSON(text, userId)

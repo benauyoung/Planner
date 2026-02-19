@@ -31,7 +31,7 @@ export function HeroSection() {
               <span className="text-primary">At a Glance.</span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-              One prompt. One visual plan. VisionPath uses AI to transform your idea into an interactive DAG
+              One prompt. One visual plan. TinyBaguette uses AI to transform your idea into an interactive DAG
               of goals, features, and tasks so you never lose the big picture.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">

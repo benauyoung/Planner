@@ -47,7 +47,7 @@ export default function SharePage({ params }: { params: Promise<{ id: string }> 
           <h1 className="text-2xl font-bold mb-2">Oops</h1>
           <p className="text-muted-foreground">{error}</p>
           <a href="/" className="text-primary underline mt-4 inline-block">
-            Go to VisionPath
+            Go to TinyBaguette
           </a>
         </div>
       </div>

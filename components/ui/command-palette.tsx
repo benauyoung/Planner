@@ -103,7 +103,7 @@ export function CommandPalette({ open, onClose, reLayout, fitView, toggleChat }:
         const next = theme === 'dark' ? 'light' : 'dark'
         useUIStore.getState().setTheme(next)
         document.documentElement.classList.toggle('dark', next === 'dark')
-        localStorage.setItem('visionpath-theme', next)
+        localStorage.setItem('tinybaguette-theme', next)
       },
       setNodeStatus: (id: string, status) =>
         useProjectStore.getState().updateNodeStatus(id, status),

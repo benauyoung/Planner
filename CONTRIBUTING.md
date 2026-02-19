@@ -1,6 +1,6 @@
-# Contributing to VisionPath
+# Contributing to TinyBaguette
 
-> Coding standards and conventions for the VisionPath codebase. Updated February 2026.
+> Coding standards and conventions for the TinyBaguette codebase. Updated February 2026.
 
 ---
 

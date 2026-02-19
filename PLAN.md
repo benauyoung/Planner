@@ -1,4 +1,4 @@
-# VisionPath Implementation Plan
+# TinyBaguette Implementation Plan
 
 > Living checklist reflecting actual implementation status as of February 16, 2026.
 

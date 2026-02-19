@@ -1,12 +1,12 @@
 # AI Agent Onboarding
 
-> **Read this document FIRST before doing any work on VisionPath.** Updated February 16, 2026.
+> **Read this document FIRST before doing any work on TinyBaguette.** Updated February 16, 2026.
 
 ---
 
 ## Welcome
 
-You are working on **VisionPath**, a visual DAG-based project planning tool built with Next.js, React Flow, Zustand, and Gemini AI. This document explains the reading order.
+You are working on **TinyBaguette**, a visual DAG-based project planning tool built with Next.js, React Flow, Zustand, and Gemini AI. This document explains the reading order.
 
 ---
 

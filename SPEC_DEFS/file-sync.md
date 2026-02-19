@@ -337,7 +337,7 @@ function ConflictModal({ conflict, onResolve }: ConflictModalProps) {
           <DialogTitle>External Change Detected</DialogTitle>
         </DialogHeader>
         
-        <p>The file was modified outside VisionPath:</p>
+        <p>The file was modified outside TinyBaguette:</p>
         <code>{conflict.filePath}</code>
         
         <div className="flex gap-4 mt-4">

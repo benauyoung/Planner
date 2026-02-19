@@ -1,6 +1,6 @@
 /**
  * Linear integration service.
- * Bidirectional sync: VisionPath tasks ↔ Linear issues.
+ * Bidirectional sync: TinyBaguette tasks ↔ Linear issues.
  *
  * Requires a Linear API key.
  * Set via integration settings in the app.

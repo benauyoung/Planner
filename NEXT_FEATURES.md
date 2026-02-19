@@ -1,6 +1,6 @@
-# VisionPath — Next Features Implementation Plan
+# TinyBaguette — Next Features Implementation Plan
 
-> Phased roadmap to make VisionPath one of the best project planners on the market.
+> Phased roadmap to make TinyBaguette one of the best project planners on the market.
 > Created February 12, 2026. **All 12 phases completed February 12, 2026.**
 
 ---
@@ -518,23 +518,23 @@ Multiple users editing the same project simultaneously with live cursors, presen
 ## Phase 12: Integrations
 
 ### Goal
-Connect VisionPath to the tools teams already use: GitHub, Slack, Linear.
+Connect TinyBaguette to the tools teams already use: GitHub, Slack, Linear.
 
 ### GitHub Integration
 - Create GitHub issues from task nodes (one-click)
-- Sync issue status back to VisionPath
+- Sync issue status back to TinyBaguette
 - Link PRs to task nodes
 - Auto-update task status when PR merges
 
 ### Slack Integration
 - Post project updates to a Slack channel
 - Receive notifications for comments, assignments, status changes
-- `/visionpath` slash command to check project status
+- `/tinybaguette` slash command to check project status
 
 ### Linear Integration
-- Bidirectional sync: VisionPath tasks ↔ Linear issues
-- Import Linear projects into VisionPath canvas
-- Push VisionPath plan to Linear backlog
+- Bidirectional sync: TinyBaguette tasks ↔ Linear issues
+- Import Linear projects into TinyBaguette canvas
+- Push TinyBaguette plan to Linear backlog
 
 ### New Files
 - `app/api/integrations/github/route.ts` — GitHub OAuth + webhook handler

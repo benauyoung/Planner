@@ -98,7 +98,7 @@ interface YPlanItem {
 import type * as Party from 'partykit/server';
 import { onConnect } from 'y-partykit';
 
-export default class VisionPathServer implements Party.Server {
+export default class TinyBaguetteServer implements Party.Server {
   constructor(readonly room: Party.Room) {}
 
   onConnect(conn: Party.Connection, ctx: Party.ConnectionContext) {
@@ -115,7 +115,7 @@ export default class VisionPathServer implements Party.Server {
 ```json
 // partykit.json
 {
-  "name": "visionpath",
+  "name": "tinybaguette",
   "main": "party/index.ts"
 }
 ```
@@ -124,7 +124,7 @@ export default class VisionPathServer implements Party.Server {
 
 ```bash
 npx partykit deploy
-# Deploys to: visionpath.partykit.dev
+# Deploys to: tinybaguette.partykit.dev
 ```
 
 ---
@@ -139,7 +139,7 @@ export function initCollaboration(roomId: string, userId: string) {
   
   // Connect to PartyKit
   const wsProvider = new WebsocketProvider(
-    'wss://visionpath.partykit.dev',
+    'wss://tinybaguette.partykit.dev',
     `room-${roomId}`,
     ydoc,
     { connect: true }
@@ -147,7 +147,7 @@ export function initCollaboration(roomId: string, userId: string) {
 
   // Local persistence (offline support)
   const indexeddbProvider = new IndexeddbPersistence(
-    `visionpath-${roomId}`,
+    `tinybaguette-${roomId}`,
     ydoc
   );
 
@@ -426,7 +426,7 @@ function generateUserColor(): string {
 }
 
 function getUserFromStorage(): CollabUser {
-  const stored = localStorage.getItem('visionpath-user');
+  const stored = localStorage.getItem('tinybaguette-user');
   if (stored) return JSON.parse(stored);
   
   const user = {
@@ -434,7 +434,7 @@ function getUserFromStorage(): CollabUser {
     name: `User ${Math.floor(Math.random() * 1000)}`,
     color: generateUserColor(),
   };
-  localStorage.setItem('visionpath-user', JSON.stringify(user));
+  localStorage.setItem('tinybaguette-user', JSON.stringify(user));
   return user;
 }
 ```

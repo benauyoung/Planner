@@ -4,7 +4,7 @@ import { generateId } from './id'
 const EXPORT_VERSION = 1
 
 interface ExportedProject {
-  _visionpath: {
+  _tinybaguette: {
     version: number
     exportedAt: string
   }
@@ -16,7 +16,7 @@ interface ExportedProject {
  */
 export function exportProjectAsJSON(project: Project): string {
   const exported: ExportedProject = {
-    _visionpath: {
+    _tinybaguette: {
       version: EXPORT_VERSION,
       exportedAt: new Date().toISOString(),
     },
@@ -37,11 +37,11 @@ export function importProjectFromJSON(json: string, userId: string): Project {
     throw new Error('Invalid JSON file')
   }
 
-  // Handle VisionPath export format
+  // Handle TinyBaguette export format
   if (
     parsed &&
     typeof parsed === 'object' &&
-    '_visionpath' in parsed &&
+    '_tinybaguette' in parsed &&
     'project' in parsed
   ) {
     const exported = parsed as ExportedProject
@@ -53,7 +53,7 @@ export function importProjectFromJSON(json: string, userId: string): Project {
     return rehydrateProject(parsed as Project, userId)
   }
 
-  throw new Error('Unrecognized file format. Expected a VisionPath project export.')
+  throw new Error('Unrecognized file format. Expected a TinyBaguette project export.')
 }
 
 function rehydrateProject(raw: Project, userId: string): Project {

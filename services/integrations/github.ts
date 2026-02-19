@@ -62,7 +62,7 @@ export function nodeToIssueBody(node: PlanNode): string {
   if (node.estimatedHours) sections.push(`**Estimate:** ${node.estimatedHours}h`)
   if (node.tags && node.tags.length > 0) sections.push(`**Tags:** ${node.tags.join(', ')}`)
 
-  sections.push(`\n---\n_Created from VisionPath_`)
+  sections.push(`\n---\n_Created from TinyBaguette_`)
 
   return sections.join('\n')
 }

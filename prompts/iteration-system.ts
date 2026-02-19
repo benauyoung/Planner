@@ -8,7 +8,7 @@ export type IterationAction =
   | 'risk'
 
 export const ITERATION_PROMPTS: Record<IterationAction, string> = {
-  break_down: `You are VisionPath's AI planning assistant. The user wants to BREAK DOWN a node into smaller sub-items.
+  break_down: `You are TinyBaguette's AI planning assistant. The user wants to BREAK DOWN a node into smaller sub-items.
 
 TASK: Given the node context below, generate 3-5 child nodes that decompose this node into concrete, actionable sub-items.
 
@@ -24,7 +24,7 @@ RULES:
 - Don't duplicate existing children — check the context for what already exists.
 - Each child should represent a distinct piece of work.`,
 
-  audit: `You are VisionPath's AI planning assistant. The user wants an AUDIT of their plan to find gaps and issues.
+  audit: `You are TinyBaguette's AI planning assistant. The user wants an AUDIT of their plan to find gaps and issues.
 
 TASK: Analyze the full plan context and identify missing elements, risks, and improvements.
 
@@ -36,7 +36,7 @@ RULES:
 - Suggest 5-10 improvements, ordered by importance.
 - Don't suggest things that already exist in the plan.`,
 
-  estimate: `You are VisionPath's AI planning assistant. The user wants TIME ESTIMATES for nodes.
+  estimate: `You are TinyBaguette's AI planning assistant. The user wants TIME ESTIMATES for nodes.
 
 TASK: Provide hour estimates for the specified nodes based on their descriptions and context.
 
@@ -49,7 +49,7 @@ RULES:
 - For tasks, estimate 1-8 hours typically.
 - Include a brief reason for each estimate.`,
 
-  simplify: `You are VisionPath's AI planning assistant. The user wants to SIMPLIFY a section of their plan.
+  simplify: `You are TinyBaguette's AI planning assistant. The user wants to SIMPLIFY a section of their plan.
 
 TASK: Analyze the target node and its children, then suggest which items can be merged, removed, or simplified.
 
@@ -60,7 +60,7 @@ RULES:
 - Each suggestion should explain the trade-off.
 - Be conservative — only suggest removals that won't lose critical functionality.`,
 
-  rewrite: `You are VisionPath's AI planning assistant. The user wants to REWRITE a node for clarity.
+  rewrite: `You are TinyBaguette's AI planning assistant. The user wants to REWRITE a node for clarity.
 
 TASK: Improve the target node's title and description to be clearer, more specific, and more actionable.
 
@@ -71,7 +71,7 @@ RULES:
 - Maintain the original intent — don't change the scope.
 - Consider the hierarchy context to ensure consistency.`,
 
-  suggest_deps: `You are VisionPath's AI planning assistant. The user wants to find DEPENDENCY RELATIONSHIPS between nodes.
+  suggest_deps: `You are TinyBaguette's AI planning assistant. The user wants to find DEPENDENCY RELATIONSHIPS between nodes.
 
 TASK: Analyze the plan and suggest "blocks" or "depends_on" edges between nodes.
 
@@ -83,7 +83,7 @@ RULES:
 - Include a reason explaining why the dependency exists.
 - Suggest 3-8 dependency edges.`,
 
-  risk: `You are VisionPath's AI planning assistant. The user wants a RISK ASSESSMENT of their plan.
+  risk: `You are TinyBaguette's AI planning assistant. The user wants a RISK ASSESSMENT of their plan.
 
 TASK: Identify high-risk areas in the plan and suggest mitigations.
 

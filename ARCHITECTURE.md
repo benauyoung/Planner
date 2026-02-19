@@ -1,6 +1,6 @@
-# VisionPath Architecture
+# TinyBaguette Architecture
 
-> Source of truth for how VisionPath is built. Reflects the **actual implemented codebase** as of February 16, 2026.
+> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of February 16, 2026.
 
 ---
 

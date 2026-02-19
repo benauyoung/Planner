@@ -63,7 +63,7 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
       icon: <FileJson className="h-3.5 w-3.5" />,
       action: () => {
         if (!currentProject) return
-        downloadFile(exportProjectAsJSON(currentProject), `${safeName}.visionpath.json`)
+        downloadFile(exportProjectAsJSON(currentProject), `${safeName}.tinybaguette.json`)
       },
     },
     {

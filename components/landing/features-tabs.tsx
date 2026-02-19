@@ -13,13 +13,18 @@ import {
   MessageSquare,
   Bot,
   Send,
+  Plug,
+  GitBranch,
+  Check,
+  Database,
+  RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
 // ─── Types ───────────────────────────────────────────────────
 
-type FeatureTab = 'planning' | 'design' | 'agents'
+type FeatureTab = 'planning' | 'design' | 'agents' | 'integrations'
 
 const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description: string }[] = [
   {
@@ -39,6 +44,12 @@ const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description
     label: 'Agents',
     icon: Bot,
     description: 'Create, teach, and deploy an AI chatbot to your website in seconds.',
+  },
+  {
+    key: 'integrations',
+    label: 'Integrations',
+    icon: Plug,
+    description: 'Connect your favorite tools in one click. Supabase, GitHub, and more.',
   },
 ]
 
@@ -1176,6 +1187,239 @@ function AgentsDemo() {
   )
 }
 
+// ─── Integrations Demo ───────────────────────────────────────
+
+const INTEGRATIONS = [
+  {
+    id: 'supabase',
+    name: 'Supabase',
+    description: 'Database, Auth & Storage',
+    color: '#3ECF8E',
+    icon: (
+      <svg viewBox="0 0 109 113" className="h-5 w-5" fill="none">
+        <path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#sb-a)" />
+        <path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#sb-b)" fillOpacity="0.2" />
+        <path d="M45.317 2.07103C48.1765 -1.53037 53.9745 0.442937 54.0434 5.04075L54.4849 72.2922H9.83113C1.64038 72.2922 -2.92775 62.8321 2.1655 56.4175L45.317 2.07103Z" fill="#3ECF8E" />
+        <defs>
+          <linearGradient id="sb-a" x1="53.9738" y1="54.974" x2="94.1635" y2="71.8295" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#249361" /><stop offset="1" stopColor="#3ECF8E" />
+          </linearGradient>
+          <linearGradient id="sb-b" x1="36.1558" y1="30.578" x2="54.4844" y2="65.0806" gradientUnits="userSpaceOnUse">
+            <stop /><stop offset="1" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      </svg>
+    ),
+    features: ['Postgres Database', 'Row Level Security', 'Auth & Users', 'Realtime Sync'],
+  },
+  {
+    id: 'github',
+    name: 'GitHub',
+    description: 'Repos, Issues & CI/CD',
+    color: '#f0f0f0',
+    icon: (
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z" />
+      </svg>
+    ),
+    features: ['Sync Repositories', 'Import Issues', 'Auto-deploy', 'Branch Tracking'],
+  },
+]
+
+function IntegrationsDemo() {
+  const [connectedIds, setConnectedIds] = useState<string[]>([])
+  const [connectingId, setConnectingId] = useState<string | null>(null)
+  const [syncedItems, setSyncedItems] = useState<Record<string, number>>({})
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+
+    // Auto-connect Supabase
+    timers.push(setTimeout(() => setConnectingId('supabase'), 800))
+    timers.push(setTimeout(() => {
+      setConnectedIds(['supabase'])
+      setConnectingId(null)
+    }, 2000))
+
+    // Sync Supabase items
+    for (let i = 1; i <= 4; i++) {
+      timers.push(setTimeout(() => setSyncedItems((prev) => ({ ...prev, supabase: i })), 2200 + i * 300))
+    }
+
+    // Auto-connect GitHub
+    timers.push(setTimeout(() => setConnectingId('github'), 3800))
+    timers.push(setTimeout(() => {
+      setConnectedIds(['supabase', 'github'])
+      setConnectingId(null)
+    }, 5000))
+
+    // Sync GitHub items
+    for (let i = 1; i <= 4; i++) {
+      timers.push(setTimeout(() => setSyncedItems((prev) => ({ ...prev, github: i })), 5200 + i * 300))
+    }
+
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  return (
+    <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
+      {/* Left: Integration Cards */}
+      <div className="flex-1 border-r flex flex-col overflow-hidden">
+        <div className="px-3 py-2 border-b flex items-center gap-2">
+          <Plug className="h-3.5 w-3.5 text-primary" />
+          <span className="text-[10px] font-semibold">Integrations</span>
+          <span className="ml-auto text-[8px] text-muted-foreground">{connectedIds.length} connected</span>
+        </div>
+
+        <div className="flex-1 p-3 space-y-3 overflow-hidden">
+          {INTEGRATIONS.map((integration, idx) => {
+            const isConnected = connectedIds.includes(integration.id)
+            const isConnecting = connectingId === integration.id
+            const synced = syncedItems[integration.id] || 0
+
+            return (
+              <motion.div
+                key={integration.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.15 }}
+                className={cn(
+                  'rounded-lg border p-2.5 transition-all',
+                  isConnected ? 'border-green-500/30 bg-green-500/5' : isConnecting ? 'border-primary/30 bg-primary/5' : 'bg-muted/10'
+                )}
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <div
+                    className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: integration.color + '15', color: integration.color }}
+                  >
+                    {integration.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[9px] font-semibold">{integration.name}</div>
+                    <div className="text-[7px] text-muted-foreground">{integration.description}</div>
+                  </div>
+                  {isConnected ? (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center"
+                    >
+                      <Check className="h-3 w-3 text-white" />
+                    </motion.div>
+                  ) : isConnecting ? (
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <RefreshCw className="h-3.5 w-3.5 text-primary" />
+                    </motion.div>
+                  ) : (
+                    <div className="px-2 py-0.5 rounded text-[7px] font-medium bg-muted/30 text-muted-foreground">
+                      Connect
+                    </div>
+                  )}
+                </div>
+
+                {/* Feature sync progress */}
+                {(isConnected || isConnecting) && (
+                  <div className="space-y-1 mt-1.5">
+                    {integration.features.map((feature, fi) => {
+                      const isSynced = fi < synced
+                      return (
+                        <motion.div
+                          key={feature}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.05 * fi }}
+                          className="flex items-center gap-1.5 text-[8px]"
+                        >
+                          {isSynced ? (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: 'spring', stiffness: 300 }}
+                            >
+                              <Check className="h-2.5 w-2.5 text-green-500" />
+                            </motion.div>
+                          ) : (
+                            <div className="w-2.5 h-2.5 rounded-full border border-muted-foreground/20" />
+                          )}
+                          <span className={cn(isSynced ? 'text-foreground' : 'text-muted-foreground/50')}>
+                            {feature}
+                          </span>
+                        </motion.div>
+                      )
+                    })}
+                  </div>
+                )}
+              </motion.div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Right: Live sync feed */}
+      <div className="w-56 flex flex-col shrink-0">
+        <div className="px-3 py-2 border-b flex items-center gap-2">
+          <RefreshCw className="h-3 w-3 text-primary" />
+          <span className="text-[10px] font-semibold">Sync Activity</span>
+        </div>
+
+        <div className="flex-1 overflow-hidden p-2 space-y-1.5">
+          {[
+            { icon: Database, text: 'Connected to Supabase project', color: 'text-green-500', delay: 2.0 },
+            { icon: Shield, text: 'Row Level Security enabled', color: 'text-green-500', delay: 2.5 },
+            { icon: Database, text: 'Synced 12 tables from schema', color: 'text-emerald-500', delay: 3.0 },
+            { icon: Database, text: 'Auth providers configured', color: 'text-emerald-500', delay: 3.4 },
+            { icon: GitBranch, text: 'Connected to GitHub repo', color: 'text-purple-500', delay: 5.0 },
+            { icon: GitBranch, text: 'Imported 8 open issues', color: 'text-purple-500', delay: 5.5 },
+            { icon: GitBranch, text: 'Webhook configured for pushes', color: 'text-violet-500', delay: 5.9 },
+            { icon: GitBranch, text: 'Branch protection rules synced', color: 'text-violet-500', delay: 6.3 },
+          ].map((item, i) => (
+            <SyncFeedItem key={i} icon={item.icon} text={item.text} color={item.color} delay={item.delay} />
+          ))}
+        </div>
+
+        {/* Status bar */}
+        <div className="px-3 py-1.5 border-t bg-muted/10">
+          <div className="flex items-center gap-1.5 text-[7px] text-muted-foreground">
+            <div className={cn(
+              'w-1.5 h-1.5 rounded-full',
+              connectedIds.length === 2 ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/30'
+            )} />
+            {connectedIds.length === 2 ? 'All integrations synced' : connectedIds.length === 1 ? '1 integration connected' : 'Waiting for connections...'}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SyncFeedItem({ icon: Icon, text, color, delay }: { icon: typeof Database; text: string; color: string; delay: number }) {
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setVisible(true), delay * 1000)
+    return () => clearTimeout(timer)
+  }, [delay])
+
+  if (!visible) return null
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -8, height: 0 }}
+      animate={{ opacity: 1, x: 0, height: 'auto' }}
+      transition={{ duration: 0.25 }}
+      className="flex items-start gap-1.5 text-[8px] py-1 border-b border-muted/20 last:border-0"
+    >
+      <Icon className={cn('h-3 w-3 shrink-0 mt-0.5', color)} />
+      <span className="text-foreground/80 leading-relaxed">{text}</span>
+      <span className="ml-auto text-[6px] text-muted-foreground/50 shrink-0 mt-0.5">just now</span>
+    </motion.div>
+  )
+}
+
 // ─── Feature Tabs Section ───────────────────────────────────
 
 export function FeaturesTabs() {
@@ -1201,23 +1445,8 @@ export function FeaturesTabs() {
           </p>
         </motion.div>
 
-        {/* Demo area */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.98 }}
-            transition={{ duration: 0.35 }}
-          >
-            {activeTab === 'planning' && <PlanningDemo />}
-            {activeTab === 'design' && <PagesDemo />}
-            {activeTab === 'agents' && <AgentsDemo />}
-          </motion.div>
-        </AnimatePresence>
-
         {/* Tab buttons */}
-        <div className="flex justify-center gap-2 mt-8 mb-4">
+        <div className="flex justify-center gap-2 mb-4">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -1243,10 +1472,26 @@ export function FeaturesTabs() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="text-center text-sm text-muted-foreground mb-4 max-w-lg mx-auto"
+            className="text-center text-sm text-muted-foreground mb-8 max-w-lg mx-auto"
           >
             {currentTab.description}
           </motion.p>
+        </AnimatePresence>
+
+        {/* Demo area */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+            transition={{ duration: 0.35 }}
+          >
+            {activeTab === 'planning' && <PlanningDemo />}
+            {activeTab === 'design' && <PagesDemo />}
+            {activeTab === 'agents' && <AgentsDemo />}
+            {activeTab === 'integrations' && <IntegrationsDemo />}
+          </motion.div>
         </AnimatePresence>
 
         {/* CTA */}
@@ -1254,7 +1499,7 @@ export function FeaturesTabs() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center mt-4"
+          className="text-center mt-2"
         >
           <Link
             href="/login"

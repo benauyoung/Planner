@@ -26,7 +26,7 @@ export async function signUpWithEmail(email: string, password: string) {
 
 export async function signInAsDemo() {
   if (!auth) throw new Error('Firebase Auth is not configured')
-  return signInWithEmailAndPassword(auth, 'demo@visionpath.app', 'demo1234')
+  return signInWithEmailAndPassword(auth, 'demo@tinybaguette.dev', 'demo1234')
 }
 
 export async function signOutUser() {

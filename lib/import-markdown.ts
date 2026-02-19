@@ -5,7 +5,7 @@ import type { AIPlanNode } from '@/types/chat'
  * Supports:
  * - Heading hierarchy: # → goal, ## → subgoal, ### → feature, #### and deeper → task
  * - Checklist items (- [ ] / - [x]) → tasks under nearest parent
- * - YAML frontmatter (id, type, status, parent) for VisionPath/Spec Kit format
+ * - YAML frontmatter (id, type, status, parent) for TinyBaguette/Spec Kit format
  * - Plain list items (- text) → tasks under nearest parent
  */
 export function parseMarkdownToNodes(markdown: string): AIPlanNode[] {
@@ -182,7 +182,7 @@ export function parseMarkdownToNodes(markdown: string): AIPlanNode[] {
 }
 
 /**
- * Try to parse frontmatter-based VisionPath/Spec Kit format.
+ * Try to parse frontmatter-based TinyBaguette/Spec Kit format.
  * Returns null if the markdown doesn't have recognizable frontmatter.
  */
 export function parseFrontmatterNodes(markdown: string): AIPlanNode[] | null {

@@ -43,7 +43,7 @@ const INTEGRATIONS: IntegrationCardConfig[] = [
   {
     type: 'linear',
     name: 'Linear',
-    description: 'Bidirectional sync between VisionPath tasks and Linear issues.',
+    description: 'Bidirectional sync between TinyBaguette tasks and Linear issues.',
     icon: <Zap className="h-5 w-5" />,
     color: '#5E6AD2',
     fields: [

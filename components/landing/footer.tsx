@@ -27,7 +27,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
               <Compass className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg">VisionPath</span>
+              <span className="font-bold text-lg">TinyBaguette</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Transform your project ideas into visual, actionable plans with AI.
@@ -57,7 +57,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} VisionPath. All rights reserved.
+            &copy; {new Date().getFullYear()} TinyBaguette. All rights reserved.
           </p>
           <div className="flex items-center gap-4">
             <a

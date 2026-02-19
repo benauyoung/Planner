@@ -1,4 +1,4 @@
-# VisionPath Roadmap
+# TinyBaguette Roadmap
 
 > Milestone tracking. Updated February 12, 2026 to reflect actual progress.
 
@@ -109,7 +109,7 @@
 - LocalStorage fallback via `services/local-storage.ts`
 - Persistence abstraction layer (`services/persistence.ts`) auto-selects backend
 - Auto-save with 2s debounce in `hooks/use-project.ts`
-- JSON export/import (`lib/export-import.ts`): download `.visionpath.json`, import from dashboard
+- JSON export/import (`lib/export-import.ts`): download `.tinybaguette.json`, import from dashboard
 - Export button in canvas toolbar, Import button on dashboard
 
 ---

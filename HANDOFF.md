@@ -1,12 +1,12 @@
-# VisionPath — Full AI Handoff Document
+# TinyBaguette — Full AI Handoff Document
 
 > Complete codebase reference. Updated February 19, 2026.
 
 ---
 
-## What Is VisionPath?
+## What Is TinyBaguette?
 
-VisionPath is an **AI-powered visual project planning tool**. Users describe a project idea through a guided onboarding flow, then AI (Gemini 2.0 Flash) builds a hierarchical plan as a **directed acyclic graph (DAG)** on an interactive canvas. Users can:
+TinyBaguette is an **AI-powered visual project planning tool**. Users describe a project idea through a guided onboarding flow, then AI (Gemini 2.0 Flash) builds a hierarchical plan as a **directed acyclic graph (DAG)** on an interactive canvas. Users can:
 
 - Chat with AI to refine the plan
 - Click nodes to inspect/edit them
@@ -20,7 +20,7 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - Import projects from JSON or Markdown specs
 - Share plans via public read-only URL
 - Start from pre-built templates (Auth System, CRUD API, Landing Page)
-- **7 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt with drag-to-move/resize), Sprints, Pages (AI-generated UI previews)
+- **8 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt with drag-to-move/resize), Sprints, Backend, Design (AI-generated UI previews)
 - **Command palette** (Cmd+K) with fuzzy search + keyboard shortcuts
 - **Team management**: Assign members, set priority, due dates, estimates, tags
 - **AI iteration**: Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
@@ -33,6 +33,7 @@ VisionPath is an **AI-powered visual project planning tool**. Users describe a p
 - **Collaboration infrastructure**: Presence avatars, live cursors, pluggable provider
 
 - **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing
+- **AI agent builder**: Create embeddable AI chatbots — configure persona, knowledge base, behavior rules, theme, preview live, deploy with embed snippet
 
 **In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview UI pages → Collaborate & integrate.
 
@@ -96,7 +97,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=<app-id>
 
 ## Routing Architecture
 
-VisionPath uses **Next.js Route Groups** to separate public marketing pages from authenticated application routes:
+TinyBaguette uses **Next.js Route Groups** to separate public marketing pages from authenticated application routes:
 
 ```
 app/
@@ -114,17 +115,20 @@ app/
 │   ├── login/page.tsx                  # Login (/login) — email/password + Google sign-in
 │   ├── project/
 │   │   ├── new/page.tsx                # New project (/project/new) — onboarding flow
-│   │   └── [id]/page.tsx              # Project workspace (/project/[id]) — canvas + chat
+│   │   └── [id]/page.tsx              # Existing project: ProjectWorkspace
 │   └── share/[id]/page.tsx            # Shared plan (/share/[id]) — read-only view
 │
-└── api/ai/                             # API routes (server-side, not in route groups)
-    ├── chat/route.ts                   # POST — Gemini chat (progressive plan building)
-    ├── suggest-features/route.ts       # POST — AI feature suggestions for onboarding
-    ├── generate-prd/route.ts           # POST — AI PRD generation from node context
-    ├── generate-prompt/route.ts        # POST — AI implementation prompt generation
-    ├── generate-questions/route.ts     # POST — AI question generation for nodes
-    ├── generate-pages/route.ts         # POST — AI page preview generation from project plan
-    └── edit-page/route.ts              # POST — AI page HTML editing from user instruction
+├── api/ai/                             # AI API routes (server-side)
+│   ├── chat/route.ts                   # POST — Gemini chat (progressive plan building)
+│   ├── suggest-features/route.ts       # POST — AI feature suggestions for onboarding
+│   ├── generate-prd/route.ts           # POST — AI PRD generation from node context
+│   ├── generate-prompt/route.ts        # POST — AI prompt generation
+│   ├── generate-questions/route.ts     # POST — AI question generation for nodes
+│   ├── generate-pages/route.ts         # POST — AI page preview generation from project plan
+│   └── edit-page/route.ts              # POST — AI page HTML editing from user instruction
+└── api/agent/                          # Agent API routes
+    ├── generate/route.ts               # POST — AI generates agent config from description
+    └── [agentId]/chat/route.ts         # POST — Agent chat (loads config, proxies to Gemini)
 ```
 
 ### Route Summary
@@ -165,16 +169,19 @@ Planner/
 │   │   │   ├── new/page.tsx            # New project: Onboarding → Chat + Canvas
 │   │   │   └── [id]/page.tsx           # Existing project: ProjectWorkspace
 │   │   └── share/[id]/page.tsx         # Read-only shared plan
-│   └── api/ai/
-│       ├── chat/route.ts               # POST — Gemini chat
-│       ├── suggest-features/route.ts   # POST — AI feature suggestions
-│       ├── generate-prd/route.ts       # POST — AI PRD generation
-│       ├── generate-prompt/route.ts    # POST — AI prompt generation
-│       ├── generate-questions/route.ts # POST — AI question generation
-│       ├── iterate/route.ts            # POST — AI iteration (break down, audit, estimate)
-│       ├── analyze/route.ts            # POST — AI smart suggestions analysis
-│       ├── generate-pages/route.ts    # POST — AI page preview generation
-│       └── edit-page/route.ts         # POST — AI page HTML editing
+│   ├── api/ai/
+│   │   ├── chat/route.ts               # POST — Gemini chat
+│   │   ├── suggest-features/route.ts   # POST — AI feature suggestions
+│   │   ├── generate-prd/route.ts       # POST — AI PRD generation
+│   │   ├── generate-prompt/route.ts    # POST — AI prompt generation
+│   │   ├── generate-questions/route.ts # POST — AI question generation
+│   │   ├── iterate/route.ts            # POST — AI iteration (break down, audit, estimate)
+│   │   ├── analyze/route.ts            # POST — AI smart suggestions analysis
+│   │   ├── generate-pages/route.ts     # POST — AI page preview generation
+│   │   └── edit-page/route.ts          # POST — AI page HTML editing
+│   └── api/agent/
+│       ├── generate/route.ts           # POST — AI generates agent config from description
+│       └── [agentId]/chat/route.ts     # POST — Agent chat (loads config, proxies to Gemini)
 ├── components/
 │   ├── landing/                        # Landing page components (public)
 │   │   ├── nav-bar.tsx                 # Sticky nav, transparent → blur on scroll, mobile menu
@@ -183,7 +190,7 @@ Planner/
 │   │   ├── hero-mockup.tsx             # SVG/CSS animated canvas mockup (nodes + edges)
 │   │   ├── trust-bar.tsx               # Social proof badges (Station 8, Pioneers VC)
 │   │   ├── how-it-works.tsx            # 3-step workflow (Describe → Generate → Refine)
-│   │   ├── features-tabs.tsx           # Interactive tabbed demo: Planning (AI chat + graph), Pages (AI color change + image), Backend
+│   │   ├── features-tabs.tsx           # Interactive tabbed demo: Planning, Design, Agents, Integrations
 │   │   ├── features-grid.tsx           # 6-card feature showcase
 │   │   ├── cta-banner.tsx              # Full-width gradient CTA section
 │   │   └── footer.tsx                  # 4-column footer with links + social icons
@@ -207,12 +214,13 @@ Planner/
 │   │       ├── pane-context-menu.tsx   # Right-click canvas (add node + smart mapping)
 │   │       └── context-submenu.tsx     # Flyout submenu helper
 │   ├── views/                          # Multiple view components
-│   │   ├── view-switcher.tsx           # Tab bar: Canvas / List / Table / Board / Timeline / Sprints / Pages
+│   │   ├── view-switcher.tsx           # Tab bar: Canvas / List / Table / Board / Timeline / Sprints / Backend / Design
 │   │   ├── list-view.tsx               # Hierarchical tree with expand/collapse
 │   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
 │   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
 │   │   ├── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
-│   │   └── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat
+│   │   ├── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat
+│   │   └── agents-view.tsx             # Agent builder: config, knowledge, theme, preview, deploy tabs
 │   ├── sprints/
 │   │   └── sprint-board.tsx            # Sprint overview: create, drag backlog, progress bars
 │   ├── ai/
@@ -259,7 +267,7 @@ Planner/
 │   │   ├── project-toolbar.tsx         # Unified toolbar: back, title, save status, view tabs, actions
 │   │   └── team-manager.tsx            # Modal to add/remove team members
 │   ├── layout/
-│   │   ├── header.tsx                  # App header (Compass icon + VisionPath → /dashboard)
+│   │   ├── header.tsx                  # App header (Compass icon + TinyBaguette → /dashboard)
 │   │   ├── theme-toggle.tsx            # Dark/light toggle
 │   │   └── user-menu.tsx               # User avatar/menu
 │   ├── error-boundary.tsx              # React error boundary component
@@ -274,9 +282,10 @@ Planner/
 │   ├── use-ai-chat.ts                 # Chat logic: send, init, context injection
 │   ├── use-ai-iterate.ts              # AI iteration actions (break down, audit, estimate)
 │   ├── use-ai-suggestions.ts          # Smart suggestions hook (analyze project)
+│   ├── use-agent-chat.ts              # Agent chat preview hook (send messages, manage state)
 │   ├── use-auto-layout.ts             # Dagre layout algorithm
 │   ├── use-collaboration.ts            # Collaboration provider hook (presence, cursors)
-│   └── use-project.ts                 # Persistence load/save with 2s debounce
+│   └── use-project.ts                 # Persistence load/save with 2s debounce (saves all project fields)
 ├── stores/
 │   ├── project-store.ts               # Central state: project, nodes, edges, sprints, versions, 55+ mutations
 │   ├── chat-store.ts                  # Chat messages, phase, onboarding answers
@@ -285,7 +294,7 @@ Planner/
 │   ├── firebase.ts                    # Firebase init (null-guarded)
 │   ├── firestore.ts                   # CRUD (null-guarded)
 │   ├── auth.ts                        # Auth functions (null-guarded)
-│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion, pages)
+│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion, pages, agent)
 │   ├── persistence.ts                 # Persistence abstraction: Firestore → localStorage failover
 │   ├── local-storage.ts              # localStorage backend for offline persistence
 │   ├── collaboration.ts               # Collaboration provider abstraction (pluggable, local mock)
@@ -301,6 +310,7 @@ Planner/
 │   ├── iteration-system.ts            # AI iteration actions system prompt
 │   ├── suggestion-system.ts           # Ambient AI analysis system prompt
 │   ├── page-generation.ts             # AI page preview generation system prompt
+│   ├── agent-generation.ts            # Agent config generation system prompt
 │   └── refinement-system.ts           # Refinement prompt (unused)
 ├── lib/
 │   ├── constants.ts                   # NODE_CONFIG (12 types), NODE_CHILD_TYPE, DAGRE_CONFIG
@@ -322,7 +332,8 @@ Planner/
 │   ├── id.ts                          # generateId() — crypto.randomUUID
 │   └── utils.ts                       # cn() — clsx + tailwind-merge
 ├── types/
-│   ├── project.ts                     # PlanNode, ProjectPage, PageEdge, ProjectEdge, Sprint, ProjectVersion, etc.
+│   ├── project.ts                     # PlanNode, ProjectPage, PageEdge, ProjectEdge, Sprint, ProjectVersion, Agent, etc.
+│   ├── agent.ts                       # Agent, AgentKnowledgeEntry, AgentAction, AgentBehaviorRule, AgentTheme
 │   ├── integrations.ts               # GitHub/Slack/Linear integration types
 │   ├── canvas.ts                      # FlowNode, FlowEdge, PlanNodeData
 │   └── chat.ts                        # ChatMessage, AIPlanNode
@@ -416,7 +427,30 @@ interface Project {
   currentVersionId?: string
   pages?: ProjectPage[]       // AI-generated page previews
   pageEdges?: PageEdge[]      // Navigation flow between pages
+  agents?: Agent[]             // Embeddable AI chatbot agents
 }
+```
+
+### Agent (Embeddable AI Chatbot)
+```typescript
+interface Agent {
+  id: string
+  name: string
+  description: string
+  systemPrompt: string
+  greeting: string
+  knowledge: AgentKnowledgeEntry[]  // FAQ/text entries the agent can reference
+  actions: AgentAction[]            // Callable actions (e.g. redirect, collect email)
+  rules: AgentBehaviorRule[]        // Behavior constraints (e.g. "never share pricing")
+  theme: AgentTheme                 // Widget colors, position, avatar
+  isPublished: boolean
+  createdAt: number
+  updatedAt: number
+}
+interface AgentKnowledgeEntry { id, type: 'faq'|'text', title, content }
+interface AgentAction { id, type: 'redirect'|'collect_email'|'escalate'|'custom', label, config }
+interface AgentBehaviorRule { id, rule: string }
+interface AgentTheme { primaryColor, backgroundColor, fontFamily, position: 'bottom-right'|'bottom-left', avatarUrl? }
 ```
 
 ### Supporting Types
@@ -483,6 +517,8 @@ interface PageEdge { id, source, target, label? }
 
 **Pages**: `setPages`, `updatePageHtml`, `updatePagePosition`, `addPageEdge`, `removePageEdge`, `removePage`
 
+**Agents**: `addAgent`, `updateAgent`, `removeAgent`, `addAgentKnowledge`, `removeAgentKnowledge`, `addAgentRule`, `removeAgentRule`, `updateAgentTheme`, `toggleAgentPublished`
+
 **Flow Conversion**: `planNodesToFlow(nodes, projectEdges, existingFlowNodes?)` — converts PlanNode[] + ProjectEdge[] → FlowNode[] + FlowEdge[], preserves existing positions
 
 ---
@@ -544,7 +580,7 @@ The `withFallback()` wrapper in `persistence.ts` handles three scenarios:
 2. **Firebase configured and working** → uses Firestore
 3. **Firebase configured but unavailable** (e.g. database not provisioned) → tries Firestore on first call, catches error, logs one warning, permanently falls back to localStorage for all subsequent calls
 
-Auto-save runs via `use-project.ts` with a 2-second debounce.
+Auto-save runs via `use-project.ts` with a 2-second debounce. It now saves all project fields (not just title/description/phase/nodes/edges).
 
 ---
 
@@ -553,17 +589,16 @@ Auto-save runs via `use-project.ts` with a 2-second debounce.
 The landing page lives in the `(marketing)` route group at `/` and is fully public (no auth wrapper).
 
 ### Sections (top to bottom)
-1. **Nav Bar** (`nav-bar.tsx`) — Sticky, transparent → blurred on scroll, Compass icon + "VisionPath" brand, links to How It Works / Features / Login, "Get Started" CTA, mobile hamburger menu
-2. **Hero** (`hero-section.tsx` + `hero-prompt.tsx`) — Split screen: left side has headline ("See Your Entire Project. At a Glance."), subheadline, animated prompt input with rotating placeholder ideas and clickable example chips; right side has animated SVG canvas mockup
-3. **Trust Bar** (`trust-bar.tsx`) — Horizontal strip: "Station 8 Developed", "Pioneers VC Approved" with Shield + Award icons
-4. **How It Works** (`how-it-works.tsx`) — 3 steps: Describe Your Idea → AI Generates Your Plan → Refine & Build, each with icon + title + description
-5. **Features Tabs** (`features-tabs.tsx`) — Interactive tabbed demo with 3 tabs:
+1. **Nav Bar** (`nav-bar.tsx`) — Sticky, transparent → blurred on scroll, Compass icon + "TinyBaguette" brand, links to How It Works / Features / Login, "Get Started" CTA, mobile hamburger menu
+2. **Features Tabs** (`features-tabs.tsx`) — Interactive tabbed demo with 4 tabs (shown first on page):
    - **Planning Demo** — AI chat sidebar with progressive conversation that builds a node graph step-by-step (Music Festival App theme). Messages auto-play and nodes appear in sync.
-   - **Pages Demo** — 6 mini-webpage previews (Home, Lineup, Map, Tickets, Profile, Feed) on a canvas with dashed bezier connection lines. AI chat overlay auto-plays two actions: (1) changes accent color to pink across all pages with smooth CSS transitions, (2) adds a concert hero image to the Lineup page.
-   - **Backend Demo** — API endpoint mockup
-6. **Features Grid** (`features-grid.tsx`) — 6 cards: Visual DAG Canvas, AI Co-Pilot, Rich Content, Dependency Tracking, Export Anywhere, Templates
-7. **CTA Banner** (`cta-banner.tsx`) — Full-width gradient section, "Start planning in 30 seconds" + "Get Started — Free" button
-8. **Footer** (`footer.tsx`) — 4-column layout: brand description, Product links, Company links, Legal links; bottom bar with copyright + social icons (GitHub, Twitter, LinkedIn)
+   - **Design Demo** — 6 mini-webpage previews (Home, Lineup, Map, Tickets, Profile, Feed) on a canvas with dashed bezier connection lines and arrow markers. AI chat overlay auto-plays two actions: (1) changes accent color to pink across all pages with smooth CSS transitions, (2) adds a concert hero image to the Lineup page.
+   - **Agents Demo** — Animated bot builder: types bot name + greeting character-by-character, shows knowledge entries, deploys with progress bar, then a floating chat widget appears on a mock website (vibefest.com) with live conversation. All timings slowed 25% for readability.
+   - **Integrations Demo** — Supabase and GitHub cards auto-connect with spinner → green checkmark animation. Each integration syncs 4 features with progressive checkmarks. Right panel shows live sync activity feed with timestamped entries.
+3. **Hero** (`hero-prompt.tsx`) — Headline ("See Your Entire Project. At a Glance."), subheadline, animated prompt input with rotating placeholder ideas and clickable example chips
+4. **Trust Bar** (`trust-bar.tsx`) — Horizontal strip: "Station 8 Developed", "Pioneers VC Approved" with Shield + Award icons
+5. **CTA Banner** (`cta-banner.tsx`) — Full-width gradient section, "One prompt. One plan. Let AI build it." + "Get Started for Free" button
+6. **Footer** (`footer.tsx`) — 4-column layout: brand description, Product links, Company links, Legal links; bottom bar with copyright + social icons (GitHub, Twitter, LinkedIn)
 
 ---
 
@@ -573,7 +608,7 @@ When the user lands on `/dashboard` after login, `DashboardLoader` (`components/
 
 - **Floating node rectangles** in the background using real node-type CSS color variables, with Framer Motion float + scale animations
 - **Dashed connection lines** (SVG) that draw in progressively
-- **Spinning compass icon** (the VisionPath brand icon) with a primary glow halo
+- **Spinning compass icon** (the TinyBaguette brand icon) with a primary glow halo
 - **"Loading your workspace"** text with three pulsing dots
 
 This replaces the old skeleton card placeholders for a more branded experience.
@@ -672,7 +707,18 @@ npm run type-check  # Alias for tsc --noEmit
 - **Image compression** — resize/compress base64 images to reduce state size
 - **Hierarchy validation** — enforce valid type changes based on position in hierarchy
 
-### Recent Changes (Feb 18-19, 2026)
+### Recent Changes (Feb 19, 2026 — Session 2)
+- **AI Agent Builder** — Full embeddable chatbot feature: `types/agent.ts` (Agent, AgentKnowledgeEntry, AgentAction, AgentBehaviorRule, AgentTheme), `agents?: Agent[]` on Project, 9 CRUD store methods, `agents-view.tsx` with 5 tabs (Config, Knowledge, Theme, Preview, Deploy), `use-agent-chat.ts` hook, `/api/agent/generate` and `/api/agent/[agentId]/chat` API routes, `agent-generation.ts` prompt, `agentGenerationSchema` + `agentChatSchema` in gemini.ts
+- **Integrations Landing Demo** — New 4th tab in features-tabs.tsx: animated Supabase + GitHub connection flow with spinner → checkmark, feature sync progress, and live sync activity feed
+- **View Restructuring** — `ViewType` changed from `'plan' | 'manage' | 'pages' | 'backend'` to `'plan' | 'design' | 'agents' | 'manage'`. Backend moved under Manage as a `ManageSubView`. Pages renamed to Design.
+- **Auto-Save Fix** — `use-project.ts` now saves all project fields (`const { id, ...rest } = currentProject`) instead of only title/description/phase/nodes/edges. This was causing data loss for pages, agents, backend modules, etc.
+- **Nested Button Fix** — Changed outer `<button>` to `<div role="button">` in agents-view.tsx agent list to fix hydration error
+- **Scroll Fix** — Added `overflow-hidden` to main content container in project-workspace.tsx so AgentsView can scroll
+- **Landing Page Reorder** — FeaturesTabs moved to top of landing page (above hero), tab buttons above demo area
+- **Agents Demo Animation** — Bot builder demo with character-by-character typing, deploy progress bar, floating chat widget on mock website. All timings slowed 25% for readability.
+- **Arrow Markers on Edges** — Planning demo connection lines now have arrow markers at both ends
+
+### Earlier Changes (Feb 18-19, 2026)
 - **Interactive Feature Demos** — Replaced static features grid with tabbed interactive demos (`features-tabs.tsx`): Planning demo with AI chat sidebar that progressively builds a node graph, Pages demo with 6 mini-webpage previews showing AI-driven color change and image insertion
 - **AI Chat Simulation** — Planning demo auto-plays a conversation where user and AI discuss building a Music Festival App; nodes appear on the graph as the conversation progresses
 - **Pages Demo AI Actions** — Two-step AI interaction: (1) user asks to change accent to pink → all 6 pages smoothly transition colors with 0.6s CSS transitions, (2) user asks to add hero image → concert banner animates into the Lineup page
