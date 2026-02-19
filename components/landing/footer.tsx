@@ -5,12 +5,11 @@ const footerLinks = {
   Product: [
     { label: 'Features', href: '#features' },
     { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Templates', href: '/login' },
+    { label: 'Templates', href: '#hero-prompt' },
   ],
   Company: [
-    { label: 'About', href: '#' },
-    { label: 'Blog', href: '#' },
-    { label: 'Contact', href: '#' },
+    { label: 'About', href: '/about' },
+    { label: 'Contact', href: '/contact' },
   ],
   Legal: [
     { label: 'Privacy Policy', href: '#' },
