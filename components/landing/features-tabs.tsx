@@ -1436,11 +1436,11 @@ export function FeaturesTabs() {
           className="text-center mb-12"
         >
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
-            Everything You Need to{' '}
-            <span className="text-primary">Ship</span>
+            Big Ideas.{' '}
+            <span className="text-primary">TinyBaguette.</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            Plan your architecture, design your pages, and define your backend — all from one place.
+            The spatial engine that turns your crumbs of an idea into a fully baked product. Plan, design, and code your entire app on a single canvas, then deploy your own AI that actually knows how it works, because why not?
           </p>
         </motion.div>
 
