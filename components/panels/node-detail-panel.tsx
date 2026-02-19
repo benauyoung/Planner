@@ -500,28 +500,24 @@ export function NodeDetailPanel() {
 
             {/* Node Type */}
             <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground mb-2 block">
+              <label className="text-xs font-medium text-muted-foreground mb-1 block">
                 Type
               </label>
-              <div className="flex flex-wrap gap-1.5">
-                {TYPE_OPTIONS.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => changeNodeType(node.id, t)}
-                    className={cn(
-                      'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors',
-                      node.type === t
-                        ? 'border-primary bg-primary/10 font-medium'
-                        : 'hover:bg-accent'
-                    )}
-                  >
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{ backgroundColor: NODE_CONFIG[t].color }}
-                    />
-                    {NODE_CONFIG[t].label}
-                  </button>
-                ))}
+              <div className="relative">
+                <div
+                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
+                  style={{ backgroundColor: NODE_CONFIG[node.type].color }}
+                />
+                <select
+                  value={node.type}
+                  onChange={(e) => changeNodeType(node.id, e.target.value as NodeType)}
+                  className="w-full h-8 pl-7 pr-2 text-sm rounded-md border bg-background text-foreground appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+                >
+                  {TYPE_OPTIONS.map((t) => (
+                    <option key={t} value={t}>{NODE_CONFIG[t].label}</option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
               </div>
             </div>
 
@@ -1211,7 +1207,7 @@ export function NodeDetailPanel() {
                   </button>
                 )}
               </div>
-              {children.length > 0 && (
+              {children.length > 0 && !node.collapsed && (
                 <div className="space-y-1">
                   {children.map((child) => (
                     <div

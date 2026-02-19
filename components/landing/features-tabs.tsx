@@ -596,6 +596,14 @@ function PageConnectionLines({ pagePositions }: { pagePositions: Map<string, { x
 
   return (
     <>
+      <defs>
+        <marker id="arrow-end" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+          <path d="M 0 0 L 6 2.5 L 0 5" fill="none" stroke="hsl(var(--muted-foreground) / 0.25)" strokeWidth="1" />
+        </marker>
+        <marker id="arrow-start" markerWidth="6" markerHeight="5" refX="1" refY="2.5" orient="auto-start-reverse">
+          <path d="M 6 0 L 0 2.5 L 6 5" fill="none" stroke="hsl(var(--muted-foreground) / 0.25)" strokeWidth="1" />
+        </marker>
+      </defs>
       {lines.map((line, i) => (
         <motion.path
           key={line.key}
@@ -604,6 +612,8 @@ function PageConnectionLines({ pagePositions }: { pagePositions: Map<string, { x
           stroke="hsl(var(--muted-foreground) / 0.15)"
           strokeWidth="1.5"
           strokeDasharray="4 3"
+          markerStart="url(#arrow-start)"
+          markerEnd="url(#arrow-end)"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.5 + i * 0.1 }}
