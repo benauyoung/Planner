@@ -1012,7 +1012,7 @@ function AgentsDemo() {
       </div>
 
       {/* Right: User's website with floating chat widget */}
-      <div className="w-[280px] flex flex-col shrink-0 relative">
+      <div className="w-[360px] flex flex-col shrink-0 relative">
         {/* Browser chrome - their website */}
         <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b bg-muted/30">
           <div className="flex gap-1">

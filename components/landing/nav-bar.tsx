@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Compass, Menu, X } from 'lucide-react'
+import { Menu, X } from 'lucide-react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export function LandingNavBar() {
@@ -27,7 +28,7 @@ export function LandingNavBar() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Compass className="h-7 w-7 text-primary" />
+            <Image src="/logo.png" alt="TinyBaguette" width={28} height={28} className="rounded" />
             <span className="font-bold text-xl">TinyBaguette</span>
           </Link>
 

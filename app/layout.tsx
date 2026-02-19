@@ -12,8 +12,7 @@ export const metadata: Metadata = {
   description: 'Transform your project ideas into visual, actionable plans with AI',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-      { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/logo.png', type: 'image/png' },
     ],
   },
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Compass } from 'lucide-react'
+import Image from 'next/image'
 
 const floatingNodes = [
   { x: '15%', y: '25%', size: 48, color: 'var(--node-goal)', delay: 0 },
@@ -81,7 +81,7 @@ export function DashboardLoader() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        {/* Animated compass */}
+        {/* Animated logo */}
         <motion.div
           className="relative"
           animate={{ rotate: 360 }}
@@ -89,7 +89,7 @@ export function DashboardLoader() {
         >
           <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl" />
           <div className="relative w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center">
-            <Compass className="h-8 w-8 text-primary" />
+            <Image src="/logo.png" alt="TinyBaguette" width={32} height={32} className="rounded" />
           </div>
         </motion.div>
 
