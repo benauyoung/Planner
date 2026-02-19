@@ -26,12 +26,11 @@ export function HeroSection() {
             transition={{ duration: 0.6 }}
           >
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6">
-              See Your Entire Project.{' '}
-              <span className="text-primary">At a Glance.</span>
+              Big Ideas.{' '}
+              <span className="text-primary">TinyBaguette.</span>
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-8 max-w-xl mx-auto lg:mx-0">
-              One prompt. One visual plan. TinyBaguette uses AI to transform your idea into an interactive DAG
-              of goals, features, and tasks so you never lose the big picture.
+              The spatial engine that turns your crumbs of an idea into a fully baked product. Plan, design, and code your entire app on a single canvas&mdash;then deploy your own AI that actually knows how it works.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
               <a
