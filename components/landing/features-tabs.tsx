@@ -18,15 +18,6 @@ import {
   Check,
   Database,
   RefreshCw,
-  Mail,
-  Sparkles,
-  Music,
-  MapPin,
-  Camera,
-  Users,
-  MessageCircle,
-  Clock,
-  X,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
@@ -109,21 +100,10 @@ const PLANNING_CHAT: ChatMsg[] = [
   { role: 'ai', text: 'Added Photo Wall and Friend Meetups. I\'ll also add a Live Chat for real-time messaging.', step: 4 },
 ]
 
-const PREVIEW_SCREENS = [
-  { name: 'Home', icon: Music, color: '#f97316', features: ['Hero banner', 'Quick links', 'Featured artists'] },
-  { name: 'Lineup', icon: Clock, color: '#3b82f6', features: ['Schedule grid', 'Set reminders', 'Stage filter'] },
-  { name: 'Map', icon: MapPin, color: '#22c55e', features: ['Interactive map', 'Stage locations', 'Food & drinks'] },
-  { name: 'Social', icon: Camera, color: '#8b5cf6', features: ['Photo wall', 'Friend meetups', 'Live chat'] },
-]
-
 function PlanningDemo() {
   const nodeMap = Object.fromEntries(PLAN_NODES.map((n) => [n.id, n]))
   const [visibleStep, setVisibleStep] = useState(-1)
   const [visibleMsgs, setVisibleMsgs] = useState(0)
-  const [showPreview, setShowPreview] = useState(false)
-  const [showEmailCapture, setShowEmailCapture] = useState(false)
-  const [emailValue, setEmailValue] = useState('')
-  const [emailSubmitted, setEmailSubmitted] = useState(false)
 
   // Auto-play the chat sequence
   useEffect(() => {
@@ -145,12 +125,7 @@ function PlanningDemo() {
 
       // Schedule next message
       const delay = msg.role === 'user' ? 900 : 1100
-      if (msgIndex < PLANNING_CHAT.length) {
-        timers.push(setTimeout(showNext, delay))
-      } else {
-        // Chat complete — show frontend preview after a pause
-        timers.push(setTimeout(() => setShowPreview(true), 1800))
-      }
+      timers.push(setTimeout(showNext, delay))
     }
 
     // Start after a brief delay
@@ -172,221 +147,85 @@ function PlanningDemo() {
           }}
         />
 
-        <AnimatePresence mode="wait">
-          {!showPreview ? (
-            <motion.div
-              key="canvas"
-              className="absolute inset-0"
-              exit={{ opacity: 0, scale: 0.95 }}
-              transition={{ duration: 0.3 }}
+        {/* Toolbar */}
+        <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
+          {['goal', 'subgoal', 'feature', 'task'].map((type) => (
+            <div
+              key={type}
+              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted/80 backdrop-blur-sm text-[9px] font-medium text-muted-foreground border"
             >
-              {/* Toolbar */}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 z-10">
-                {['goal', 'subgoal', 'feature', 'task'].map((type) => (
-                  <div
-                    key={type}
-                    className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-muted/80 backdrop-blur-sm text-[9px] font-medium text-muted-foreground border"
-                  >
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[type] }} />
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </div>
-                ))}
-              </div>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: STATUS_COLORS[type] }} />
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </div>
+          ))}
+        </div>
 
-              <svg viewBox="0 0 480 250" className="relative w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                {/* Edges */}
-                {PLAN_EDGES.map((edge) => {
-                  const from = nodeMap[edge.from]
-                  const to = nodeMap[edge.to]
-                  const sx = from.x + from.w
-                  const sy = from.y + 18
-                  const ex = to.x
-                  const ey = to.y + 18
-                  const mx = (sx + ex) / 2
-                  return (
-                    <motion.path
-                      key={`${edge.from}-${edge.to}`}
-                      d={`M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ey}, ${ex} ${ey}`}
-                      fill="none"
-                      stroke="hsl(var(--muted-foreground) / 0.25)"
-                      strokeWidth="1.5"
-                      strokeDasharray="6 4"
-                      initial={{ pathLength: 0, opacity: 0 }}
-                      animate={visibleStep >= edge.step ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
-                      transition={{ duration: 0.5 }}
-                    />
-                  )
-                })}
+        <svg viewBox="0 0 480 250" className="relative w-full h-full" xmlns="http://www.w3.org/2000/svg">
+          {/* Edges */}
+          {PLAN_EDGES.map((edge) => {
+            const from = nodeMap[edge.from]
+            const to = nodeMap[edge.to]
+            const sx = from.x + from.w
+            const sy = from.y + 18
+            const ex = to.x
+            const ey = to.y + 18
+            const mx = (sx + ex) / 2
+            return (
+              <motion.path
+                key={`${edge.from}-${edge.to}`}
+                d={`M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ey}, ${ex} ${ey}`}
+                fill="none"
+                stroke="hsl(var(--muted-foreground) / 0.25)"
+                strokeWidth="1.5"
+                strokeDasharray="6 4"
+                initial={{ pathLength: 0, opacity: 0 }}
+                animate={visibleStep >= edge.step ? { pathLength: 1, opacity: 1 } : { pathLength: 0, opacity: 0 }}
+                transition={{ duration: 0.5 }}
+              />
+            )
+          })}
 
-                {/* Nodes */}
-                {PLAN_NODES.map((node) => (
-                  <motion.g
-                    key={node.id}
-                    initial={{ opacity: 0, scale: 0.7 }}
-                    animate={visibleStep >= node.step ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }}
-                    transition={{ duration: 0.35, type: 'spring', stiffness: 200 }}
-                  >
-                    <rect
-                      x={node.x}
-                      y={node.y}
-                      width={node.w}
-                      height={36}
-                      rx={8}
-                      fill="hsl(var(--background))"
-                      stroke={node.color}
-                      strokeWidth={1.5}
-                    />
-                    <circle cx={node.x + 12} cy={node.y + 18} r={3.5} fill={node.color} />
-                    <text
-                      x={node.x + 22}
-                      y={node.y + 15}
-                      fill="hsl(var(--foreground))"
-                      fontSize="9"
-                      fontWeight="600"
-                      fontFamily="system-ui, sans-serif"
-                    >
-                      {node.title}
-                    </text>
-                    <text
-                      x={node.x + 22}
-                      y={node.y + 26}
-                      fill="hsl(var(--muted-foreground))"
-                      fontSize="7"
-                      fontFamily="system-ui, sans-serif"
-                    >
-                      {node.type}
-                    </text>
-                  </motion.g>
-                ))}
-              </svg>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="preview"
-              className="absolute inset-0 p-4 cursor-pointer"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              onClick={() => setShowEmailCapture(true)}
+          {/* Nodes */}
+          {PLAN_NODES.map((node) => (
+            <motion.g
+              key={node.id}
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={visibleStep >= node.step ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }}
+              transition={{ duration: 0.35, type: 'spring', stiffness: 200 }}
             >
-              {/* Preview header */}
-              <div className="flex items-center gap-2 mb-3">
-                <Sparkles className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[10px] font-semibold">Generated Frontend Preview</span>
-                <span className="text-[8px] text-muted-foreground ml-auto">Click to continue →</span>
-              </div>
-
-              {/* App preview grid */}
-              <div className="grid grid-cols-4 gap-2 h-[calc(100%-28px)]">
-                {PREVIEW_SCREENS.map((screen, i) => (
-                  <motion.div
-                    key={screen.name}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.12, duration: 0.35 }}
-                    className="rounded-lg border bg-background/80 overflow-hidden flex flex-col"
-                  >
-                    {/* Screen header bar */}
-                    <div className="px-2 py-1.5 border-b flex items-center gap-1.5" style={{ backgroundColor: `${screen.color}15` }}>
-                      <screen.icon className="h-3 w-3" style={{ color: screen.color }} />
-                      <span className="text-[9px] font-semibold">{screen.name}</span>
-                    </div>
-                    {/* Hero block */}
-                    <div className="mx-1.5 mt-1.5 h-8 rounded" style={{ background: `linear-gradient(135deg, ${screen.color}30, ${screen.color}10)` }} />
-                    {/* Feature list */}
-                    <div className="flex-1 px-1.5 py-1 space-y-1">
-                      {screen.features.map((f) => (
-                        <div key={f} className="flex items-center gap-1">
-                          <div className="w-1 h-1 rounded-full" style={{ backgroundColor: screen.color }} />
-                          <span className="text-[7px] text-muted-foreground">{f}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Bottom nav hint */}
-                    <div className="px-1.5 py-1 border-t">
-                      <div className="h-1 rounded-full bg-muted/60 w-2/3" />
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Email capture overlay */}
-        <AnimatePresence>
-          {showEmailCapture && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-20 bg-background/80 backdrop-blur-sm flex items-center justify-center"
-              onClick={(e) => { if (e.target === e.currentTarget) setShowEmailCapture(false) }}
-            >
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                transition={{ duration: 0.25 }}
-                className="bg-background border rounded-xl shadow-2xl p-5 w-72 relative"
+              <rect
+                x={node.x}
+                y={node.y}
+                width={node.w}
+                height={36}
+                rx={8}
+                fill="hsl(var(--background))"
+                stroke={node.color}
+                strokeWidth={1.5}
+              />
+              <circle cx={node.x + 12} cy={node.y + 18} r={3.5} fill={node.color} />
+              <text
+                x={node.x + 22}
+                y={node.y + 15}
+                fill="hsl(var(--foreground))"
+                fontSize="9"
+                fontWeight="600"
+                fontFamily="system-ui, sans-serif"
               >
-                <button
-                  onClick={() => setShowEmailCapture(false)}
-                  className="absolute top-2 right-2 p-1 rounded-md hover:bg-muted/60 text-muted-foreground"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-
-                {!emailSubmitted ? (
-                  <>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                        <Sparkles className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="text-sm font-semibold">Build this for real</h3>
-                        <p className="text-[10px] text-muted-foreground">Get your full plan + frontend in seconds</p>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <input
-                        type="email"
-                        placeholder="you@email.com"
-                        value={emailValue}
-                        onChange={(e) => setEmailValue(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border bg-muted/20 text-sm placeholder:text-muted-foreground/50 focus:outline-none focus:ring-2 focus:ring-primary/30"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          if (emailValue.includes('@')) setEmailSubmitted(true)
-                        }}
-                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        Get Started Free
-                      </button>
-                      <p className="text-[9px] text-muted-foreground text-center">No credit card required</p>
-                    </div>
-                  </>
-                ) : (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-2"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-2">
-                      <Check className="h-5 w-5 text-green-500" />
-                    </div>
-                    <h3 className="text-sm font-semibold mb-1">You&apos;re in!</h3>
-                    <p className="text-[10px] text-muted-foreground">Check your inbox to start building your Festival App.</p>
-                  </motion.div>
-                )}
-              </motion.div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+                {node.title}
+              </text>
+              <text
+                x={node.x + 22}
+                y={node.y + 26}
+                fill="hsl(var(--muted-foreground))"
+                fontSize="7"
+                fontFamily="system-ui, sans-serif"
+              >
+                {node.type}
+              </text>
+            </motion.g>
+          ))}
+        </svg>
       </div>
 
       {/* AI Chat sidebar */}
@@ -445,21 +284,6 @@ function PlanningDemo() {
                     transition={{ duration: 0.8, repeat: Infinity, delay: d * 0.2 }}
                   />
                 ))}
-              </div>
-            </motion.div>
-          )}
-          {/* AI generating preview message */}
-          {showPreview && (
-            <motion.div
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex gap-1.5 justify-start"
-            >
-              <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                <Bot className="h-2.5 w-2.5 text-primary" />
-              </div>
-              <div className="rounded-lg px-2 py-1 text-[8px] leading-relaxed max-w-[140px] bg-primary/10 text-foreground border border-primary/20">
-                <span className="font-semibold">✨ Preview ready!</span> Here&apos;s your app. Click to get started.
               </div>
             </motion.div>
           )}
