@@ -11,9 +11,7 @@ export const metadata: Metadata = {
   title: 'TinyBaguette - AI Project Planner',
   description: 'Transform your project ideas into visual, actionable plans with AI',
   icons: {
-    icon: [
-      { url: '/logo.png', type: 'image/png' },
-    ],
+    icon: '/logo.png',
   },
 }
 
