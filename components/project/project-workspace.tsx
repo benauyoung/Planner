@@ -25,6 +25,7 @@ import { TimelineView } from '@/components/views/timeline-view'
 import { SprintBoard } from '@/components/sprints/sprint-board'
 import { PagesView } from '@/components/views/pages-view'
 import { BackendView } from '@/components/views/backend-view'
+import { AgentsView } from '@/components/views/agents-view'
 import { SmartSuggestionsPanel } from '@/components/ai/smart-suggestions-panel'
 import { VersionHistory } from '@/components/versions/version-history'
 import { IntegrationSettings } from '@/components/integrations/integration-settings'
@@ -381,7 +382,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
 
           {/* Main content area */}
           <div className="flex-1 flex flex-col min-h-0">
-            <div className="flex-1 relative">
+            <div className="flex-1 relative overflow-hidden">
               {currentView === 'plan' && (
                 currentProject.nodes.length === 0 ? (
                   <div className="h-full flex items-center justify-center">
@@ -407,6 +408,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
               )}
               {currentView === 'pages' && <PagesView />}
               {currentView === 'backend' && <BackendView />}
+              {currentView === 'agents' && <AgentsView />}
             </div>
           </div>
 

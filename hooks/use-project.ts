@@ -57,13 +57,8 @@ export function useProject(projectId?: string) {
 
     saveTimeoutRef.current = setTimeout(async () => {
       try {
-        await firestore.updateProject(currentProject.id, {
-          title: currentProject.title,
-          description: currentProject.description,
-          phase: currentProject.phase,
-          nodes: currentProject.nodes,
-          edges: currentProject.edges,
-        })
+        const { id, ...rest } = currentProject
+        await firestore.updateProject(id, rest)
         lastSavedRef.current = serialized
       } catch (err) {
         console.error('Auto-save failed:', err)

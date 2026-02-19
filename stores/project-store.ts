@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge, BackendModule, BackendEdge } from '@/types/project'
+import type { Agent, AgentKnowledgeEntry, AgentBehaviorRule, AgentTheme } from '@/types/agent'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
 import { generateId } from '@/lib/id'
@@ -88,6 +89,15 @@ interface ProjectState {
   removeBackendModule: (moduleId: string) => void
   addBackendEdge: (source: string, target: string, label?: string, edgeType?: BackendEdge['edgeType']) => void
   removeBackendEdge: (edgeId: string) => void
+  addAgent: (agent: Agent) => void
+  updateAgent: (agentId: string, updates: Partial<Omit<Agent, 'id'>>) => void
+  removeAgent: (agentId: string) => void
+  addAgentKnowledge: (agentId: string, entry: AgentKnowledgeEntry) => void
+  removeAgentKnowledge: (agentId: string, entryId: string) => void
+  addAgentRule: (agentId: string, rule: string) => void
+  removeAgentRule: (agentId: string, ruleId: string) => void
+  updateAgentTheme: (agentId: string, theme: Partial<AgentTheme>) => void
+  toggleAgentPublished: (agentId: string) => void
   undo: () => void
   redo: () => void
 }
@@ -1170,6 +1180,83 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const p = get().currentProject
       if (!p) return
       applyWithoutUndo({ ...p, updatedAt: Date.now(), backendEdges: (p.backendEdges || []).filter((e) => e.id !== edgeId) })
+    },
+
+    addAgent: (agent) => {
+      const p = get().currentProject
+      if (!p) return
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents: [...(p.agents || []), agent] })
+    },
+
+    updateAgent: (agentId, updates) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, ...updates, updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    removeAgent: (agentId) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).filter((a) => a.id !== agentId)
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    addAgentKnowledge: (agentId, entry) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, knowledge: [...a.knowledge, entry], updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    removeAgentKnowledge: (agentId, entryId) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, knowledge: a.knowledge.filter((k) => k.id !== entryId), updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    addAgentRule: (agentId, rule) => {
+      const p = get().currentProject
+      if (!p) return
+      const newRule: AgentBehaviorRule = { id: generateId(), rule }
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, rules: [...a.rules, newRule], updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    removeAgentRule: (agentId, ruleId) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, rules: a.rules.filter((r) => r.id !== ruleId), updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    updateAgentTheme: (agentId, theme) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, theme: { ...a.theme, ...theme }, updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    toggleAgentPublished: (agentId) => {
+      const p = get().currentProject
+      if (!p) return
+      const agents = (p.agents || []).map((a) =>
+        a.id === agentId ? { ...a, isPublished: !a.isPublished, updatedAt: Date.now() } : a
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
     },
 
     undo: () => {

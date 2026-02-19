@@ -21,6 +21,7 @@ import {
   X,
   AppWindow,
   Server,
+  Bot,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -51,6 +52,7 @@ const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] 
   { value: 'manage', label: 'Manage', icon: <List className="h-3.5 w-3.5" /> },
   { value: 'pages', label: 'Pages', icon: <AppWindow className="h-3.5 w-3.5" /> },
   { value: 'backend', label: 'Backend', icon: <Server className="h-3.5 w-3.5" /> },
+  { value: 'agents', label: 'Agents', icon: <Bot className="h-3.5 w-3.5" /> },
 ]
 
 const MANAGE_SUB_OPTIONS: { value: ManageSubView; label: string; icon: React.ReactNode }[] = [

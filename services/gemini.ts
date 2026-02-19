@@ -77,15 +77,15 @@ export const refinementChatSchema: Schema = {
     message: { type: SchemaType.STRING, description: 'Brief analysis of what was understood and what needs clarification' },
     questions: {
       type: SchemaType.ARRAY,
-      description: 'Clarifying multiple-choice questions to refine the project scope',
+      description: 'Clarifying questions tailored to the specific project described — must reference the project domain, features, and terminology',
       items: {
         type: SchemaType.OBJECT,
         properties: {
           id: { type: SchemaType.STRING, description: 'Unique question ID (e.g. q1, q2)' },
-          question: { type: SchemaType.STRING, description: 'A specific, decision-oriented clarifying question' },
+          question: { type: SchemaType.STRING, description: 'A project-specific, decision-oriented question using the domain language from the user prompt' },
           options: {
             type: SchemaType.ARRAY,
-            description: '3-5 concrete answer options',
+            description: '3-5 concrete answer options specific to the project domain',
             items: { type: SchemaType.STRING },
           },
           category: {
@@ -322,6 +322,58 @@ export const backendEditSchema: Schema = {
     summary: { type: SchemaType.STRING, description: 'Brief summary of what was changed' },
   },
   required: ['code', 'summary'],
+}
+
+export const agentGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    name: { type: SchemaType.STRING, description: 'Agent display name' },
+    description: { type: SchemaType.STRING, description: 'Brief description of the agent purpose' },
+    persona: { type: SchemaType.STRING, description: 'Agent personality and role description' },
+    greeting: { type: SchemaType.STRING, description: 'First message shown to visitors' },
+    systemPrompt: { type: SchemaType.STRING, description: 'Detailed system prompt that defines agent behavior (200-400 words)' },
+    knowledge: {
+      type: SchemaType.ARRAY,
+      description: 'Sample knowledge entries for the agent',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: { type: SchemaType.STRING, enum: ['text', 'faq'], description: 'Knowledge entry type' },
+          title: { type: SchemaType.STRING, description: 'Entry title or question' },
+          content: { type: SchemaType.STRING, description: 'Entry content or answer' },
+        },
+        required: ['type', 'title', 'content'],
+      },
+    },
+    rules: {
+      type: SchemaType.ARRAY,
+      description: 'Behavior rules and guardrails',
+      items: { type: SchemaType.STRING },
+    },
+  },
+  required: ['name', 'description', 'persona', 'greeting', 'systemPrompt', 'knowledge', 'rules'],
+}
+
+export const agentChatSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    message: { type: SchemaType.STRING, description: 'The agent response message' },
+    actions: {
+      type: SchemaType.ARRAY,
+      description: 'Optional actions triggered by the response',
+      nullable: true,
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          type: { type: SchemaType.STRING, enum: ['collect_info', 'redirect', 'show_card'], description: 'Action type' },
+          label: { type: SchemaType.STRING, description: 'Action label' },
+          data: { type: SchemaType.STRING, description: 'Action data (URL, field name, etc.)', nullable: true },
+        },
+        required: ['type', 'label'],
+      },
+    },
+  },
+  required: ['message'],
 }
 
 export const iterationSchema: Schema = {

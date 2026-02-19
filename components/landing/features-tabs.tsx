@@ -5,24 +5,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Workflow,
   FileText,
-  Database,
-  Target,
-  Flag,
-  Puzzle,
-  CheckSquare,
   ArrowRight,
-  Plus,
-  Code2,
-  Table2,
   Shield,
   Globe,
   Layers,
-  Settings,
-  Eye,
   Pencil,
   MessageSquare,
   Bot,
-  User,
   Send,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -30,7 +19,7 @@ import Link from 'next/link'
 
 // ─── Types ───────────────────────────────────────────────────
 
-type FeatureTab = 'planning' | 'pages' | 'backend'
+type FeatureTab = 'planning' | 'pages' | 'agents'
 
 const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description: string }[] = [
   {
@@ -46,10 +35,10 @@ const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description
     description: 'Design and preview your application pages. Edit content and layout visually.',
   },
   {
-    key: 'backend',
-    label: 'Backend',
-    icon: Database,
-    description: 'Define your API routes, database schemas, and server logic all in one place.',
+    key: 'agents',
+    label: 'Agents',
+    icon: Bot,
+    description: 'Create, teach, and deploy an AI chatbot to your website in seconds.',
   },
 ]
 
@@ -815,123 +804,279 @@ function PagesDemo() {
   )
 }
 
-// ─── Backend Demo ───────────────────────────────────────────
+// ─── Agents Demo ─────────────────────────────────────────────
 
-const API_ROUTES = [
-  { method: 'GET', path: '/api/users', status: 'active', description: 'List all users' },
-  { method: 'POST', path: '/api/users', status: 'active', description: 'Create user' },
-  { method: 'GET', path: '/api/projects', status: 'active', description: 'List projects' },
-  { method: 'POST', path: '/api/projects', status: 'draft', description: 'Create project' },
-  { method: 'PUT', path: '/api/projects/:id', status: 'draft', description: 'Update project' },
-  { method: 'DELETE', path: '/api/projects/:id', status: 'draft', description: 'Delete project' },
-]
+function AgentsDemo() {
+  const [botName, setBotName] = useState('')
+  const [greeting, setGreeting] = useState('')
+  const [phase, setPhase] = useState<'typing-name' | 'typing-greeting' | 'deploying' | 'live' | 'chatting'>('typing-name')
+  const [deployProgress, setDeployProgress] = useState(0)
+  const [visibleMsgs, setVisibleMsgs] = useState(0)
 
-const METHOD_COLORS: Record<string, string> = {
-  GET: 'bg-green-500/15 text-green-500',
-  POST: 'bg-blue-500/15 text-blue-500',
-  PUT: 'bg-amber-500/15 text-amber-500',
-  DELETE: 'bg-red-500/15 text-red-500',
-}
+  const targetName = 'Bella'
+  const targetGreeting = "Hey! \u{1F44B} I'm Bella, your festival guide. Ask me anything!"
 
-const SCHEMA_FIELDS = [
-  { name: 'id', type: 'string', required: true },
-  { name: 'name', type: 'string', required: true },
-  { name: 'email', type: 'string', required: true },
-  { name: 'role', type: 'enum', required: false },
-  { name: 'createdAt', type: 'datetime', required: true },
-]
+  const LIVE_CHAT: { role: 'user' | 'bot'; text: string }[] = [
+    { role: 'user', text: 'When does the main stage open?' },
+    { role: 'bot', text: 'The main stage opens at 4 PM on Friday! I\'d recommend getting there early for the best spots. \u{1F3B6}' },
+    { role: 'user', text: 'Who\'s headlining Saturday?' },
+    { role: 'bot', text: 'Saturday\'s headliner is Luna Ray at 10 PM on the Main Stage. She\'s incredible live! \u2728' },
+  ]
 
-function BackendDemo() {
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = []
+    let t = 400
+
+    // Phase 1: Type bot name character by character
+    for (let i = 0; i < targetName.length; i++) {
+      const idx = i
+      timers.push(setTimeout(() => {
+        setBotName(targetName.slice(0, idx + 1))
+      }, t))
+      t += 120
+    }
+    t += 500
+
+    // Phase 2: Type greeting character by character
+    timers.push(setTimeout(() => setPhase('typing-greeting'), t))
+    for (let i = 0; i < targetGreeting.length; i++) {
+      const idx = i
+      timers.push(setTimeout(() => {
+        setGreeting(targetGreeting.slice(0, idx + 1))
+      }, t))
+      t += 25
+    }
+    t += 600
+
+    // Phase 3: Deploy
+    timers.push(setTimeout(() => setPhase('deploying'), t))
+    for (let p = 0; p <= 100; p += 5) {
+      timers.push(setTimeout(() => setDeployProgress(p), t + p * 8))
+    }
+    t += 900
+
+    // Phase 4: Live
+    timers.push(setTimeout(() => setPhase('live'), t))
+    t += 600
+
+    // Phase 5: Chat messages
+    timers.push(setTimeout(() => setPhase('chatting'), t))
+    LIVE_CHAT.forEach((_, i) => {
+      timers.push(setTimeout(() => setVisibleMsgs(i + 1), t + i * 1000))
+    })
+
+    return () => timers.forEach(clearTimeout)
+  }, [])
+
+  const isTypingName = phase === 'typing-name'
+  const isTypingGreeting = phase === 'typing-greeting'
+  const isDeploying = phase === 'deploying'
+  const isLiveOrLater = phase === 'live' || phase === 'chatting'
+  const isChatting = phase === 'chatting'
+
   return (
     <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
-      {/* Left - API Routes */}
-      <div className="flex-1 border-r p-3 overflow-hidden">
-        <div className="flex items-center justify-between mb-3">
+      {/* Left: Agent Builder Config */}
+      <div className="flex-1 border-r flex flex-col overflow-hidden">
+        <div className="px-3 py-2 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Code2 className="h-4 w-4 text-primary" />
-            <span className="text-xs font-semibold">API Routes</span>
+            <Bot className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[10px] font-semibold">Agent Builder</span>
           </div>
-          <button className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium bg-primary/10 text-primary hover:bg-primary/20 transition-colors">
-            <Plus className="h-3 w-3" />
-            Add Route
-          </button>
+          {isLiveOrLater && (
+            <motion.span
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-[7px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-500 flex items-center gap-1"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              Live
+            </motion.span>
+          )}
         </div>
 
-        <div className="space-y-1.5">
-          {API_ROUTES.map((route, i) => (
-            <motion.div
-              key={`${route.method}-${route.path}`}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3, delay: i * 0.06 }}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/10 hover:bg-muted/30 cursor-pointer transition-colors group"
-            >
-              <span className={cn('px-1.5 py-0.5 rounded text-[9px] font-bold', METHOD_COLORS[route.method])}>
-                {route.method}
-              </span>
-              <span className="text-[10px] font-mono text-foreground/80 truncate flex-1">{route.path}</span>
-              <span className={cn(
-                'text-[8px] font-medium px-1.5 py-0.5 rounded-full',
-                route.status === 'active' ? 'bg-green-500/10 text-green-500' : 'bg-muted text-muted-foreground'
+        <div className="flex-1 p-3 space-y-2.5 overflow-hidden">
+          {/* Name field */}
+          <div>
+            <div className="text-[8px] font-medium text-muted-foreground mb-0.5">Name</div>
+            <div className={cn(
+              'px-2 py-1 rounded border text-[9px] transition-colors',
+              isTypingName ? 'border-primary bg-primary/5' : 'bg-muted/20'
+            )}>
+              {botName || <span className="text-muted-foreground/40">Enter bot name...</span>}
+              {isTypingName && <span className="animate-pulse text-primary">|</span>}
+            </div>
+          </div>
+
+          {/* Greeting field */}
+          <div>
+            <div className="text-[8px] font-medium text-muted-foreground mb-0.5">Greeting</div>
+            <div className={cn(
+              'px-2 py-1 rounded border text-[9px] min-h-[32px] transition-colors',
+              isTypingGreeting ? 'border-primary bg-primary/5' : 'bg-muted/20'
+            )}>
+              {greeting || <span className="text-muted-foreground/40">Enter greeting message...</span>}
+              {isTypingGreeting && <span className="animate-pulse text-primary">|</span>}
+            </div>
+          </div>
+
+          {/* Knowledge section */}
+          <div>
+            <div className="text-[8px] font-medium text-muted-foreground mb-1">Knowledge</div>
+            <div className="space-y-1">
+              {[
+                { type: 'FAQ', title: 'Festival schedule & stages' },
+                { type: 'FAQ', title: 'Ticket pricing & upgrades' },
+                { type: 'TEXT', title: 'Venue map & directions' },
+              ].map((entry, i) => (
+                <motion.div
+                  key={entry.title}
+                  initial={{ opacity: 0, x: -6 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + i * 0.08 }}
+                  className="flex items-center gap-1.5 px-2 py-0.5 rounded border bg-muted/10 text-[8px]"
+                >
+                  <span className={cn(
+                    'text-[6px] font-bold px-1 py-0.5 rounded',
+                    entry.type === 'FAQ' ? 'text-purple-500 bg-purple-500/15' : 'text-blue-500 bg-blue-500/15'
+                  )}>{entry.type}</span>
+                  <span className="truncate">{entry.title}</span>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          {/* Deploy button / progress / status */}
+          <div className="pt-1">
+            {isDeploying ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="space-y-1"
+              >
+                <div className="flex items-center justify-between text-[8px]">
+                  <span className="text-muted-foreground">Deploying to website...</span>
+                  <span className="font-medium text-primary">{deployProgress}%</span>
+                </div>
+                <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
+                  <motion.div
+                    className="h-full bg-primary rounded-full"
+                    style={{ width: `${deployProgress}%` }}
+                    transition={{ duration: 0.1 }}
+                  />
+                </div>
+              </motion.div>
+            ) : isLiveOrLater ? (
+              <motion.div
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-1.5 text-[8px] text-green-500 font-medium"
+              >
+                <Globe className="h-3 w-3" />
+                Deployed to vibefest.com
+              </motion.div>
+            ) : (
+              <div className={cn(
+                'flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-[9px] font-medium transition-all',
+                botName && greeting
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'bg-muted/30 text-muted-foreground/50'
               )}>
-                {route.status}
-              </span>
-            </motion.div>
-          ))}
+                <Globe className="h-3 w-3" />
+                Deploy to Website
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Right - Schema Editor */}
-      <div className="w-56 p-3 shrink-0">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Table2 className="h-4 w-4 text-primary" />
-            <span className="text-xs font-semibold">User Schema</span>
+      {/* Right: Live Chat Preview */}
+      <div className="w-56 flex flex-col shrink-0">
+        {/* Widget header - name updates live */}
+        <div className="px-3 py-2 flex items-center gap-2 bg-primary">
+          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
+            <Bot className="h-3 w-3 text-white" />
           </div>
-        </div>
-
-        <div className="rounded-lg border bg-muted/10 overflow-hidden">
-          <div className="px-2 py-1.5 border-b bg-muted/30">
-            <div className="flex items-center gap-3 text-[9px] font-semibold text-muted-foreground">
-              <span className="flex-1">Field</span>
-              <span className="w-14">Type</span>
-              <span className="w-6">Req</span>
+          <div className="min-w-0">
+            <div className="text-[9px] font-semibold text-white truncate">
+              {botName || <span className="text-white/40">Bot Name</span>}
+            </div>
+            <div className="text-[7px] text-white/60">
+              {isLiveOrLater ? 'Online' : 'Preview'}
             </div>
           </div>
-          {SCHEMA_FIELDS.map((field, i) => (
-            <motion.div
-              key={field.name}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.2 + i * 0.06 }}
-              className="flex items-center gap-3 px-2 py-1.5 border-b last:border-b-0 text-[10px] hover:bg-muted/20 transition-colors"
-            >
-              <span className="flex-1 font-mono font-medium text-foreground/80">{field.name}</span>
-              <span className="w-14 text-muted-foreground">{field.type}</span>
-              <span className="w-6 text-center">
-                {field.required ? (
-                  <span className="text-primary font-bold">*</span>
-                ) : (
-                  <span className="text-muted-foreground/40">-</span>
-                )}
-              </span>
-            </motion.div>
-          ))}
         </div>
 
-        {/* Mini code preview */}
-        <motion.div
-          initial={{ opacity: 0, y: 5 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.5 }}
-          className="mt-3 rounded-lg border bg-[hsl(222_47%_8%)] p-2 font-mono text-[9px] leading-relaxed"
-        >
-          <div><span className="text-violet-400">interface</span> <span className="text-amber-300">User</span> {'{'}</div>
-          <div className="pl-3"><span className="text-blue-300">id</span>: <span className="text-green-300">string</span>;</div>
-          <div className="pl-3"><span className="text-blue-300">name</span>: <span className="text-green-300">string</span>;</div>
-          <div className="pl-3"><span className="text-blue-300">email</span>: <span className="text-green-300">string</span>;</div>
-          <div>{'}'}</div>
-        </motion.div>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted/5">
+          {/* Greeting message - updates live as user types */}
+          {(greeting || isTypingGreeting) && (
+            <div className="flex gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                <Bot className="h-2.5 w-2.5 text-primary" />
+              </div>
+              <div className="bg-muted/60 rounded-lg rounded-tl-none px-2 py-1 text-[8px] max-w-[85%] leading-relaxed">
+                {greeting || '...'}
+              </div>
+            </div>
+          )}
+
+          {/* Live chat messages after deployment */}
+          <AnimatePresence>
+            {isChatting && LIVE_CHAT.slice(0, visibleMsgs).map((msg, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.2 }}
+                className={cn('flex gap-1.5', msg.role === 'user' ? 'justify-end' : '')}
+              >
+                {msg.role === 'bot' && (
+                  <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                    <Bot className="h-2.5 w-2.5 text-primary" />
+                  </div>
+                )}
+                <div className={cn(
+                  'rounded-lg px-2 py-1 text-[8px] leading-relaxed max-w-[85%]',
+                  msg.role === 'user'
+                    ? 'bg-primary text-primary-foreground rounded-tr-none'
+                    : 'bg-muted/60 text-foreground rounded-tl-none'
+                )}>
+                  {msg.text}
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+
+          {/* Typing indicator during chat */}
+          {isChatting && visibleMsgs > 0 && visibleMsgs < LIVE_CHAT.length && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-1.5">
+              <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                <Bot className="h-2.5 w-2.5 text-primary" />
+              </div>
+              <div className="flex gap-0.5 px-2 py-1.5">
+                {[0, 1, 2].map((d) => (
+                  <motion.div
+                    key={d}
+                    className="w-1 h-1 rounded-full bg-muted-foreground/40"
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 0.8, repeat: Infinity, delay: d * 0.2 }}
+                  />
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
+
+        {/* Input */}
+        <div className="px-2 py-2 border-t">
+          <div className="flex items-center gap-1 rounded-full border bg-muted/20 px-2 py-1">
+            <span className="flex-1 text-[8px] text-muted-foreground/50">Type a message...</span>
+            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+              <Send className="h-2 w-2 text-white" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -1006,7 +1151,7 @@ export function FeaturesTabs() {
           >
             {activeTab === 'planning' && <PlanningDemo />}
             {activeTab === 'pages' && <PagesDemo />}
-            {activeTab === 'backend' && <BackendDemo />}
+            {activeTab === 'agents' && <AgentsDemo />}
           </motion.div>
         </AnimatePresence>
 

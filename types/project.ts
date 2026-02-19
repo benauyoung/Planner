@@ -1,3 +1,5 @@
+import type { Agent } from './agent'
+
 export type NodeType =
   | 'goal' | 'subgoal' | 'feature' | 'task'
   | 'moodboard' | 'notes' | 'connector'
@@ -204,4 +206,5 @@ export interface Project {
   pageEdges?: PageEdge[]
   backendModules?: BackendModule[]
   backendEdges?: BackendEdge[]
+  agents?: Agent[]
 }
