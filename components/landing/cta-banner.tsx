@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 
@@ -29,13 +28,13 @@ export function CTABanner() {
           <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
             No credit card. No setup. Describe your project, get a complete plan with PRDs and implementation prompts, then hand it to your AI coding assistant.
           </p>
-          <Link
-            href="/login"
+          <a
+            href="#hero-prompt"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
           >
             Get Started for Free
             <ArrowRight className="h-4 w-4" />
-          </Link>
+          </a>
         </motion.div>
       </div>
     </section>

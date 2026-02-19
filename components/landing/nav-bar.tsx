@@ -43,12 +43,12 @@ export function LandingNavBar() {
             >
               Login
             </Link>
-            <Link
-              href="/login"
+            <a
+              href="#hero-prompt"
               className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
             >
               Get Started
-            </Link>
+            </a>
           </div>
 
           {/* Mobile toggle */}
@@ -84,12 +84,13 @@ export function LandingNavBar() {
               >
                 Login
               </Link>
-              <Link
-                href="/login"
+              <a
+                href="#hero-prompt"
+                onClick={() => setMobileOpen(false)}
                 className="block w-full text-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
               >
                 Get Started
-              </Link>
+              </a>
             </div>
           </motion.div>
         )}

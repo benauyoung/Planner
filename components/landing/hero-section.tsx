@@ -1,6 +1,5 @@
 'use client'
 
-import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowRight } from 'lucide-react'
 import { HeroMockup } from './hero-mockup'
@@ -35,13 +34,13 @@ export function HeroSection() {
               of goals, features, and tasks so you never lose the big picture.
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start">
-              <Link
-                href="/login"
+              <a
+                href="#hero-prompt"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-primary text-primary-foreground font-semibold text-base hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
               >
                 Get Started for Free
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </a>
               <a
                 href="#how-it-works"
                 className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"

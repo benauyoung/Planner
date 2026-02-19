@@ -538,7 +538,7 @@ export function HeroPrompt() {
   const appTitle = suggestedTitle || 'Your App'
 
   return (
-    <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <section id="hero-prompt" className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div
