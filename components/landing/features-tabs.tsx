@@ -1478,20 +1478,22 @@ export function FeaturesTabs() {
         </AnimatePresence>
 
         {/* Demo area */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.98 }}
-            transition={{ duration: 0.35 }}
-          >
-            {activeTab === 'planning' && <PlanningDemo />}
-            {activeTab === 'design' && <PagesDemo />}
-            {activeTab === 'agents' && <AgentsDemo />}
-            {activeTab === 'integrations' && <IntegrationsDemo />}
-          </motion.div>
-        </AnimatePresence>
+        <div className="max-w-[75%] mx-auto">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 16, scale: 0.98 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -16, scale: 0.98 }}
+              transition={{ duration: 0.35 }}
+            >
+              {activeTab === 'planning' && <PlanningDemo />}
+              {activeTab === 'design' && <PagesDemo />}
+              {activeTab === 'agents' && <AgentsDemo />}
+              {activeTab === 'integrations' && <IntegrationsDemo />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
         {/* CTA */}
         <motion.div
