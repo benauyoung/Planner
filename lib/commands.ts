@@ -263,14 +263,14 @@ export function buildCommands(ctx: CommandContext): Command[] {
       },
     })
     commands.push({
-      id: 'view:pages',
-      label: 'Switch to Pages View',
+      id: 'view:design',
+      label: 'Switch to Design View',
       shortcut: '',
       category: 'view',
       when: 'has-project',
       action: () => {
         const { useUIStore } = require('@/stores/ui-store')
-        useUIStore.getState().setCurrentView('pages')
+        useUIStore.getState().setCurrentView('design')
       },
     })
     commands.push({
@@ -281,7 +281,9 @@ export function buildCommands(ctx: CommandContext): Command[] {
       when: 'has-project',
       action: () => {
         const { useUIStore } = require('@/stores/ui-store')
-        useUIStore.getState().setCurrentView('backend')
+        const store = useUIStore.getState()
+        store.setCurrentView('manage')
+        store.setManageSubView('backend')
       },
     })
   }

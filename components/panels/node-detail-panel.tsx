@@ -478,19 +478,20 @@ export function NodeDetailPanel() {
               {answeredCount > 0 && (
                 <Button
                   size="sm"
-                  className="w-full mt-3 h-8"
+                  variant="outline"
+                  className="w-full mt-3 h-7 text-xs"
                   disabled={submittingAnswers}
                   onClick={handleSubmitAnswers}
                 >
                   {submittingAnswers ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
-                      Generating PRD & Prompt...
+                      <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
+                      Submitting...
                     </>
                   ) : (
                     <>
-                      <Send className="h-3.5 w-3.5 mr-1.5" />
-                      Submit Answers → Generate PRD & Prompt
+                      <Send className="h-3 w-3 mr-1.5" />
+                      Submit ({answeredCount} answered)
                     </>
                   )}
                 </Button>
@@ -843,19 +844,19 @@ export function NodeDetailPanel() {
                   <FileText className="h-3.5 w-3.5" />
                   PRDs ({(node.prds || []).length})
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   {canGenerate && (
                     <button
                       onClick={handleGeneratePRD}
                       disabled={generatingPRD}
-                      className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-400 transition-colors disabled:opacity-50"
+                      className="p-1 rounded hover:bg-accent transition-colors disabled:opacity-50"
+                      title="Generate PRD"
                     >
                       {generatingPRD ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <Sparkles className="h-3.5 w-3.5 text-purple-500" />
                       )}
-                      Generate
                     </button>
                   )}
                   <button
@@ -864,10 +865,10 @@ export function NodeDetailPanel() {
                       setPrdTitle('')
                       setPrdContent('')
                     }}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-1 rounded hover:bg-accent transition-colors"
+                    title="Add PRD"
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
               </div>
@@ -1031,19 +1032,19 @@ export function NodeDetailPanel() {
                   <Terminal className="h-3.5 w-3.5" />
                   Prompts ({(node.prompts || []).length})
                 </label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   {canGenerate && (
                     <button
                       onClick={handleGeneratePrompt}
                       disabled={generatingPrompt}
-                      className="flex items-center gap-1 text-xs text-purple-500 hover:text-purple-400 transition-colors disabled:opacity-50"
+                      className="p-1 rounded hover:bg-accent transition-colors disabled:opacity-50"
+                      title="Generate Prompt"
                     >
                       {generatingPrompt ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-purple-500" />
                       ) : (
-                        <Sparkles className="h-3.5 w-3.5" />
+                        <Sparkles className="h-3.5 w-3.5 text-purple-500" />
                       )}
-                      Generate
                     </button>
                   )}
                   <button
@@ -1052,10 +1053,10 @@ export function NodeDetailPanel() {
                       setPromptTitle('')
                       setPromptContent('')
                     }}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="p-1 rounded hover:bg-accent transition-colors"
+                    title="Add Prompt"
                   >
-                    <Plus className="h-3.5 w-3.5" />
-                    Add
+                    <Plus className="h-3.5 w-3.5 text-muted-foreground" />
                   </button>
                 </div>
               </div>

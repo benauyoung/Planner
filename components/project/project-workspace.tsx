@@ -404,10 +404,10 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                   {manageSubView === 'board' && <BoardView />}
                   {manageSubView === 'timeline' && <TimelineView />}
                   {manageSubView === 'sprints' && <SprintBoard />}
+                  {manageSubView === 'backend' && <BackendView />}
                 </>
               )}
-              {currentView === 'pages' && <PagesView />}
-              {currentView === 'backend' && <BackendView />}
+              {currentView === 'design' && <PagesView />}
               {currentView === 'agents' && <AgentsView />}
             </div>
           </div>

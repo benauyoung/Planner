@@ -19,7 +19,7 @@ import Link from 'next/link'
 
 // ─── Types ───────────────────────────────────────────────────
 
-type FeatureTab = 'planning' | 'pages' | 'agents'
+type FeatureTab = 'planning' | 'design' | 'agents'
 
 const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description: string }[] = [
   {
@@ -29,8 +29,8 @@ const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description
     description: 'Visual project planning with an interactive canvas. Break down goals into features and tasks.',
   },
   {
-    key: 'pages',
-    label: 'Pages',
+    key: 'design',
+    label: 'Design',
     icon: FileText,
     description: 'Design and preview your application pages. Edit content and layout visually.',
   },
@@ -825,7 +825,7 @@ function AgentsDemo() {
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = []
-    let t = 400
+    let t = 500
 
     // Phase 1: Type bot name character by character
     for (let i = 0; i < targetName.length; i++) {
@@ -833,9 +833,9 @@ function AgentsDemo() {
       timers.push(setTimeout(() => {
         setBotName(targetName.slice(0, idx + 1))
       }, t))
-      t += 120
+      t += 150
     }
-    t += 500
+    t += 625
 
     // Phase 2: Type greeting character by character
     timers.push(setTimeout(() => setPhase('typing-greeting'), t))
@@ -844,25 +844,25 @@ function AgentsDemo() {
       timers.push(setTimeout(() => {
         setGreeting(targetGreeting.slice(0, idx + 1))
       }, t))
-      t += 25
+      t += 31
     }
-    t += 600
+    t += 750
 
     // Phase 3: Deploy
     timers.push(setTimeout(() => setPhase('deploying'), t))
     for (let p = 0; p <= 100; p += 5) {
-      timers.push(setTimeout(() => setDeployProgress(p), t + p * 8))
+      timers.push(setTimeout(() => setDeployProgress(p), t + p * 10))
     }
-    t += 900
+    t += 1125
 
     // Phase 4: Live
     timers.push(setTimeout(() => setPhase('live'), t))
-    t += 600
+    t += 750
 
     // Phase 5: Chat messages
     timers.push(setTimeout(() => setPhase('chatting'), t))
     LIVE_CHAT.forEach((_, i) => {
-      timers.push(setTimeout(() => setVisibleMsgs(i + 1), t + i * 1000))
+      timers.push(setTimeout(() => setVisibleMsgs(i + 1), t + i * 1250))
     })
 
     return () => timers.forEach(clearTimeout)
@@ -990,92 +990,176 @@ function AgentsDemo() {
         </div>
       </div>
 
-      {/* Right: Live Chat Preview */}
-      <div className="w-56 flex flex-col shrink-0">
-        {/* Widget header - name updates live */}
-        <div className="px-3 py-2 flex items-center gap-2 bg-primary">
-          <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center">
-            <Bot className="h-3 w-3 text-white" />
+      {/* Right: User's website with floating chat widget */}
+      <div className="w-[280px] flex flex-col shrink-0 relative">
+        {/* Browser chrome - their website */}
+        <div className="flex items-center gap-1.5 px-2.5 py-1.5 border-b bg-muted/30">
+          <div className="flex gap-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-red-400/60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-yellow-400/60" />
+            <div className="w-1.5 h-1.5 rounded-full bg-green-400/60" />
           </div>
-          <div className="min-w-0">
-            <div className="text-[9px] font-semibold text-white truncate">
-              {botName || <span className="text-white/40">Bot Name</span>}
-            </div>
-            <div className="text-[7px] text-white/60">
-              {isLiveOrLater ? 'Online' : 'Preview'}
-            </div>
+          <div className="flex-1 flex items-center gap-1 px-2 py-0.5 rounded bg-background/80 text-[7px] font-mono text-muted-foreground">
+            <Globe className="h-2 w-2 shrink-0 text-green-500" />
+            vibefest.com
           </div>
         </div>
 
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted/5">
-          {/* Greeting message - updates live as user types */}
-          {(greeting || isTypingGreeting) && (
-            <div className="flex gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                <Bot className="h-2.5 w-2.5 text-primary" />
-              </div>
-              <div className="bg-muted/60 rounded-lg rounded-tl-none px-2 py-1 text-[8px] max-w-[85%] leading-relaxed">
-                {greeting || '...'}
-              </div>
-            </div>
-          )}
-
-          {/* Live chat messages after deployment */}
-          <AnimatePresence>
-            {isChatting && LIVE_CHAT.slice(0, visibleMsgs).map((msg, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 6, scale: 0.95 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ duration: 0.2 }}
-                className={cn('flex gap-1.5', msg.role === 'user' ? 'justify-end' : '')}
-              >
-                {msg.role === 'bot' && (
-                  <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
-                    <Bot className="h-2.5 w-2.5 text-primary" />
-                  </div>
-                )}
-                <div className={cn(
-                  'rounded-lg px-2 py-1 text-[8px] leading-relaxed max-w-[85%]',
-                  msg.role === 'user'
-                    ? 'bg-primary text-primary-foreground rounded-tr-none'
-                    : 'bg-muted/60 text-foreground rounded-tl-none'
-                )}>
-                  {msg.text}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-
-          {/* Typing indicator during chat */}
-          {isChatting && visibleMsgs > 0 && visibleMsgs < LIVE_CHAT.length && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-1.5">
-              <div className="w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                <Bot className="h-2.5 w-2.5 text-primary" />
-              </div>
-              <div className="flex gap-0.5 px-2 py-1.5">
-                {[0, 1, 2].map((d) => (
-                  <motion.div
-                    key={d}
-                    className="w-1 h-1 rounded-full bg-muted-foreground/40"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ duration: 0.8, repeat: Infinity, delay: d * 0.2 }}
-                  />
+        {/* Website content */}
+        <div className="flex-1 overflow-hidden bg-background/90 relative">
+          {/* Mini website mockup */}
+          <div className="p-3 space-y-2">
+            {/* Site nav */}
+            <div className="flex items-center justify-between rounded px-2 py-1 bg-violet-500/8">
+              <span className="text-[8px] font-bold text-violet-500">{'\u{1F3B5}'} Vibe Fest</span>
+              <div className="flex gap-2">
+                {['Lineup', 'Tickets', 'Map'].map((l) => (
+                  <span key={l} className="text-[6px] text-violet-500/60">{l}</span>
                 ))}
               </div>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Input */}
-        <div className="px-2 py-2 border-t">
-          <div className="flex items-center gap-1 rounded-full border bg-muted/20 px-2 py-1">
-            <span className="flex-1 text-[8px] text-muted-foreground/50">Type a message...</span>
-            <div className="w-4 h-4 rounded-full bg-primary flex items-center justify-center">
-              <Send className="h-2 w-2 text-white" />
+            </div>
+            {/* Hero */}
+            <div className="text-center py-3">
+              <div className="text-[10px] font-bold">Summer Vibe Fest 2026</div>
+              <div className="text-[7px] text-muted-foreground mt-0.5">3 days &middot; 50 artists &middot; 1 weekend</div>
+              <div className="mt-1.5 inline-block px-2.5 py-0.5 rounded text-[7px] font-semibold text-white bg-violet-500">Get Tickets</div>
+            </div>
+            {/* Feature cards */}
+            <div className="grid grid-cols-3 gap-1.5">
+              {[{ e: '\u{1F3A4}', t: 'Live Music' }, { e: '\u{1F355}', t: 'Food Court' }, { e: '\u{1F3A8}', t: 'Art Walk' }].map((f) => (
+                <div key={f.t} className="rounded p-1.5 text-center border border-violet-500/15 bg-violet-500/5">
+                  <div className="text-[9px]">{f.e}</div>
+                  <div className="text-[6px] font-semibold text-violet-500">{f.t}</div>
+                </div>
+              ))}
+            </div>
+            {/* Lineup preview */}
+            <div className="space-y-1">
+              <div className="text-[8px] font-semibold">Lineup</div>
+              {[
+                { time: '7 PM', name: 'Luna Ray', stage: 'Main' },
+                { time: '9 PM', name: 'The Neons', stage: 'Echo' },
+                { time: '11 PM', name: 'DJ Nova', stage: 'Main' },
+              ].map((a) => (
+                <div key={a.name} className="flex items-center gap-1.5 rounded px-1.5 py-0.5 border border-violet-500/10 bg-violet-500/3">
+                  <span className="text-[6px] text-violet-500 w-6 shrink-0">{a.time}</span>
+                  <span className="text-[7px] font-medium flex-1">{a.name}</span>
+                  <span className="text-[5px] text-muted-foreground">{a.stage}</span>
+                </div>
+              ))}
             </div>
           </div>
+
+          {/* Floating chat widget - appears during/after greeting typing */}
+          <AnimatePresence>
+            {(isTypingGreeting || isDeploying || isLiveOrLater || isChatting) && (
+              <motion.div
+                initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                transition={{ duration: 0.3, type: 'spring', stiffness: 200 }}
+                className="absolute bottom-2 right-2 left-2 rounded-xl border shadow-xl bg-background/95 backdrop-blur-sm overflow-hidden flex flex-col"
+                style={{ maxHeight: isLiveOrLater ? 200 : 120 }}
+              >
+                {/* Widget header */}
+                <div className="px-2.5 py-1.5 flex items-center gap-2 bg-primary shrink-0">
+                  <div className="w-4 h-4 rounded-full bg-white/20 flex items-center justify-center">
+                    <Bot className="h-2.5 w-2.5 text-white" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[8px] font-semibold text-white truncate">
+                      {botName || <span className="text-white/40">Bot Name</span>}
+                    </div>
+                    <div className="text-[6px] text-white/60">
+                      {isLiveOrLater ? 'Online' : 'Preview'}
+                    </div>
+                  </div>
+                  <div className="w-3 h-3 rounded-full bg-white/10 flex items-center justify-center">
+                    <span className="text-white text-[8px]">&minus;</span>
+                  </div>
+                </div>
+
+                {/* Chat messages */}
+                <div className="flex-1 overflow-y-auto p-1.5 space-y-1.5">
+                  {/* Greeting - updates live */}
+                  {(greeting || isTypingGreeting) && (
+                    <div className="flex gap-1">
+                      <div className="w-3.5 h-3.5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                        <Bot className="h-2 w-2 text-primary" />
+                      </div>
+                      <div className="bg-muted/60 rounded-lg rounded-tl-none px-1.5 py-1 text-[7px] max-w-[85%] leading-relaxed">
+                        {greeting || '...'}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Live visitor chat */}
+                  <AnimatePresence>
+                    {isChatting && LIVE_CHAT.slice(0, visibleMsgs).map((msg, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 4, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.2 }}
+                        className={cn('flex gap-1', msg.role === 'user' ? 'justify-end' : '')}
+                      >
+                        {msg.role === 'bot' && (
+                          <div className="w-3.5 h-3.5 rounded-full bg-primary/20 flex items-center justify-center shrink-0 mt-0.5">
+                            <Bot className="h-2 w-2 text-primary" />
+                          </div>
+                        )}
+                        <div className={cn(
+                          'rounded-lg px-1.5 py-1 text-[7px] leading-relaxed max-w-[80%]',
+                          msg.role === 'user'
+                            ? 'bg-primary text-primary-foreground rounded-tr-none'
+                            : 'bg-muted/60 text-foreground rounded-tl-none'
+                        )}>
+                          {msg.text}
+                        </div>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+
+                  {/* Typing indicator */}
+                  {isChatting && visibleMsgs > 0 && visibleMsgs < LIVE_CHAT.length && (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-1">
+                      <div className="w-3.5 h-3.5 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                        <Bot className="h-2 w-2 text-primary" />
+                      </div>
+                      <div className="flex gap-0.5 px-1.5 py-1">
+                        {[0, 1, 2].map((d) => (
+                          <motion.div
+                            key={d}
+                            className="w-1 h-1 rounded-full bg-muted-foreground/40"
+                            animate={{ opacity: [0.3, 1, 0.3] }}
+                            transition={{ duration: 0.8, repeat: Infinity, delay: d * 0.2 }}
+                          />
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* Input */}
+                <div className="px-1.5 py-1.5 border-t shrink-0">
+                  <div className="flex items-center gap-1 rounded-full border bg-muted/20 px-2 py-0.5">
+                    <span className="flex-1 text-[7px] text-muted-foreground/50">Type a message...</span>
+                    <div className="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
+                      <Send className="h-1.5 w-1.5 text-white" />
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Chat bubble FAB - shown before widget opens */}
+          {isTypingName && (
+            <div className="absolute bottom-2 right-2">
+              <div className="w-8 h-8 rounded-full bg-primary shadow-lg flex items-center justify-center">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1107,8 +1191,23 @@ export function FeaturesTabs() {
           </p>
         </motion.div>
 
+        {/* Demo area */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 16, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+            transition={{ duration: 0.35 }}
+          >
+            {activeTab === 'planning' && <PlanningDemo />}
+            {activeTab === 'design' && <PagesDemo />}
+            {activeTab === 'agents' && <AgentsDemo />}
+          </motion.div>
+        </AnimatePresence>
+
         {/* Tab buttons */}
-        <div className="flex justify-center gap-2 mb-4">
+        <div className="flex justify-center gap-2 mt-8 mb-4">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -1134,33 +1233,18 @@ export function FeaturesTabs() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="text-center text-sm text-muted-foreground mb-8 max-w-lg mx-auto"
+            className="text-center text-sm text-muted-foreground mb-4 max-w-lg mx-auto"
           >
             {currentTab.description}
           </motion.p>
         </AnimatePresence>
 
-        {/* Demo area */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeTab}
-            initial={{ opacity: 0, y: 16, scale: 0.98 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -16, scale: 0.98 }}
-            transition={{ duration: 0.35 }}
-          >
-            {activeTab === 'planning' && <PlanningDemo />}
-            {activeTab === 'pages' && <PagesDemo />}
-            {activeTab === 'agents' && <AgentsDemo />}
-          </motion.div>
-        </AnimatePresence>
-
-        {/* CTA below tabs */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center mt-10"
+          className="text-center mt-4"
         >
           <Link
             href="/login"
