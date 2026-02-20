@@ -538,7 +538,7 @@ export function HeroPrompt() {
   const appTitle = suggestedTitle || 'Your App'
 
   return (
-    <section id="hero-prompt" className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
+    <section id="hero-prompt" className="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
       {/* Background effects */}
       <div className="absolute inset-0 pointer-events-none">
         <div
@@ -570,17 +570,12 @@ export function HeroPrompt() {
               transition={{ duration: 0.4 }}
             >
               <div className="text-center">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border bg-muted/50 text-xs font-medium text-muted-foreground mb-8">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
-                  AI-Powered Project Planning
-                </div>
-
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-4">
                   What are you{' '}
                   <span className="text-primary">building?</span>
                 </h1>
 
-                <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
+                <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-xl mx-auto">
                   Describe your project and we&apos;ll generate it.
                 </p>
               </div>
