@@ -1,6 +1,6 @@
 # TinyBaguette — Full AI Handoff Document
 
-> Complete codebase reference. Updated February 19, 2026.
+> Complete codebase reference. Updated February 20, 2026.
 
 ---
 
@@ -103,11 +103,13 @@ TinyBaguette uses **Next.js Route Groups** to separate public marketing pages fr
 app/
 ├── layout.tsx                          # Root layout (html, body, Inter font, metadata ONLY)
 ├── globals.css                         # CSS variables, node colors, React Flow overrides
-├── icon.svg                            # App icon (compass)
+├── icon.png                            # App icon (logo.png)
 │
 ├── (marketing)/                        # PUBLIC — no auth, own nav + footer
 │   ├── layout.tsx                      # MarketingLayout: LandingNavBar + Footer
-│   └── page.tsx                        # Landing page (/ route) — hero, trust, features, CTA
+│   ├── page.tsx                        # Landing page (/ route) — features tabs, hero prompt, trust bar
+│   ├── about/page.tsx                  # About TinyBaguette (company story + philosophy)
+│   └── contact/page.tsx                # Contact page (hello@tinybaguette.com mailto)
 │
 ├── (app)/                              # AUTHENTICATED — auth-guarded, app header
 │   ├── layout.tsx                      # AppLayout: AuthProvider + Header + ErrorBoundary
@@ -136,6 +138,8 @@ app/
 | URL | Route Group | Auth Required | Description |
 |-----|-------------|---------------|-------------|
 | `/` | `(marketing)` | No | Public landing page |
+| `/about` | `(marketing)` | No | About TinyBaguette |
+| `/contact` | `(marketing)` | No | Contact page (hello@tinybaguette.com) |
 | `/login` | `(app)` | No (redirects to /dashboard if authed) | Login page |
 | `/dashboard` | `(app)` | Yes | Project list dashboard |
 | `/project/new` | `(app)` | Yes | New project creation |
@@ -157,10 +161,12 @@ Planner/
 ├── app/
 │   ├── layout.tsx                      # Root layout (Inter font, favicon metadata ONLY)
 │   ├── globals.css                     # CSS variables, node colors, React Flow overrides
-│   ├── icon.svg                        # App icon (compass SVG)
+│   ├── icon.png                        # App icon (logo.png)
 │   ├── (marketing)/
 │   │   ├── layout.tsx                  # LandingNavBar + Footer wrapper
-│   │   └── page.tsx                    # Landing page sections assembly
+│   │   ├── page.tsx                    # Landing page sections assembly
+│   │   ├── about/page.tsx              # About TinyBaguette (company story + philosophy)
+│   │   └── contact/page.tsx            # Contact page (hello@tinybaguette.com mailto)
 │   ├── (app)/
 │   │   ├── layout.tsx                  # AuthProvider + Header + ErrorBoundary
 │   │   ├── dashboard/page.tsx          # ProjectList dashboard
@@ -185,8 +191,8 @@ Planner/
 ├── components/
 │   ├── landing/                        # Landing page components (public)
 │   │   ├── nav-bar.tsx                 # Sticky nav, transparent → blur on scroll, mobile menu
-│   │   ├── hero-section.tsx            # Split-screen hero: headline + CTA / animated mockup
-│   │   ├── hero-prompt.tsx             # Animated prompt input with rotating placeholder ideas + example chips
+│   │   ├── hero-section.tsx            # Split-screen hero: headline + CTA / animated mockup (currently unused, kept for reference)
+│   │   ├── hero-prompt.tsx             # AI-powered prompt → page preview generator with email capture gate
 │   │   ├── hero-mockup.tsx             # SVG/CSS animated canvas mockup (nodes + edges)
 │   │   ├── trust-bar.tsx               # Social proof badges (Station 8, Pioneers VC)
 │   │   ├── how-it-works.tsx            # 3-step workflow (Describe → Generate → Refine)
@@ -525,10 +531,13 @@ interface PageEdge { id, source, target, label? }
 
 ## Application Flows
 
-### Landing Page → Login → Dashboard
+### Landing Page → Email Capture → Login → Dashboard
 ```
 / (Landing Page — public)
-  → "Get Started" CTA → /login
+  → All CTA buttons scroll to #hero-prompt section
+  → User types project idea → AI generates page previews
+  → "Continue Building" → email capture modal
+  → "Login" nav link → /login
   → User signs in (email/password or Google)
   → Redirect to /dashboard
   → DashboardLoader animation while projects load
@@ -589,16 +598,31 @@ Auto-save runs via `use-project.ts` with a 2-second debounce. It now saves all p
 The landing page lives in the `(marketing)` route group at `/` and is fully public (no auth wrapper).
 
 ### Sections (top to bottom)
-1. **Nav Bar** (`nav-bar.tsx`) — Sticky, transparent → blurred on scroll, Compass icon + "TinyBaguette" brand, links to How It Works / Features / Login, "Get Started" CTA, mobile hamburger menu
-2. **Features Tabs** (`features-tabs.tsx`) — Interactive tabbed demo with 4 tabs (shown first on page):
+1. **Nav Bar** (`nav-bar.tsx`) — Sticky, transparent → blurred on scroll, logo.png + "TinyBaguette" brand, links to Features / Login, "Get Started" CTA → scrolls to `#hero-prompt`, mobile hamburger menu
+2. **Features Tabs** (`features-tabs.tsx`) — Section header: "Big Ideas. TinyBaguette." + subtitle. Interactive tabbed demo with 4 tabs (shown first on page), demo area constrained to 75% width:
    - **Planning Demo** — AI chat sidebar with progressive conversation that builds a node graph step-by-step (Music Festival App theme). Messages auto-play and nodes appear in sync.
    - **Design Demo** — 6 mini-webpage previews (Home, Lineup, Map, Tickets, Profile, Feed) on a canvas with dashed bezier connection lines and arrow markers. AI chat overlay auto-plays two actions: (1) changes accent color to pink across all pages with smooth CSS transitions, (2) adds a concert hero image to the Lineup page.
    - **Agents Demo** — Animated bot builder: types bot name + greeting character-by-character, shows knowledge entries, deploys with progress bar, then a floating chat widget appears on a mock website (vibefest.com) with live conversation. All timings slowed 25% for readability.
    - **Integrations Demo** — Supabase and GitHub cards auto-connect with spinner → green checkmark animation. Each integration syncs 4 features with progressive checkmarks. Right panel shows live sync activity feed with timestamped entries.
-3. **Hero** (`hero-prompt.tsx`) — Headline ("See Your Entire Project. At a Glance."), subheadline, animated prompt input with rotating placeholder ideas and clickable example chips
+   - "Try It Free" CTA → scrolls to `#hero-prompt`
+3. **Hero Prompt** (`hero-prompt.tsx`) — `id="hero-prompt"`. 4-phase flow:
+   - **Input phase**: Animated prompt input with rotating placeholder ideas and clickable example chips
+   - **Loading phase**: Conic-gradient spinning border around Sparkles icon, step messages ("Analyzing...", "Designing pages...", etc.)
+   - **Preview phase**: 3 premium page preview cards derived from AI plan nodes. Dark glassmorphism aesthetic (`bg-[#0c0c0f]`), macOS browser chrome with traffic lights, 3 distinct layouts (hero with gradient CTA + stats, dashboard with animated bar chart, feed with social cards). Animated gradient glows, spring animations, staggered reveals. "Continue Building →" button.
+   - **Email phase**: Modal overlay with email input, validation, success confirmation, "Build another project" reset
 4. **Trust Bar** (`trust-bar.tsx`) — Horizontal strip: "Station 8 Developed", "Pioneers VC Approved" with Shield + Award icons
-5. **CTA Banner** (`cta-banner.tsx`) — Full-width gradient section, "One prompt. One plan. Let AI build it." + "Get Started for Free" button
-6. **Footer** (`footer.tsx`) — 4-column layout: brand description, Product links, Company links, Legal links; bottom bar with copyright + social icons (GitHub, Twitter, LinkedIn)
+5. **Footer** (`footer.tsx`) — 4-column footer: Product (Features, How It Works, Templates → #hero-prompt), Company (About → /about, Contact → /contact), Legal (Privacy, Terms). Blog link removed. Social icons (GitHub, Twitter)
+
+### Additional Marketing Pages
+- **`/about`** — Company story ("Nobody actually likes Jira..."), philosophy ("Less bloat. More bread. Just keep shipping.")
+- **`/contact`** — Centered Mail icon + `mailto:hello@tinybaguette.com` button
+
+### CTA Button Routing
+All CTA buttons on the landing page scroll to `#hero-prompt` instead of linking to `/login`:
+- "Get Started" (nav-bar desktop + mobile) → `#hero-prompt`
+- "Get Started for Free" (hero-section, cta-banner) → `#hero-prompt`
+- "Try It Free" (features-tabs) → `#hero-prompt`
+- Only the "Login" text link in the nav still goes to `/login`
 
 ---
 
@@ -706,6 +730,16 @@ npm run type-check  # Alias for tsc --noEmit
 - **Advanced canvas** — spring physics (d3-force), multi-select, level-of-detail zoom
 - **Image compression** — resize/compress base64 images to reduce state size
 - **Hierarchy validation** — enforce valid type changes based on position in hierarchy
+
+### Recent Changes (Feb 19-20, 2026 — Session 3)
+- **Landing Page Hero Rewrite** — FeaturesTabs section header changed to "Big Ideas. TinyBaguette." with new subtitle about the spatial engine. `HeroSection` component removed from page (kept in codebase for reference).
+- **Hero Prompt Rewrite** — Complete rewrite of `hero-prompt.tsx`. New 4-phase flow: input → loading → preview → email. After user submits a prompt, AI generates a plan, then derives 3 premium page preview cards (Home + 2 from plan nodes). Dark glassmorphism UI with macOS browser chrome, 3 layout variants (hero/dashboard/feed), animated gradient glows, spring animations, staggered reveals. "Continue Building" leads to email capture.
+- **Email Capture Gate** — All CTA buttons ("Get Started", "Get Started for Free", "Try It Free") now scroll to `#hero-prompt` instead of linking to `/login`. Email capture modal with validation and success state.
+- **About Page** — New `/about` page with company story and philosophy: "Less bloat. More bread. Just keep shipping."
+- **Contact Page** — New `/contact` page with `mailto:hello@tinybaguette.com` button.
+- **Footer Updates** — Removed Blog link. Updated About → `/about`, Contact → `/contact`, Templates → `#hero-prompt`.
+- **Demo Size Reduction** — Demo animation area constrained to 75% width (`max-w-[75%] mx-auto`) for better screen fit.
+- **Unused Link Cleanup** — Removed unused `Link` imports from `hero-section.tsx`, `cta-banner.tsx`, `features-tabs.tsx`.
 
 ### Recent Changes (Feb 19, 2026 — Session 2)
 - **AI Agent Builder** — Full embeddable chatbot feature: `types/agent.ts` (Agent, AgentKnowledgeEntry, AgentAction, AgentBehaviorRule, AgentTheme), `agents?: Agent[]` on Project, 9 CRUD store methods, `agents-view.tsx` with 5 tabs (Config, Knowledge, Theme, Preview, Deploy), `use-agent-chat.ts` hook, `/api/agent/generate` and `/api/agent/[agentId]/chat` API routes, `agent-generation.ts` prompt, `agentGenerationSchema` + `agentChatSchema` in gemini.ts
