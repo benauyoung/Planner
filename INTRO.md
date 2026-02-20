@@ -54,7 +54,7 @@ You are working on **TinyBaguette**, a visual DAG-based project planning tool bu
 ## Current State Summary (v0.9.6 ✅)
 
 - **12 node types**: goal, subgoal, feature, task, moodboard, notes, connector, spec, prd, schema, prompt, reference
-- **7 views**: Canvas, List, Table, Board (Kanban), Timeline (interactive Gantt), Sprints, Pages (AI-generated UI previews)
+- **4 view tabs** (Plan, Design, Agents, Manage) with **6 Manage sub-views** (List, Table, Board, Timeline, Sprints, Backend)
 - **8 edge types**: hierarchy, blocks, depends_on, informs, defines, implements, references, supersedes
 - **AI features**: onboarding, chat planning, PRD/prompt generation, iteration loops, smart suggestions, page generation
 - **Rich content**: images (base64), rich text (Tiptap), PRDs, IDE prompts, Notion-style embedded docs

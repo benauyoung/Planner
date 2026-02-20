@@ -30,6 +30,11 @@
 │              API Routes: /api/ai/analyze                      │
 │              API Routes: /api/ai/generate-pages               │
 │              API Routes: /api/ai/edit-page                    │
+│              API Routes: /api/ai/refine                       │
+│              API Routes: /api/ai/generate-backend             │
+│              API Routes: /api/ai/edit-backend                 │
+│              API Routes: /api/agent/generate                  │
+│              API Routes: /api/agent/[agentId]/chat            │
 ├──────────────────────────────────────────────────────────────┤
 │         Firebase (Optional, guarded, runtime failover)        │
 │              Auth + Firestore → localStorage fallback         │
@@ -86,6 +91,9 @@ interface NodePRD {
   title: string
   content: string
   updatedAt: number
+  referencedPrdIds?: string[]   // Cross-references to other PRDs
+  isStale?: boolean             // Staleness flag
+  staleReason?: string          // Why this PRD is stale
 }
 
 interface NodePrompt {
@@ -159,6 +167,9 @@ interface Project {
   currentVersionId?: string
   pages?: ProjectPage[]       // AI-generated page previews
   pageEdges?: PageEdge[]      // Navigation flow between pages
+  backendModules?: BackendModule[]  // AI-generated backend architecture modules
+  backendEdges?: BackendEdge[]      // Connections between backend modules
+  agents?: Agent[]             // Embeddable AI chatbot agents
 }
 
 interface ProjectPage {
@@ -175,6 +186,30 @@ interface PageEdge {
   source: string
   target: string
   label?: string
+}
+
+type BackendModuleType = 'endpoint' | 'model' | 'service' | 'middleware' | 'database' | 'auth' | 'config'
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+interface BackendModule {
+  id: string
+  type: BackendModuleType
+  title: string
+  description: string
+  code: string
+  linkedNodeIds: string[]
+  position: { x: number; y: number }
+  method?: HttpMethod
+  path?: string
+  fields?: { name: string; type: string; required: boolean }[]
+}
+
+interface BackendEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
+  edgeType?: 'uses' | 'returns' | 'stores' | 'middleware' | 'depends_on'
 }
 
 // Supporting types
@@ -315,6 +350,16 @@ interface ProjectState {
   setPages, updatePageHtml, updatePagePosition
   addPageEdge, removePageEdge, removePage
 
+  // Backend
+  setBackendModules, updateBackendModule, updateBackendModulePosition
+  removeBackendModule, addBackendEdge, removeBackendEdge
+
+  // Agents
+  addAgent, updateAgent, removeAgent
+  addAgentKnowledge, removeAgentKnowledge
+  addAgentRule, removeAgentRule
+  updateAgentTheme, toggleAgentPublished
+
   // Sharing
   toggleShareProject: () => string | null
 
@@ -339,10 +384,12 @@ The `planNodesToFlow(nodes, projectEdges, existingFlowNodes?)` function converts
 
 ```
 components/
-├── landing/                            # Public landing page (marketing)
+├── landing/                            # Public landing page (marketing, 11 components)
 │   ├── nav-bar.tsx                     # Sticky nav, blur on scroll, mobile menu
-│   ├── hero-section.tsx                # Split-screen hero: headline + CTA / mockup
+│   ├── hero-section.tsx                # Split-screen hero: headline + CTA / mockup (kept for reference)
+│   ├── hero-prompt.tsx                 # AI prompt → page preview generator with email capture
 │   ├── hero-mockup.tsx                 # SVG animated canvas mockup (nodes + edges)
+│   ├── features-tabs.tsx               # Interactive 4-tab demo: Planning, Design, Agents, Integrations
 │   ├── interactive-showcase.tsx        # Animated canvas, task table, Gantt demos
 │   ├── trust-bar.tsx                   # Social proof badges
 │   ├── how-it-works.tsx                # 3-step workflow
@@ -378,13 +425,15 @@ components/
 │   ├── chat-input.tsx                # Message input
 │   ├── chat-message.tsx              # Message bubble
 │   └── typing-indicator.tsx          # AI typing dots
-├── views/                             # Multiple view components
-│   ├── view-switcher.tsx              # Tab bar: Canvas / List / Table / Board / Timeline / Sprints / Pages
-│   ├── list-view.tsx                  # Hierarchical tree with expand/collapse
-│   ├── table-view.tsx                 # Sortable/filterable grid
-│   ├── board-view.tsx                 # Kanban by status with drag-and-drop
-│   ├── timeline-view.tsx              # Interactive Gantt chart with drag-to-move/resize
-│   └── pages-view.tsx                 # AI-generated page previews on zoomable canvas with inline chat
+├── views/                             # View tabs: Plan, Design, Agents, Manage (with sub-views)
+│   ├── view-switcher.tsx              # Tab bar: Plan / Design / Agents / Manage (with sub-views)
+│   ├── list-view.tsx                  # Manage sub-view: hierarchical tree with expand/collapse
+│   ├── table-view.tsx                 # Manage sub-view: sortable/filterable grid
+│   ├── board-view.tsx                 # Manage sub-view: Kanban by status with drag-and-drop
+│   ├── timeline-view.tsx              # Manage sub-view: interactive Gantt chart with drag-to-move/resize
+│   ├── backend-view.tsx               # Manage sub-view: backend module architect on zoomable canvas
+│   ├── pages-view.tsx                 # Design view: AI-generated page previews on zoomable canvas with inline chat
+│   └── agents-view.tsx                # Agents view: agent builder with config, knowledge, theme, preview, deploy tabs
 ├── sprints/
 │   └── sprint-board.tsx               # Sprint overview: create, drag backlog, progress bars
 ├── ai/
@@ -603,7 +652,7 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2026-02 | Persistence failover | Runtime Firestore → localStorage fallback on error |
 | 2026-02 | Dashboard loader | Animated loading screen with floating nodes + spinning compass |
 | 2026-02 | Command palette | Cmd+K fuzzy search + keyboard shortcuts for power users |
-| 2026-02 | Multiple views | 7 views: Canvas, List, Table, Board, Timeline, Sprints, Pages |
+| 2026-02 | Multiple views | 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views |
 | 2026-02 | Team features | Assignees, priority, due dates, comments, activity feed |
 | 2026-02 | AI iteration | Break down, audit, estimate, suggest deps — accept/dismiss |
 | 2026-02 | Sprint planning | Create sprints, drag backlog, progress bars |

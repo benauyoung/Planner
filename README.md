@@ -22,7 +22,7 @@ TinyBaguette is a **visual DAG-based project planning tool** where you:
 ### Key Features
 
 - **12 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
-- **8 Views** — Canvas, List, Table, Board (Kanban), Timeline (Gantt), Sprints, Backend, Design (AI-generated UI previews)
+- **4 View Tabs** — Plan (Canvas), Design (AI-generated UI previews), Agents (AI chatbot builder), Manage (List, Table, Board, Timeline, Sprints, Backend)
 - **AI Agent Builder** — Create embeddable AI chatbots with persona, knowledge base, behavior rules, theme customization, live preview, and one-click deploy with embed snippet
 - **Interactive Landing Demos** — 4-tab feature showcase: Planning (AI chat + graph), Design (live page editing), Agents (bot builder + deploy animation), Integrations (Supabase + GitHub connection flow)
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
@@ -91,7 +91,7 @@ Open [http://localhost:3000](http://localhost:3000) to start planning.
 ```
 Planner/
 ├── app/                          # Next.js App Router pages
-│   ├── api/ai/                   # AI routes (chat, iterate, analyze, generate-prd, etc.)
+│   ├── api/ai/                   # AI routes (chat, iterate, analyze, generate-prd, generate-pages, generate-backend, refine, etc.)
 │   ├── api/agent/                # Agent routes (generate config, chat)
 │   ├── (marketing)/              # Public landing page route group
 │   ├── (app)/                    # Authenticated app route group
@@ -102,9 +102,9 @@ Planner/
 │   │   └── share/[id]/           # Read-only shared plan
 │   └── layout.tsx                # Root layout
 ├── components/
-│   ├── landing/                  # Public landing page (10 components incl. interactive demos)
+│   ├── landing/                  # Public landing page (11 components incl. interactive demos)
 │   ├── canvas/                   # React Flow canvas + nodes (7 types) + context menus
-│   ├── views/                    # View switcher + List, Table, Board, Timeline, Design, Agents views
+│   ├── views/                    # View switcher + List, Table, Board, Timeline, Backend, Pages, Agents views
 │   ├── sprints/                  # Sprint board with drag-and-drop backlog
 │   ├── ai/                       # AI suggestion panels (iteration + smart suggestions)
 │   ├── comments/                 # Comment thread + activity feed

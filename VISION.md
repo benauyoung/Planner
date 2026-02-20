@@ -95,7 +95,7 @@ Time flows left to right. Goals on the left, completed tasks on the right. This 
 
 ### 5. Organic Over Rigid
 
-Nodes float freely with spring physics. No forced grids. Projects grow like organisms, not spreadsheets.
+Nodes float freely with organic layout. No forced grids. Projects grow like organisms, not spreadsheets.
 
 ---
 
@@ -115,7 +115,7 @@ Nodes float freely with spring physics. No forced grids. Projects grow like orga
 ### Delivered ✅
 - Infinite canvas with 12 node types and 8 typed edge types
 - AI-powered plan generation, iteration, smart suggestions, and page preview generation
-- 7 views: Canvas, List, Table, Board, Timeline (interactive Gantt), Sprints, Pages
+- 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views (List, Table, Board, Timeline, Sprints, Backend)
 - Rich content: images, PRDs, IDE prompts, Notion-style embedded docs
 - Team management: assignees, priority, due dates, estimates, tags
 - Comments, activity feed, sprint planning, version history

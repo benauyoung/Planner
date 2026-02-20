@@ -209,7 +209,7 @@
 
 ## Version Targets
 
-### v0.1.0 - Alpha ✅ (Current)
+### v0.1.0 - Alpha ✅
 - Full canvas with 7 node types
 - AI onboarding + chat planning
 - Rich content: images, PRDs, prompts, notes
@@ -232,7 +232,7 @@
 
 ### v0.9.0 - Feature Complete ✅
 - All 12 feature phases implemented
-- 6 views: Canvas, List, Table, Board, Timeline, Sprints
+- 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views
 - AI iteration + smart suggestions
 - Team management, comments, activity feed
 - Sprint planning with drag-and-drop
@@ -245,14 +245,14 @@
 - Unified project toolbar (single bar with all controls)
 - Interactive Gantt chart (drag-to-move, edge-resize)
 - 12 node types (5 new document types)
-- 7 edge types (5 new relationship types)
+- 8 edge types (5 new relationship types)
 - New project page header with Save & Open Workspace
 - Chat state reset on new project
 - Bug fixes: Tiptap SSR, React Flow edge type, Firestore provisioning
 
 ### v0.9.6 - Pages View & Landing ✅ (Current)
 - Pages View: AI-generated full-fidelity Tailwind page previews on zoomable canvas
-- 7 views total (added Pages)
+- 4 view tabs with Design (Pages), Agents, and 6 Manage sub-views incl. Backend
 - Inline chat per page for AI editing
 - Auto-layout fix: position preservation on node updates
 - New interactive landing page with one-shot pipeline messaging

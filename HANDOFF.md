@@ -20,7 +20,7 @@ TinyBaguette is an **AI-powered visual project planning tool**. Users describe a
 - Import projects from JSON or Markdown specs
 - Share plans via public read-only URL
 - Start from pre-built templates (Auth System, CRUD API, Landing Page)
-- **8 views**: Canvas, List, Table, Board (Kanban), Timeline (Gantt with drag-to-move/resize), Sprints, Backend, Design (AI-generated UI previews)
+- **4 view tabs** (Plan, Design, Agents, Manage) with **6 Manage sub-views** (List, Table, Board, Timeline, Sprints, Backend)
 - **Command palette** (Cmd+K) with fuzzy search + keyboard shortcuts
 - **Team management**: Assign members, set priority, due dates, estimates, tags
 - **AI iteration**: Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
@@ -114,7 +114,7 @@ app/
 ├── (app)/                              # AUTHENTICATED — auth-guarded, app header
 │   ├── layout.tsx                      # AppLayout: AuthProvider + Header + ErrorBoundary
 │   ├── dashboard/page.tsx              # Dashboard (/dashboard) — ProjectList
-│   ├── login/page.tsx                  # Login (/login) — email/password + Google sign-in
+│   ├── login/page.tsx                  # Login (/login) — email/password
 │   ├── project/
 │   │   ├── new/page.tsx                # New project (/project/new) — onboarding flow
 │   │   └── [id]/page.tsx              # Existing project: ProjectWorkspace
@@ -127,7 +127,10 @@ app/
 │   ├── generate-prompt/route.ts        # POST — AI prompt generation
 │   ├── generate-questions/route.ts     # POST — AI question generation for nodes
 │   ├── generate-pages/route.ts         # POST — AI page preview generation from project plan
-│   └── edit-page/route.ts              # POST — AI page HTML editing from user instruction
+│   ├── edit-page/route.ts              # POST — AI page HTML editing from user instruction
+│   ├── refine/route.ts                 # POST — AI plan refinement
+│   ├── generate-backend/route.ts       # POST — AI backend module generation
+│   └── edit-backend/route.ts           # POST — AI backend module editing
 └── api/agent/                          # Agent API routes
     ├── generate/route.ts               # POST — AI generates agent config from description
     └── [agentId]/chat/route.ts         # POST — Agent chat (loads config, proxies to Gemini)
@@ -140,7 +143,7 @@ app/
 | `/` | `(marketing)` | No | Public landing page |
 | `/about` | `(marketing)` | No | About TinyBaguette |
 | `/contact` | `(marketing)` | No | Contact page (hello@tinybaguette.com) |
-| `/login` | `(app)` | No (redirects to /dashboard if authed) | Login page |
+| `/login` | `(app)` | No (redirects to /dashboard if authed) | Login page (email/password) |
 | `/dashboard` | `(app)` | Yes | Project list dashboard |
 | `/project/new` | `(app)` | Yes | New project creation |
 | `/project/[id]` | `(app)` | Yes | Project canvas workspace |
@@ -170,7 +173,7 @@ Planner/
 │   ├── (app)/
 │   │   ├── layout.tsx                  # AuthProvider + Header + ErrorBoundary
 │   │   ├── dashboard/page.tsx          # ProjectList dashboard
-│   │   ├── login/page.tsx              # Firebase auth (email + Google)
+│   │   ├── login/page.tsx              # Firebase auth (email/password)
 │   │   ├── project/
 │   │   │   ├── new/page.tsx            # New project: Onboarding → Chat + Canvas
 │   │   │   └── [id]/page.tsx           # Existing project: ProjectWorkspace
@@ -184,7 +187,10 @@ Planner/
 │   │   ├── iterate/route.ts            # POST — AI iteration (break down, audit, estimate)
 │   │   ├── analyze/route.ts            # POST — AI smart suggestions analysis
 │   │   ├── generate-pages/route.ts     # POST — AI page preview generation
-│   │   └── edit-page/route.ts          # POST — AI page HTML editing
+│   │   ├── edit-page/route.ts          # POST — AI page HTML editing
+│   │   ├── refine/route.ts             # POST — AI plan refinement
+│   │   ├── generate-backend/route.ts   # POST — AI backend module generation
+│   │   └── edit-backend/route.ts       # POST — AI backend module editing
 │   └── api/agent/
 │       ├── generate/route.ts           # POST — AI generates agent config from description
 │       └── [agentId]/chat/route.ts     # POST — Agent chat (loads config, proxies to Gemini)
@@ -220,12 +226,13 @@ Planner/
 │   │       ├── pane-context-menu.tsx   # Right-click canvas (add node + smart mapping)
 │   │       └── context-submenu.tsx     # Flyout submenu helper
 │   ├── views/                          # Multiple view components
-│   │   ├── view-switcher.tsx           # Tab bar: Canvas / List / Table / Board / Timeline / Sprints / Backend / Design
+│   │   ├── view-switcher.tsx           # Tab bar: Plan / Design / Agents / Manage (with sub-views)
 │   │   ├── list-view.tsx               # Hierarchical tree with expand/collapse
 │   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
 │   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
 │   │   ├── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
 │   │   ├── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat
+│   │   ├── backend-view.tsx            # Backend module architect on zoomable canvas
 │   │   └── agents-view.tsx             # Agent builder: config, knowledge, theme, preview, deploy tabs
 │   ├── sprints/
 │   │   └── sprint-board.tsx            # Sprint overview: create, drag backlog, progress bars
@@ -346,7 +353,8 @@ Planner/
 ├── contexts/
 │   └── auth-context.tsx               # Firebase auth context provider
 ├── public/
-│   └── favicon.svg                    # Browser favicon
+│   ├── logo.png                       # App logo / favicon (referenced in layout.tsx metadata)
+│   └── favicon.svg                    # Legacy SVG favicon
 ├── netlify.toml                       # Netlify deploy config (optional, Vercel is primary)
 ├── next.config.js                     # Next.js config (reactStrictMode: true)
 ├── tailwind.config.ts                 # Tailwind with custom node-type color tokens
@@ -433,7 +441,36 @@ interface Project {
   currentVersionId?: string
   pages?: ProjectPage[]       // AI-generated page previews
   pageEdges?: PageEdge[]      // Navigation flow between pages
+  backendModules?: BackendModule[]  // AI-generated backend architecture modules
+  backendEdges?: BackendEdge[]      // Connections between backend modules
   agents?: Agent[]             // Embeddable AI chatbot agents
+}
+```
+
+### Backend Architecture Types
+```typescript
+type BackendModuleType = 'endpoint' | 'model' | 'service' | 'middleware' | 'database' | 'auth' | 'config'
+type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
+
+interface BackendModule {
+  id: string
+  type: BackendModuleType
+  title: string
+  description: string
+  code: string
+  linkedNodeIds: string[]
+  position: { x: number; y: number }
+  method?: HttpMethod
+  path?: string
+  fields?: { name: string; type: string; required: boolean }[]
+}
+
+interface BackendEdge {
+  id: string
+  source: string
+  target: string
+  label?: string
+  edgeType?: 'uses' | 'returns' | 'stores' | 'middleware' | 'depends_on'
 }
 ```
 
@@ -523,6 +560,8 @@ interface PageEdge { id, source, target, label? }
 
 **Pages**: `setPages`, `updatePageHtml`, `updatePagePosition`, `addPageEdge`, `removePageEdge`, `removePage`
 
+**Backend**: `setBackendModules`, `updateBackendModule`, `updateBackendModulePosition`, `removeBackendModule`, `addBackendEdge`, `removeBackendEdge`
+
 **Agents**: `addAgent`, `updateAgent`, `removeAgent`, `addAgentKnowledge`, `removeAgentKnowledge`, `addAgentRule`, `removeAgentRule`, `updateAgentTheme`, `toggleAgentPublished`
 
 **Flow Conversion**: `planNodesToFlow(nodes, projectEdges, existingFlowNodes?)` — converts PlanNode[] + ProjectEdge[] → FlowNode[] + FlowEdge[], preserves existing positions
@@ -538,7 +577,7 @@ interface PageEdge { id, source, target, label? }
   → User types project idea → AI generates page previews
   → "Continue Building" → email capture modal
   → "Login" nav link → /login
-  → User signs in (email/password or Google)
+  → User signs in (email/password)
   → Redirect to /dashboard
   → DashboardLoader animation while projects load
   → ProjectList appears (or EmptyState)
@@ -562,7 +601,7 @@ interface PageEdge { id, source, target, label? }
 - **Export dropdown** → JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - **Share button** → Public/private toggle with shareable URL
 - **Cmd+K** → Command palette with fuzzy search
-- **View switcher** → Canvas / List / Table / Board / Timeline / Sprints / Pages
+- **View tabs** → Plan / Design / Agents / Manage (with List, Table, Board, Timeline, Sprints, Backend sub-views)
 - **Toolbar buttons** → Team Manager, AI Smart Suggestions, Version History, Integrations
 
 ### Smart Mapping
