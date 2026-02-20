@@ -61,7 +61,13 @@
       "Bash(git status:*)",
       "mcp__claude_ai_Vercel__deploy_to_vercel",
       "mcp__claude_ai_Vercel__list_deployments",
-      "Bash(awk:*)"
+      "Bash(awk:*)",
+      "Bash(xargs cat:*)",
+      "Bash(for hook in use-agent-chat use-ai-chat use-ai-iterate use-ai-suggestions use-auto-layout use-collaboration use-project)",
+      "Bash(do echo \"=== $hook ===\" grep -r \"$hook\" /c/Users/Benjamin/Desktop/Projects/Planner --include=\"*.ts\" --include=\"*.tsx\")",
+      "Bash(done)",
+      "Bash(for svc in auth collaboration firebase firestore gemini local-storage persistence)",
+      "Bash(do echo \"=== $svc ===\" grep -r \"from ''@/services/$svc''\" /c/Users/Benjamin/Desktop/Projects/Planner --include=\"*.ts\" --include=\"*.tsx\")"
     ]
   }
 }

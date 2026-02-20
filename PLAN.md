@@ -1,6 +1,6 @@
 # TinyBaguette Implementation Plan
 
-> Living checklist reflecting actual implementation status as of February 16, 2026.
+> Living checklist reflecting actual implementation status as of February 20, 2026.
 
 ---
 
@@ -241,30 +241,67 @@
 
 ---
 
-## Future Work
+## The Big Vision: "Ralphy-Ready" PRD Pipeline
 
-### Real-Time Collaboration
+Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or JSON with user stories), hands it to an AI agent (Claude Code, Cursor, Codex, etc.), and loops until every task passes. The key insight for TinyBaguette is:
+
+**TinyBaguette should be the PRD generation engine that feeds Ralphy.** The flow becomes:
+
+1. User describes project → AI builds the DAG (goals → subgoals → features → tasks)
+2. AI asks targeted questions about each node to gather requirements
+3. TinyBaguette generates context-aware PRDs for each node that:
+   - Know about sibling/parent/child PRDs in the hierarchy
+   - Include what other PRDs exist in the ecosystem and their status
+   - Reference the parent PRD for broader context
+   - Are scoped small enough for one AI coding context window (Ralphy's key constraint)
+   - Instruct the AI agent to use the Ralphy technique (`ralphy --prd PRD.md`)
+4. User exports the PRD tree → runs ralphy → autonomous coding gets it done
+
+---
+
+## Consolidated Task List
+
+### 🔴 CORE — PRD Pipeline (Highest Priority)
+
+- [ ] **Deep question flow per node** — Guided AI questioning for each goal/subgoal/feature/task to extract requirements, acceptance criteria, constraints, and dependencies before PRD generation
+- [ ] **Context-aware PRD generation** — Rewrite PRD generation so each PRD knows:
+  - Its parent PRD (what it rolls up to)
+  - Sibling PRDs (what's being built alongside it)
+  - Child PRDs (what it breaks down into)
+  - Dependency PRDs (what blocks/informs it via typed edges)
+  - Overall project context (tech stack, conventions, constraints)
+- [ ] **PRD scoping for Ralphy** — Each PRD should be small enough for one AI context window. Features/tasks get their own PRDs; goals/subgoals get summary PRDs that reference children
+- [ ] **Ralphy export format** — Export PRD tree as Ralphy-compatible output:
+  - Markdown checklist (`PRD.md` with `- [ ]` tasks)
+  - Or folder structure (`prd/feature-auth.md`, `prd/feature-dashboard.md`, etc.)
+  - Include `.ralphy/config.yaml` generation (project name, framework, rules, boundaries)
+- [ ] **Ralphy instructions in PRDs** — Generated PRDs should advise the AI to use Ralphy (`ralphy --prd PRD.md`) and include the Ralphy workflow pattern
+- [ ] **PRD status tracking** — Track which PRDs are generated, which need more questions answered, and which are ready for export
+
+### 🟡 INFRASTRUCTURE — Pending Items
+
+- [ ] **Email infrastructure** — Set up email receiving at `hello@tinybaguette.com` (Cloudflare Email Routing or ImprovMX)
+- [ ] **Email storage** — Wire hero prompt email capture to Firestore collection, Resend, or Mailchimp
+- [ ] **Privacy Policy / Terms of Service** — Create real pages (footer links are `#` placeholders)
+- [ ] **Cleanup** — Delete unused `hero-section.tsx`
+
+### 🟢 KNOWN ISSUES
+
+- [ ] **API route auth** — No middleware auth enforcement; API routes are unprotected
+- [ ] **Base64 image bloat** — No size limits or compression
+- [ ] **`changeNodeType` hierarchy validation** — No guardrails on type changes
+- [ ] **Share page routing** — `/share/[id]` in `(app)` group but doesn't need auth
+- [ ] **Dead code** — `refinement-system.ts` unused
+
+### 🔵 POST v1.0
+
 - [x] Pluggable collaboration provider (local mock)
 - [x] Presence avatars + live cursors (local mock)
-- [ ] Yjs CRDT integration
-- [ ] Production WebSocket backend (PartyKit or Liveblocks)
-
-### Advanced Canvas
-- [ ] Spring physics (d3-force)
-- [ ] Multi-select
-- [ ] Level of detail (LOD) zoom
-
-### Territory Sync
-- [ ] Bidirectional file sync (canvas ↔ Markdown)
-- [ ] Chokidar file watcher
-- [ ] YAML frontmatter serialization
-
-### Polish
-- [ ] Edge deletion UI (click edge to select, then delete)
-- [ ] Image compression / size limits
-- [ ] `changeNodeType` hierarchy validation
-- [ ] Move `/share/[id]` out of `(app)` route group
-- [ ] Middleware auth enforcement (currently client-side only)
+- [ ] **Real-time collaboration** — WebSocket backend (PartyKit/Liveblocks)
+- [ ] **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth
+- [ ] **Territory file sync** — Bidirectional canvas ↔ Markdown
+- [ ] **Advanced canvas** — Spring physics, multi-select, level-of-detail zoom
+- [ ] **Image compression** — Resize/compress base64 before storing
 
 ---
 

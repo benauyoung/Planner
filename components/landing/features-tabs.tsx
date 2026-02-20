@@ -30,7 +30,7 @@ const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description
     key: 'planning',
     label: 'Planning',
     icon: Workflow,
-    description: 'Visual project planning with an interactive canvas. Break down goals into features and tasks. This is the new standard for structuring code.',
+    description: 'Visual project planning with an interactive canvas. This is the new standard for structuring code.',
   },
   {
     key: 'design',
@@ -134,7 +134,7 @@ function PlanningDemo() {
   }, [])
 
   return (
-    <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
+    <div className="relative w-full aspect-[2/1] rounded-xl border bg-background/60 overflow-hidden flex">
       {/* Canvas area */}
       <div className="flex-1 relative overflow-hidden">
         {/* Dot grid background */}
@@ -895,7 +895,7 @@ function AgentsDemo() {
   const isChatting = phase === 'chatting'
 
   return (
-    <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
+    <div className="relative w-full aspect-[2/1] rounded-xl border bg-background/60 overflow-hidden flex">
       {/* Left: Agent Builder Config */}
       <div className="flex-1 border-r flex flex-col overflow-hidden">
         <div className="px-3 py-2 border-b flex items-center justify-between">
@@ -1261,7 +1261,7 @@ function IntegrationsDemo() {
   }, [])
 
   return (
-    <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/60 overflow-hidden flex">
+    <div className="relative w-full aspect-[2/1] rounded-xl border bg-background/60 overflow-hidden flex">
       {/* Left: Integration Cards */}
       <div className="flex-1 border-r flex flex-col overflow-hidden">
         <div className="px-3 py-2 border-b flex items-center gap-2">
@@ -1440,7 +1440,7 @@ export function FeaturesTabs() {
             <span className="text-primary">TinyBaguette.</span>
           </h2>
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-            The spatial engine that turns your crumbs of an idea into a fully baked product. Plan, design, and code your entire app on a single canvas, then deploy your own AI that actually knows how it works, because why not?
+            Plan, design, and code your entire website, then deploy your own AI that actually knows how it works, because why not?
           </p>
         </motion.div>
 
@@ -1478,7 +1478,7 @@ export function FeaturesTabs() {
         </AnimatePresence>
 
         {/* Demo area */}
-        <div className="max-w-[75%] mx-auto">
+        <div className="max-w-[56%] mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}

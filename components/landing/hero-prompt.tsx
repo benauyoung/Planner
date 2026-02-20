@@ -581,7 +581,7 @@ export function HeroPrompt() {
                 </h1>
 
                 <p className="text-lg text-muted-foreground mb-10 max-w-xl mx-auto">
-                  Describe your project and we&apos;ll generate a complete frontend preview in seconds.
+                  Describe your project and we&apos;ll generate it.
                 </p>
               </div>
 
