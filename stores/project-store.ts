@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge, BackendModule, BackendEdge } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge, BackendModule, BackendEdge, AppFile, AppChatMessage } from '@/types/project'
 import type { Agent, AgentKnowledgeEntry, AgentBehaviorRule, AgentTheme } from '@/types/agent'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
@@ -83,6 +83,10 @@ interface ProjectState {
   addPageEdge: (source: string, target: string, label?: string) => void
   removePageEdge: (edgeId: string) => void
   removePage: (pageId: string) => void
+  setAppFiles: (files: AppFile[], summary?: string) => void
+  updateAppFile: (path: string, content: string) => void
+  addAppChatMessage: (message: AppChatMessage) => void
+  clearAppChatMessages: () => void
   setBackendModules: (modules: BackendModule[], edges?: BackendEdge[]) => void
   updateBackendModule: (moduleId: string, updates: Partial<BackendModule>) => void
   updateBackendModulePosition: (moduleId: string, position: { x: number; y: number }) => void
@@ -562,16 +566,17 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const project = get().currentProject
       if (!project) return
 
-      const updatedNodes = project.nodes.map((n) =>
-        n.id === nodeId
-          ? {
-              ...n,
-              questions: n.questions.map((q) =>
-                q.id === questionId ? { ...q, answer } : q
-              ),
-            }
-          : n
-      )
+      const updatedNodes = project.nodes.map((n) => {
+        if (n.id !== nodeId) return n
+        const updatedQuestions = n.questions.map((q) =>
+          q.id === questionId ? { ...q, answer } : q
+        )
+        // Mark existing PRDs stale when answers change after generation
+        const updatedPrds = (n.prds ?? []).map((p) =>
+          p.isStale ? p : { ...p, isStale: true, staleReason: 'Questions updated after generation' }
+        )
+        return { ...n, questions: updatedQuestions, prds: updatedPrds }
+      })
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
     },
 
@@ -1170,6 +1175,32 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const pages = (p.pages || []).filter((pg) => pg.id !== pageId)
       const pageEdges = (p.pageEdges || []).filter((e) => e.source !== pageId && e.target !== pageId)
       commitProjectUpdate({ ...p, updatedAt: Date.now(), pages, pageEdges })
+    },
+
+    setAppFiles: (files, summary) => {
+      const p = get().currentProject
+      if (!p) return
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), appFiles: files, appDesignSummary: summary || p.appDesignSummary })
+    },
+
+    updateAppFile: (path, content) => {
+      const p = get().currentProject
+      if (!p) return
+      const appFiles = (p.appFiles || []).map((f) => f.path === path ? { ...f, content } : f)
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), appFiles })
+    },
+
+    addAppChatMessage: (message) => {
+      const p = get().currentProject
+      if (!p) return
+      const messages = [...(p.appChatMessages || []), message]
+      applyWithoutUndo({ ...p, appChatMessages: messages })
+    },
+
+    clearAppChatMessages: () => {
+      const p = get().currentProject
+      if (!p) return
+      applyWithoutUndo({ ...p, appChatMessages: [] })
     },
 
     setBackendModules: (modules, edges) => {

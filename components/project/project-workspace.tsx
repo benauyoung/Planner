@@ -10,6 +10,7 @@ import { useChatStore } from '@/stores/chat-store'
 import { useUIStore } from '@/stores/ui-store'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
+import { PrdPipelinePanel } from '@/components/panels/prd-pipeline-panel'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ProjectToolbar } from '@/components/project/project-toolbar'
@@ -23,7 +24,7 @@ import { TableView } from '@/components/views/table-view'
 import { BoardView } from '@/components/views/board-view'
 import { TimelineView } from '@/components/views/timeline-view'
 import { SprintBoard } from '@/components/sprints/sprint-board'
-import { PagesView } from '@/components/views/pages-view'
+import { DesignView } from '@/components/views/design-view'
 import { BackendView } from '@/components/views/backend-view'
 import { AgentsView } from '@/components/views/agents-view'
 import { SmartSuggestionsPanel } from '@/components/ai/smart-suggestions-panel'
@@ -407,13 +408,16 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                   {manageSubView === 'backend' && <BackendView />}
                 </>
               )}
-              {currentView === 'design' && <PagesView />}
+              {currentView === 'design' && <DesignView />}
               {currentView === 'agents' && <AgentsView />}
             </div>
           </div>
 
           {/* Detail Panel */}
           <NodeDetailPanel />
+
+          {/* PRD Pipeline Panel */}
+          <PrdPipelinePanel />
 
           {/* AI Suggestions Panel */}
           {aiPanelOpen && (

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package } from 'lucide-react'
+import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -10,6 +10,7 @@ import { exportProjectAsJSON, downloadFile } from '@/lib/export-import'
 import { exportFullPlanAsMarkdown } from '@/lib/export-markdown'
 import { generateCursorRules, generateClaudeMD, generatePlanMD, generateTasksMD } from '@/lib/export-project-files'
 import { downloadRalphyZip, downloadFlatPrdMd } from '@/lib/export-ralphy'
+import { getProjectPrdSummary } from '@/lib/prd-status'
 
 interface CanvasToolbarProps {
   onReLayout: () => void
@@ -25,6 +26,10 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
   const canRedo = useProjectStore((s) => s.canRedo)
   const blastRadiusMode = useUIStore((s) => s.blastRadiusMode)
   const setBlastRadiusMode = useUIStore((s) => s.setBlastRadiusMode)
+  const prdPipelineOpen = useUIStore((s) => s.prdPipelineOpen)
+  const setPrdPipelineOpen = useUIStore((s) => s.setPrdPipelineOpen)
+
+  const prdSummary = currentProject ? getProjectPrdSummary(currentProject) : null
 
   const handleExpandAll = () => {
     if (!currentProject) return
@@ -194,6 +199,22 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
       >
         <Radar className="h-4 w-4" />
       </Button>
+      <div className="relative">
+        <Button
+          variant={prdPipelineOpen ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => setPrdPipelineOpen(!prdPipelineOpen)}
+          disabled={!currentProject}
+          title="PRD Pipeline"
+        >
+          <ListChecks className="h-4 w-4" />
+        </Button>
+        {prdSummary && prdSummary.actionable > 0 && (
+          <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold pointer-events-none">
+            {prdSummary.actionable}
+          </span>
+        )}
+      </div>
       <div className="h-px bg-border my-1" />
       <div className="relative" ref={exportRef}>
         <Button

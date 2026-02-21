@@ -23,6 +23,7 @@ interface UIState {
   searchQuery: string
   filterType: NodeType | null
   filterStatus: NodeStatus | null
+  prdPipelineOpen: boolean
   setTheme: (theme: 'light' | 'dark') => void
   selectNode: (nodeId: string | null) => void
   openDetailPanel: () => void
@@ -42,6 +43,7 @@ interface UIState {
   setFilterType: (type: NodeType | null) => void
   setFilterStatus: (status: NodeStatus | null) => void
   clearFilters: () => void
+  setPrdPipelineOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -58,6 +60,7 @@ export const useUIStore = create<UIState>((set) => ({
   searchQuery: '',
   filterType: null,
   filterStatus: null,
+  prdPipelineOpen: false,
   setTheme: (theme) => set({ theme }),
   selectNode: (nodeId) =>
     set({ selectedNodeId: nodeId, detailPanelOpen: nodeId !== null }),
@@ -81,4 +84,5 @@ export const useUIStore = create<UIState>((set) => ({
   setFilterType: (type) => set({ filterType: type }),
   setFilterStatus: (status) => set({ filterStatus: status }),
   clearFilters: () => set({ searchQuery: '', filterType: null, filterStatus: null }),
+  setPrdPipelineOpen: (open) => set({ prdPipelineOpen: open }),
 }))

@@ -8,6 +8,7 @@ import { NODE_CONFIG, STATUS_COLORS } from '@/lib/constants'
 import type { NodeType, NodeStatus } from '@/types/project'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
+import { getNodePrdStatus, PRD_STATUS_CONFIG } from '@/lib/prd-status'
 import { NodeToolbar } from './node-toolbar'
 
 interface BasePlanNodeProps {
@@ -49,6 +50,12 @@ export const BasePlanNode = memo(function BasePlanNode({
     [nodes, id]
   )
   const hasChildren = children.length > 0
+
+  const fullNode = useMemo(() => nodes?.find((n) => n.id === id), [nodes, id])
+  const prdStatus = useMemo(
+    () => (fullNode ? getNodePrdStatus(fullNode) : null),
+    [fullNode]
+  )
 
   const statusCounts = useMemo(() => {
     if (!hasChildren) return null
@@ -144,6 +151,19 @@ export const BasePlanNode = memo(function BasePlanNode({
           <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
             {data.description}
           </p>
+        )}
+
+        {/* PRD status dot */}
+        {prdStatus && (
+          <div className="flex items-center gap-1 mt-2">
+            <div
+              className={cn('w-1.5 h-1.5 rounded-full shrink-0', PRD_STATUS_CONFIG[prdStatus].dot)}
+              title={`PRD: ${PRD_STATUS_CONFIG[prdStatus].label}`}
+            />
+            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium">
+              {PRD_STATUS_CONFIG[prdStatus].label}
+            </span>
+          </div>
         )}
       </div>
 
