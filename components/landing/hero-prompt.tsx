@@ -470,6 +470,7 @@ export function HeroPrompt() {
   const [error, setError] = useState<string | null>(null)
   const [emailValue, setEmailValue] = useState('')
   const [emailSubmitted, setEmailSubmitted] = useState(false)
+  const [emailSubmitting, setEmailSubmitting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
@@ -529,8 +530,19 @@ export function HeroPrompt() {
     textareaRef.current?.focus()
   }
 
-  function handleEmailSubmit() {
-    if (emailValue.includes('@') && emailValue.includes('.')) {
+  async function handleEmailSubmit() {
+    if (!emailValue.includes('@') || !emailValue.includes('.')) return
+    setEmailSubmitting(true)
+    try {
+      await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailValue, prompt, appTitle: suggestedTitle || '' }),
+      })
+    } catch {
+      // Silently succeed — don't block UX on network errors
+    } finally {
+      setEmailSubmitting(false)
       setEmailSubmitted(true)
     }
   }
@@ -740,10 +752,15 @@ export function HeroPrompt() {
                       />
                       <button
                         onClick={handleEmailSubmit}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
+                        disabled={emailSubmitting}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-primary/20"
                       >
-                        <Mail className="h-4 w-4" />
-                        Get Started Free
+                        {emailSubmitting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Mail className="h-4 w-4" />
+                        )}
+                        {emailSubmitting ? 'Joining...' : 'Get Started Free'}
                       </button>
                     </div>
 
