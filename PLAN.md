@@ -282,16 +282,16 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 
 - [ ] **Email infrastructure** — Set up email receiving at `hello@tinybaguette.com` (Cloudflare Email Routing or ImprovMX)
 - [ ] **Email storage** — Wire hero prompt email capture to Firestore collection, Resend, or Mailchimp
-- [ ] **Privacy Policy / Terms of Service** — Create real pages (footer links are `#` placeholders)
-- [ ] **Cleanup** — Delete unused `hero-section.tsx`
+- [x] **Privacy Policy / Terms of Service** — Pages at `/privacy` and `/terms`, footer links wired
+- [x] **Cleanup** — Deleted 10 dead code files: `hero-section.tsx`, `view-switcher.tsx`, `timeline-bar.tsx`, 2 collaboration components, `activity-feed.tsx`, `use-collaboration.ts`, 3 integration services (github, linear, slack)
 
 ### 🟢 KNOWN ISSUES
 
-- [ ] **API route auth** — No middleware auth enforcement; API routes are unprotected
-- [ ] **Base64 image bloat** — No size limits or compression
-- [ ] **`changeNodeType` hierarchy validation** — No guardrails on type changes
-- [ ] **Share page routing** — `/share/[id]` in `(app)` group but doesn't need auth
-- [ ] **Dead code** — `refinement-system.ts` unused
+- [x] **API route auth** — `middleware.ts` enforces Authorization header on `/api/*` when Firebase is configured; `lib/auth-fetch.ts` sends tokens from frontend
+- [x] **Base64 image bloat** — Images > 5MB rejected, images > 1MB auto-compressed via canvas (max 1200px, JPEG 0.8 quality)
+- [x] **`changeNodeType` hierarchy validation** — Validates parent compatibility and children compatibility before allowing type change
+- [x] **Share page routing** — Moved to `(marketing)` route group (publicly accessible without auth)
+- [x] ~~**Dead code** — `refinement-system.ts` unused~~ — Actually used by `planning-chat.tsx` and `refinement-question-card.tsx`
 
 ### 🔵 POST v1.0
 
@@ -301,16 +301,17 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 - [ ] **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth
 - [ ] **Territory file sync** — Bidirectional canvas ↔ Markdown
 - [ ] **Advanced canvas** — Spring physics, multi-select, level-of-detail zoom
-- [ ] **Image compression** — Resize/compress base64 before storing
+- [x] **Image compression** — Resize/compress base64 before storing (canvas-based, > 1MB threshold)
 
 ---
 
 ## Notes
 
 - Firebase is optional — all env vars guarded at init; runtime failover to localStorage
-- Route groups: `(marketing)` public, `(app)` authenticated; root layout is minimal
+- Route groups: `(marketing)` public (incl. share page), `(app)` authenticated; root layout is minimal
+- API routes protected by `middleware.ts` (checks Authorization header when Firebase is configured); `lib/auth-fetch.ts` sends Firebase ID tokens from frontend
 - Landing page is public at `/`; dashboard at `/dashboard`
-- Images stored as base64 data URLs (no external storage needed)
+- Images stored as base64 data URLs (no external storage needed); auto-compressed above 1MB, rejected above 5MB
 - PRDs and prompts designed for copy-paste into IDE workflows
 - Smart mapping uses `PARENT_TYPE_MAP` hierarchy + Euclidean distance
 - Typed edges: `blocks` (red dashed, animated), `depends_on` (blue dashed)

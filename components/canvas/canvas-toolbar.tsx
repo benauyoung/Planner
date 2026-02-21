@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar } from 'lucide-react'
+import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import { exportProjectAsJSON, downloadFile } from '@/lib/export-import'
 import { exportFullPlanAsMarkdown } from '@/lib/export-markdown'
 import { generateCursorRules, generateClaudeMD, generatePlanMD, generateTasksMD } from '@/lib/export-project-files'
+import { downloadRalphyZip, downloadFlatPrdMd } from '@/lib/export-ralphy'
 
 interface CanvasToolbarProps {
   onReLayout: () => void
@@ -114,6 +115,23 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
         navigator.clipboard.writeText(exportFullPlanAsMarkdown(currentProject))
       },
     },
+    { label: '---', icon: null, action: () => {} },
+    {
+      label: 'Ralphy Package (ZIP)',
+      icon: <Package className="h-3.5 w-3.5" />,
+      action: () => {
+        if (!currentProject) return
+        downloadRalphyZip(currentProject)
+      },
+    },
+    {
+      label: 'PRD Manifest (.md)',
+      icon: <FileText className="h-3.5 w-3.5" />,
+      action: () => {
+        if (!currentProject) return
+        downloadFlatPrdMd(currentProject)
+      },
+    },
   ]
 
   return (
@@ -192,19 +210,23 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
             <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Export
             </div>
-            {exportActions.map((item) => (
-              <button
-                key={item.label}
-                className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
-                onClick={() => {
-                  item.action()
-                  setExportOpen(false)
-                }}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
+            {exportActions.map((item) =>
+              item.label === '---' ? (
+                <div key="sep-ralphy" className="h-px bg-border mx-2 my-1" />
+              ) : (
+                <button
+                  key={item.label}
+                  className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+                  onClick={() => {
+                    item.action()
+                    setExportOpen(false)
+                  }}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              )
+            )}
           </div>
         )}
       </div>

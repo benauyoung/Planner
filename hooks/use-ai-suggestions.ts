@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import type { SuggestionType } from '@/prompts/suggestion-system'
+import { authFetch } from '@/lib/auth-fetch'
 
 export interface SmartSuggestion {
   type: SuggestionType
@@ -81,7 +82,7 @@ export function useAISuggestions() {
         return
       }
 
-      const res = await fetch('/api/ai/analyze', {
+      const res = await authFetch('/api/ai/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ projectSummary }),

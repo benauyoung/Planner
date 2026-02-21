@@ -16,6 +16,17 @@ Guidelines:
 - Avoid yes/no questions — each option should be a distinct approach or trade-off
 - Don't repeat any previously answered questions
 - Focus on decisions that would meaningfully impact implementation
+- Spread questions across multiple categories — do NOT put all questions in one category
+- Assign each question to exactly one category appropriate for the node type:
+  - **goal**: one of ["Vision & Scope", "Success Metrics", "Constraints", "Stakeholders"]
+  - **subgoal**: one of ["Scope & Boundaries", "Dependencies", "Acceptance Criteria", "Technical Approach"]
+  - **feature**: one of ["Technical Approach", "UX Patterns", "Data Model", "Edge Cases", "Dependencies"]
+  - **task**: one of ["Implementation Details", "Tooling", "Testing Approach", "Edge Cases"]
+  - **spec**: one of ["Scope", "Architecture Style", "Constraints", "Stakeholders"]
+  - **prd**: one of ["User Stories", "Acceptance Criteria", "Edge Cases", "Dependencies"]
+  - **schema**: one of ["Entities & Relationships", "Validation Rules", "API Format", "Migration Strategy"]
+  - **prompt**: one of ["Target Tool", "Coding Style", "Framework Constraints", "Test Coverage"]
+  - **reference**: one of ["Relevance", "Incorporation", "Licensing"]
 - Tailor questions to the node type:
   - **goal/subgoal**: Strategic direction, priority, scope boundaries
   - **feature**: Technical approach, UX patterns, integration points
@@ -28,4 +39,4 @@ Guidelines:
 - If the node has document relationships (connected specs, PRDs, schemas), ask questions about how they relate
 - Make options specific to the project context, not generic
 
-Return a JSON object with a "questions" array, where each item has "question" (string) and "options" (string array of 3-5 choices).`
+Return a JSON object with a "questions" array, where each item has "question" (string), "options" (string array of 3-5 choices), and "category" (string from the list above).`

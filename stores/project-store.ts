@@ -32,7 +32,7 @@ interface ProjectState {
   duplicateNode: (nodeId: string, includeChildren: boolean) => string | null
   changeNodeType: (nodeId: string, newType: NodeType) => void
   answerNodeQuestion: (nodeId: string, questionId: string, answer: string) => void
-  addNodeQuestions: (nodeId: string, questions: { question: string; options: string[] }[]) => void
+  addNodeQuestions: (nodeId: string, questions: { question: string; options: string[]; category?: string; isFollowUp?: boolean; followUpForId?: string }[]) => void
   addCustomNodeQuestion: (nodeId: string, question: string) => void
   updateNodeRichContent: (nodeId: string, content: string) => void
   addNodeImage: (nodeId: string, imageUrl: string) => void
@@ -524,6 +524,34 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const project = get().currentProject
       if (!project) return
 
+      const node = project.nodes.find((n) => n.id === nodeId)
+      if (!node) return
+
+      // Validate: if this node has a parent, check the parent allows newType as a child
+      const VALID_CHILDREN: Record<string, string[]> = {
+        goal: ['subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference'],
+        subgoal: ['feature', 'task', 'moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference'],
+        feature: ['task', 'moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference'],
+        task: ['moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference'],
+      }
+
+      if (node.parentId) {
+        const parent = project.nodes.find((n) => n.id === node.parentId)
+        if (parent) {
+          const allowed = VALID_CHILDREN[parent.type]
+          if (allowed && !allowed.includes(newType)) return
+        }
+      }
+
+      // Validate: if this node has children with hierarchy types, check newType can parent them
+      const children = project.nodes.filter((n) => n.parentId === nodeId)
+      const hierarchyTypes = ['goal', 'subgoal', 'feature', 'task']
+      for (const child of children) {
+        if (!hierarchyTypes.includes(child.type)) continue
+        const allowed = VALID_CHILDREN[newType]
+        if (allowed && !allowed.includes(child.type)) return
+      }
+
       const updatedNodes = project.nodes.map((n) =>
         n.id === nodeId ? { ...n, type: newType } : n
       )
@@ -561,6 +589,9 @@ export const useProjectStore = create<ProjectState>((set, get) => {
             question: q.question,
             answer: '',
             options: q.options,
+            ...(q.category !== undefined && { category: q.category }),
+            ...(q.isFollowUp !== undefined && { isFollowUp: q.isFollowUp }),
+            ...(q.followUpForId !== undefined && { followUpForId: q.followUpForId }),
           }))
         return { ...n, questions: [...n.questions, ...newQuestions] }
       })

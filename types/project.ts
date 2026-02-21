@@ -25,6 +25,9 @@ export interface NodeQuestion {
   answer: string
   options?: string[]
   isCustom?: boolean
+  category?: string
+  isFollowUp?: boolean
+  followUpForId?: string
 }
 
 export interface NodePRD {

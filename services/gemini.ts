@@ -125,8 +125,34 @@ export const questionGenerationSchema: Schema = {
             description: '3-5 concrete answer options',
             items: { type: SchemaType.STRING },
           },
+          category: { type: SchemaType.STRING, description: 'Category this question belongs to (e.g. "Technical Approach", "Data Model")' },
         },
-        required: ['question', 'options'],
+        required: ['question', 'options', 'category'],
+      },
+    },
+  },
+  required: ['questions'],
+}
+
+export const followUpGenerationSchema: Schema = {
+  type: SchemaType.OBJECT,
+  properties: {
+    questions: {
+      type: SchemaType.ARRAY,
+      description: 'Targeted follow-up questions based on previous answers',
+      items: {
+        type: SchemaType.OBJECT,
+        properties: {
+          question: { type: SchemaType.STRING, description: 'A targeted follow-up question' },
+          options: {
+            type: SchemaType.ARRAY,
+            description: '3-5 concrete answer options',
+            items: { type: SchemaType.STRING },
+          },
+          category: { type: SchemaType.STRING, description: 'Category this question belongs to' },
+          followUpForId: { type: SchemaType.STRING, description: 'ID of the previous question this follows up on' },
+        },
+        required: ['question', 'options', 'category', 'followUpForId'],
       },
     },
   },

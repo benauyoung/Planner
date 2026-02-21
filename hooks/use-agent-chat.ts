@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import type { Agent } from '@/types/agent'
+import { authFetch } from '@/lib/auth-fetch'
 
 export interface AgentChatMessage {
   id: string
@@ -37,7 +38,7 @@ export function useAgentChat(agent: Agent | null) {
         content: m.content,
       }))
 
-      const res = await fetch(`/api/agent/${agent.id}/chat`, {
+      const res = await authFetch(`/api/agent/${agent.id}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

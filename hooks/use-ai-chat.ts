@@ -6,6 +6,7 @@ import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import type { AIProgressiveResponse, AIRefinementResponse } from '@/types/chat'
 import { formatOnboardingMessage } from '@/lib/onboarding-message'
+import { authFetch } from '@/lib/auth-fetch'
 
 export function useAIChat() {
   const {
@@ -60,7 +61,7 @@ export function useAIChat() {
           content: m.content,
         }))
 
-        const res = await fetch('/api/ai/chat', {
+        const res = await authFetch('/api/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -132,7 +133,7 @@ export function useAIChat() {
           content: m.content,
         }))
 
-        const res = await fetch('/api/ai/refine', {
+        const res = await authFetch('/api/ai/refine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ messages: apiMessages }),
@@ -195,7 +196,7 @@ export function useAIChat() {
 
         // Route to correct endpoint based on current phase
         if (currentPhase === 'refining') {
-          const res = await fetch('/api/ai/refine', {
+          const res = await authFetch('/api/ai/refine', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: apiMessages }),
@@ -206,7 +207,7 @@ export function useAIChat() {
           const data: AIRefinementResponse = await res.json()
           handleRefinementResponse(data)
         } else {
-          const res = await fetch('/api/ai/chat', {
+          const res = await authFetch('/api/ai/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ messages: apiMessages }),
@@ -241,7 +242,7 @@ export function useAIChat() {
     setLoading(true)
     try {
       // Route initial message to refinement endpoint
-      const res = await fetch('/api/ai/refine', {
+      const res = await authFetch('/api/ai/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -266,7 +267,7 @@ export function useAIChat() {
           content: m.content,
         }))
 
-        const planRes = await fetch('/api/ai/chat', {
+        const planRes = await authFetch('/api/ai/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

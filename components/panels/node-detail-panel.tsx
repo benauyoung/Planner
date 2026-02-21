@@ -2,22 +2,23 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, Send, PenLine, AlertTriangle, Settings } from 'lucide-react'
+import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, Send, PenLine, AlertTriangle, Settings, CornerDownRight } from 'lucide-react'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { NodeEditForm } from './node-edit-form'
 import { RichTextEditor } from './rich-text-editor'
-import { NODE_CONFIG, STATUS_COLORS, NODE_CHILD_TYPE } from '@/lib/constants'
+import { NODE_CONFIG, STATUS_COLORS, NODE_CHILD_TYPE, QUESTION_CATEGORIES } from '@/lib/constants'
 import type { NodeStatus, NodeType, Priority, TeamMember } from '@/types/project'
 import { cn } from '@/lib/utils'
-import { buildNodeContext } from '@/lib/node-context'
+import { buildNodeContext, buildPrdContext } from '@/lib/node-context'
 import { PrioritySelector } from '@/components/ui/priority-badge'
 import { AssigneePicker } from '@/components/ui/assignee-picker'
 import { TagInput } from '@/components/ui/tag-input'
 import { CommentThread } from '@/components/comments/comment-thread'
 import { BlockEditor } from '@/components/editor/block-editor'
+import { authFetch } from '@/lib/auth-fetch'
 
 const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
   { value: 'not_started', label: 'Not Started' },
@@ -111,10 +112,12 @@ export function NodeDetailPanel() {
   const [generatingPrompt, setGeneratingPrompt] = useState(false)
   const [generateError, setGenerateError] = useState<string | null>(null)
   const [generatingQuestions, setGeneratingQuestions] = useState(false)
+  const [generatingFollowUps, setGeneratingFollowUps] = useState(false)
   const [submittingAnswers, setSubmittingAnswers] = useState(false)
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [customQuestion, setCustomQuestion] = useState('')
   const [advancedOpen, setAdvancedOpen] = useState(false)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
 
   const node = currentProject?.nodes.find((n) => n.id === selectedNodeId)
   const parent = node?.parentId
@@ -123,21 +126,58 @@ export function NodeDetailPanel() {
   const children = currentProject?.nodes.filter((n) => n.parentId === selectedNodeId) || []
   const childType = node ? NODE_CHILD_TYPE[node.type] : null
 
-  const fileToDataUrl = useCallback((file: File): Promise<string> => {
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
+  const COMPRESS_THRESHOLD = 1 * 1024 * 1024 // 1MB
+  const MAX_DIMENSION = 1200
+
+  const compressImage = useCallback((file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => {
+        let { width, height } = img
+        if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+          const ratio = Math.min(MAX_DIMENSION / width, MAX_DIMENSION / height)
+          width = Math.round(width * ratio)
+          height = Math.round(height * ratio)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { reject(new Error('Canvas not supported')); return }
+        ctx.drawImage(img, 0, 0, width, height)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      }
+      img.onerror = reject
+      img.src = URL.createObjectURL(file)
+    })
+  }, [])
+
+  const fileToDataUrl = useCallback(async (file: File): Promise<string> => {
+    if (file.size > MAX_IMAGE_SIZE) {
+      throw new Error(`Image too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max size is 5MB.`)
+    }
+    if (file.size > COMPRESS_THRESHOLD) {
+      return compressImage(file)
+    }
     return new Promise((resolve, reject) => {
       const reader = new FileReader()
       reader.onload = () => resolve(reader.result as string)
       reader.onerror = reject
       reader.readAsDataURL(file)
     })
-  }, [])
+  }, [compressImage])
 
   const handleImageFiles = useCallback(async (files: FileList | File[]) => {
     if (!node) return
     for (const file of Array.from(files)) {
       if (!file.type.startsWith('image/')) continue
-      const dataUrl = await fileToDataUrl(file)
-      addNodeImage(node.id, dataUrl)
+      try {
+        const dataUrl = await fileToDataUrl(file)
+        addNodeImage(node.id, dataUrl)
+      } catch (err) {
+        setGenerateError(err instanceof Error ? err.message : 'Failed to process image')
+      }
     }
   }, [node, addNodeImage, fileToDataUrl])
 
@@ -176,15 +216,15 @@ export function NodeDetailPanel() {
     }
   }
 
-  const canGenerate = node?.type === 'feature' || node?.type === 'subgoal'
+  const canGenerate = node?.type === 'goal' || node?.type === 'subgoal' || node?.type === 'feature' || node?.type === 'task'
 
   async function handleGeneratePRD() {
     if (!node || !currentProject || generatingPRD) return
     setGeneratingPRD(true)
     setGenerateError(null)
     try {
-      const context = buildNodeContext(node.id, currentProject)
-      const res = await fetch('/api/ai/generate-prd', {
+      const context = buildPrdContext(node.id, currentProject)
+      const res = await authFetch('/api/ai/generate-prd', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context }),
@@ -206,7 +246,7 @@ export function NodeDetailPanel() {
     setGenerateError(null)
     try {
       const context = buildNodeContext(node.id, currentProject)
-      const res = await fetch('/api/ai/generate-prompt', {
+      const res = await authFetch('/api/ai/generate-prompt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context }),
@@ -228,7 +268,7 @@ export function NodeDetailPanel() {
     setGenerateError(null)
     try {
       const context = buildNodeContext(node.id, currentProject)
-      const res = await fetch('/api/ai/generate-questions', {
+      const res = await authFetch('/api/ai/generate-questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ context }),
@@ -237,12 +277,60 @@ export function NodeDetailPanel() {
       const data = await res.json()
       if (data.error) throw new Error(data.error)
       if (data.questions && data.questions.length > 0) {
+        const wasEmpty = (node.questions?.length ?? 0) === 0
         addNodeQuestions(node.id, data.questions)
+        if (wasEmpty) {
+          const newCategories = new Set<string>(
+            data.questions.map((q: { category?: string }) => q.category ?? 'Other')
+          )
+          setExpandedCategories(newCategories)
+        }
       }
     } catch (err) {
       setGenerateError(err instanceof Error ? err.message : 'Failed to generate questions')
     } finally {
       setGeneratingQuestions(false)
+    }
+  }
+
+  async function handleGenerateFollowUps() {
+    if (!node || !currentProject || generatingFollowUps) return
+    const answeredQA = node.questions.filter((q) => (q.answer ?? '').trim())
+    if (answeredQA.length < 2) return
+    setGeneratingFollowUps(true)
+    setGenerateError(null)
+    try {
+      const context = buildNodeContext(node.id, currentProject)
+      const previousQA = answeredQA.map((q) => ({
+        id: q.id,
+        question: q.question,
+        answer: q.answer,
+        category: q.category,
+      }))
+      const res = await authFetch('/api/ai/generate-followups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ context, previousQA }),
+      })
+      if (!res.ok) throw new Error('Failed to generate follow-up questions')
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      if (data.questions && data.questions.length > 0) {
+        const followUps = data.questions.map((q: { question: string; options: string[]; category?: string; followUpForId?: string }) => ({
+          ...q,
+          isFollowUp: true,
+        }))
+        addNodeQuestions(node.id, followUps)
+        setExpandedCategories((prev) => {
+          const next = new Set(prev)
+          followUps.forEach((q: { category?: string }) => next.add(q.category ?? 'Other'))
+          return next
+        })
+      }
+    } catch (err) {
+      setGenerateError(err instanceof Error ? err.message : 'Failed to generate follow-up questions')
+    } finally {
+      setGeneratingFollowUps(false)
     }
   }
 
@@ -254,14 +342,14 @@ export function NodeDetailPanel() {
     setSubmittingAnswers(true)
     setGenerateError(null)
     try {
-      const context = buildNodeContext(node.id, currentProject)
+      const context = buildPrdContext(node.id, currentProject)
       const [prdRes, promptRes] = await Promise.all([
-        fetch('/api/ai/generate-prd', {
+        authFetch('/api/ai/generate-prd', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ context }),
         }),
-        fetch('/api/ai/generate-prompt', {
+        authFetch('/api/ai/generate-prompt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ context }),
@@ -295,7 +383,28 @@ export function NodeDetailPanel() {
 
   const answeredCount = node?.questions.filter((q) => (q.answer ?? '').trim()).length ?? 0
   const totalCount = node?.questions.length ?? 0
+  const readinessPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0
   const isDocNode = node ? DOC_NODE_TYPES.includes(node.type) : false
+
+  // Group questions by category
+  const questionsByCategory = (() => {
+    if (!node) return []
+    const nodeCategories = node.type in QUESTION_CATEGORIES
+      ? (QUESTION_CATEGORIES as Record<string, string[]>)[node.type]
+      : []
+    const grouped = new Map<string, typeof node.questions>()
+    // Initialize known categories in order
+    nodeCategories.forEach((cat) => grouped.set(cat, []))
+    // Place questions
+    node.questions.forEach((q) => {
+      const cat = q.category && nodeCategories.includes(q.category) ? q.category : 'Other'
+      if (!grouped.has(cat)) grouped.set(cat, [])
+      grouped.get(cat)!.push(q)
+    })
+    // Remove empty known categories, keep Other if non-empty
+    return Array.from(grouped.entries())
+      .filter(([cat, qs]) => cat === 'Other' ? qs.length > 0 : qs.length > 0)
+  })()
 
   // Build document lineage breadcrumb by traversing informs/defines/implements edges backwards
   const docLineage = (() => {
@@ -353,6 +462,17 @@ export function NodeDetailPanel() {
                 <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                   <HelpCircle className="h-3.5 w-3.5" />
                   Questions ({answeredCount}/{totalCount})
+                  {totalCount > 0 && (
+                    <span className={cn(
+                      'flex items-center gap-0.5 text-[10px] font-semibold',
+                      readinessPct === 100 ? 'text-green-500' : readinessPct > 0 ? 'text-amber-500' : 'text-red-400'
+                    )}>
+                      <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{
+                        backgroundColor: readinessPct === 100 ? '#22c55e' : readinessPct > 0 ? '#f59e0b' : '#f87171'
+                      }} />
+                      {readinessPct}%
+                    </span>
+                  )}
                 </label>
                 <button
                   onClick={handleGenerateQuestions}
@@ -369,71 +489,110 @@ export function NodeDetailPanel() {
               </div>
 
               {totalCount > 0 && (
-                <div className="space-y-3">
-                  {node.questions.map((q) => (
-                    <div key={q.id} className="rounded-lg border bg-card p-3 space-y-2">
-                      <div className="flex items-start gap-1.5">
-                        <div className={cn(
-                          'w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5',
-                          (q.answer ?? '').trim()
-                            ? 'bg-green-500/20 text-green-600 dark:text-green-400'
-                            : 'bg-muted text-muted-foreground'
-                        )}>
-                          {(q.answer ?? '').trim() ? (
-                            <Check className="h-2.5 w-2.5" />
-                          ) : (
-                            <span className="text-[8px] font-bold">?</span>
-                          )}
-                        </div>
-                        <p className="text-xs font-medium leading-snug flex-1">
-                          {q.question}
-                          {q.isCustom && (
-                            <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">(custom)</span>
-                          )}
-                        </p>
-                      </div>
-
-                      {q.options && q.options.length > 0 ? (
-                        <div className="space-y-1 ml-5">
-                          {q.options.map((option, optIdx) => (
-                            <button
-                              key={optIdx}
-                              onClick={() => answerNodeQuestion(node.id, q.id, option)}
-                              className={cn(
-                                'w-full text-left text-xs px-2.5 py-1.5 rounded-md border transition-colors',
-                                (q.answer ?? '') === option
-                                  ? 'border-primary bg-primary/10 text-foreground font-medium'
-                                  : 'border-transparent bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground'
-                              )}
-                            >
-                              <span className="inline-flex items-center gap-2">
-                                <span className={cn(
-                                  'w-3 h-3 rounded-full border-2 shrink-0 flex items-center justify-center',
-                                  (q.answer ?? '') === option
-                                    ? 'border-primary'
-                                    : 'border-muted-foreground/40'
-                                )}>
-                                  {(q.answer ?? '') === option && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                <div className="space-y-2">
+                  {questionsByCategory.map(([category, questions]) => {
+                    const catAnswered = questions.filter((q) => (q.answer ?? '').trim()).length
+                    const catTotal = questions.length
+                    const isExpanded = expandedCategories.has(category)
+                    return (
+                      <div key={category} className="rounded-lg border bg-card overflow-hidden">
+                        <button
+                          onClick={() => setExpandedCategories((prev) => {
+                            const next = new Set(prev)
+                            if (next.has(category)) next.delete(category)
+                            else next.add(category)
+                            return next
+                          })}
+                          className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-center gap-1.5">
+                            {isExpanded ? (
+                              <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+                            ) : (
+                              <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
+                            )}
+                            <span className="text-xs font-medium">{category}</span>
+                          </div>
+                          <span className={cn(
+                            'text-[10px] font-medium shrink-0',
+                            catAnswered === catTotal ? 'text-green-500' : catAnswered > 0 ? 'text-amber-500' : 'text-muted-foreground'
+                          )}>
+                            {catAnswered === catTotal ? '✓' : '○'} {catAnswered}/{catTotal}
+                          </span>
+                        </button>
+                        {isExpanded && (
+                          <div className="px-3 pb-3 space-y-2.5 border-t pt-2.5">
+                            {questions.map((q) => (
+                              <div key={q.id} className={cn('space-y-1.5', q.isFollowUp && 'ml-3 pl-2 border-l-2 border-muted')}>
+                                <div className="flex items-start gap-1.5">
+                                  {q.isFollowUp && (
+                                    <CornerDownRight className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
                                   )}
-                                </span>
-                                {option}
-                              </span>
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <textarea
-                          value={q.answer}
-                          onChange={(e) => answerNodeQuestion(node.id, q.id, e.target.value)}
-                          placeholder="Type your answer..."
-                          rows={2}
-                          className="w-full text-xs px-2 py-1.5 rounded-md border bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60 ml-5"
-                          style={{ width: 'calc(100% - 1.25rem)' }}
-                        />
-                      )}
-                    </div>
-                  ))}
+                                  <div className={cn(
+                                    'w-4 h-4 rounded-full flex items-center justify-center shrink-0 mt-0.5',
+                                    (q.answer ?? '').trim()
+                                      ? 'bg-green-500/20 text-green-600 dark:text-green-400'
+                                      : 'bg-muted text-muted-foreground'
+                                  )}>
+                                    {(q.answer ?? '').trim() ? (
+                                      <Check className="h-2.5 w-2.5" />
+                                    ) : (
+                                      <span className="text-[8px] font-bold">?</span>
+                                    )}
+                                  </div>
+                                  <p className="text-xs font-medium leading-snug flex-1">
+                                    {q.question}
+                                    {q.isCustom && (
+                                      <span className="ml-1.5 text-[10px] text-muted-foreground font-normal">(custom)</span>
+                                    )}
+                                  </p>
+                                </div>
+                                {q.options && q.options.length > 0 ? (
+                                  <div className="space-y-1 ml-5">
+                                    {q.options.map((option, optIdx) => (
+                                      <button
+                                        key={optIdx}
+                                        onClick={() => answerNodeQuestion(node.id, q.id, option)}
+                                        className={cn(
+                                          'w-full text-left text-xs px-2.5 py-1.5 rounded-md border transition-colors',
+                                          (q.answer ?? '') === option
+                                            ? 'border-primary bg-primary/10 text-foreground font-medium'
+                                            : 'border-transparent bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground'
+                                        )}
+                                      >
+                                        <span className="inline-flex items-center gap-2">
+                                          <span className={cn(
+                                            'w-3 h-3 rounded-full border-2 shrink-0 flex items-center justify-center',
+                                            (q.answer ?? '') === option
+                                              ? 'border-primary'
+                                              : 'border-muted-foreground/40'
+                                          )}>
+                                            {(q.answer ?? '') === option && (
+                                              <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                                            )}
+                                          </span>
+                                          {option}
+                                        </span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <textarea
+                                    value={q.answer}
+                                    onChange={(e) => answerNodeQuestion(node.id, q.id, e.target.value)}
+                                    placeholder="Type your answer..."
+                                    rows={2}
+                                    className="w-full text-xs px-2 py-1.5 rounded-md border bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60 ml-5"
+                                    style={{ width: 'calc(100% - 1.25rem)' }}
+                                  />
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
                 </div>
               )}
 
@@ -441,6 +600,22 @@ export function NodeDetailPanel() {
                 <p className="text-xs text-muted-foreground/60 italic">
                   No questions yet. Click &quot;Generate&quot; to get started.
                 </p>
+              )}
+
+              {/* Ask Follow-ups */}
+              {answeredCount >= 2 && (
+                <button
+                  onClick={handleGenerateFollowUps}
+                  disabled={generatingFollowUps}
+                  className="mt-2 flex items-center gap-1.5 text-xs text-purple-500 hover:text-purple-400 transition-colors disabled:opacity-50"
+                >
+                  {generatingFollowUps ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <CornerDownRight className="h-3.5 w-3.5" />
+                  )}
+                  {generatingFollowUps ? 'Generating follow-ups...' : 'Ask Follow-ups'}
+                </button>
               )}
 
               {/* Custom Input */}
@@ -474,7 +649,7 @@ export function NodeDetailPanel() {
                 </button>
               )}
 
-              {/* Submit Answers */}
+              {/* Generate PRD */}
               {answeredCount > 0 && (
                 <Button
                   size="sm"
@@ -486,12 +661,12 @@ export function NodeDetailPanel() {
                   {submittingAnswers ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin mr-1.5" />
-                      Submitting...
+                      Generating...
                     </>
                   ) : (
                     <>
-                      <Send className="h-3 w-3 mr-1.5" />
-                      Submit ({answeredCount} answered)
+                      <Sparkles className="h-3 w-3 mr-1.5" />
+                      Generate PRD ({readinessPct}% ready)
                     </>
                   )}
                 </Button>

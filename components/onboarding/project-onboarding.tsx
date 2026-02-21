@@ -40,6 +40,7 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ONBOARDING_STEPS } from '@/lib/onboarding-config'
 import type { OnboardingAnswers } from '@/types/chat'
+import { authFetch } from '@/lib/auth-fetch'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   Globe, Smartphone, Server, Monitor, BarChart3, Shapes,
@@ -87,7 +88,7 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
     ) {
       featuresFetchedRef.current = true
       setFeaturesLoading(true)
-      fetch('/api/ai/suggest-features', {
+      authFetch('/api/ai/suggest-features', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
 import { buildNodeContext } from '@/lib/node-context'
 import type { IterationAction } from '@/prompts/iteration-system'
+import { authFetch } from '@/lib/auth-fetch'
 import type { Project, PlanNode, NodeType, EdgeType } from '@/types/project'
 
 export interface AISuggestion {
@@ -85,7 +86,7 @@ export function useAIIterate() {
         : `# Project: ${project.title}\n${project.description || ''}\nTotal nodes: ${project.nodes.length}`
       const fullPlanSummary = buildPlanSummary(project)
 
-      const res = await fetch('/api/ai/iterate', {
+      const res = await authFetch('/api/ai/iterate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action, nodeContext, fullPlanSummary }),
