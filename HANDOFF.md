@@ -1,6 +1,6 @@
 # TinyBaguette — Full AI Handoff Document
 
-> Complete codebase reference. Updated February 20, 2026.
+> Complete codebase reference. Updated February 22, 2026.
 
 ---
 
@@ -34,8 +34,9 @@ TinyBaguette is an **AI-powered visual project planning tool**. Users describe a
 
 - **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing
 - **AI agent builder**: Create embeddable AI chatbots — configure persona, knowledge base, behavior rules, theme, preview live, deploy with embed snippet
+- **Lovable-quality Design tab**: WebContainer runs a live Vite+React+Tailwind app in-browser. AI generates multi-file apps from Plan tab PRDs. Iterate via chat sidebar, visual click-to-edit inspector, or Monaco code editor. Export as zip.
 
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview UI pages → Collaborate & integrate.
+**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview live app → Iterate with AI chat + visual editing → Export code.
 
 ---
 
@@ -67,6 +68,9 @@ TinyBaguette is an **AI-powered visual project planning tool**. Users describe a
 | Animation | Framer Motion | 11.x |
 | Icons | Lucide React | 0.462.0 |
 | Markdown | react-markdown | 9.0.1 |
+| WebContainer | @webcontainer/api | latest |
+| Code Editor | @monaco-editor/react | latest |
+| Zip Export | jszip | latest |
 | Utilities | clsx, tailwind-merge | latest |
 
 ### NOT Installed (Planned but not in package.json)
@@ -109,16 +113,18 @@ app/
 │   ├── layout.tsx                      # MarketingLayout: LandingNavBar + Footer
 │   ├── page.tsx                        # Landing page (/ route) — features tabs, hero prompt, trust bar
 │   ├── about/page.tsx                  # About TinyBaguette (company story + philosophy)
-│   └── contact/page.tsx                # Contact page (hello@tinybaguette.com mailto)
+│   ├── contact/page.tsx                # Contact page (hello@tinybaguette.com mailto)
+│   ├── privacy/page.tsx                # Privacy Policy (/privacy)
+│   ├── terms/page.tsx                  # Terms of Service (/terms)
+│   └── share/[id]/page.tsx            # Shared plan (/share/[id]) — read-only view
 │
 ├── (app)/                              # AUTHENTICATED — auth-guarded, app header
 │   ├── layout.tsx                      # AppLayout: AuthProvider + Header + ErrorBoundary
 │   ├── dashboard/page.tsx              # Dashboard (/dashboard) — ProjectList
 │   ├── login/page.tsx                  # Login (/login) — email/password
-│   ├── project/
-│   │   ├── new/page.tsx                # New project (/project/new) — onboarding flow
-│   │   └── [id]/page.tsx              # Existing project: ProjectWorkspace
-│   └── share/[id]/page.tsx            # Shared plan (/share/[id]) — read-only view
+│   └── project/
+│       ├── new/page.tsx                # New project (/project/new) — onboarding flow
+│       └── [id]/page.tsx              # Existing project: ProjectWorkspace
 │
 ├── api/ai/                             # AI API routes (server-side)
 │   ├── chat/route.ts                   # POST — Gemini chat (progressive plan building)
@@ -128,12 +134,17 @@ app/
 │   ├── generate-questions/route.ts     # POST — AI question generation for nodes
 │   ├── generate-pages/route.ts         # POST — AI page preview generation from project plan
 │   ├── edit-page/route.ts              # POST — AI page HTML editing from user instruction
+│   ├── generate-app/route.ts           # POST — AI generates multi-file React+Tailwind app from project context
+│   ├── edit-app/route.ts               # POST — AI edits existing app files from user instruction
+│   ├── generate-followups/route.ts     # POST — AI generates follow-up questions based on previous Q&A
 │   ├── refine/route.ts                 # POST — AI plan refinement
 │   ├── generate-backend/route.ts       # POST — AI backend module generation
 │   └── edit-backend/route.ts           # POST — AI backend module editing
-└── api/agent/                          # Agent API routes
-    ├── generate/route.ts               # POST — AI generates agent config from description
-    └── [agentId]/chat/route.ts         # POST — Agent chat (loads config, proxies to Gemini)
+├── api/agent/                          # Agent API routes
+│   ├── generate/route.ts               # POST — AI generates agent config from description
+│   └── [agentId]/chat/route.ts         # POST — Agent chat (loads config, proxies to Gemini)
+└── api/waitlist/
+    └── route.ts                        # POST — Email waitlist capture → Firestore + optional Resend welcome
 ```
 
 ### Route Summary
@@ -143,11 +154,14 @@ app/
 | `/` | `(marketing)` | No | Public landing page |
 | `/about` | `(marketing)` | No | About TinyBaguette |
 | `/contact` | `(marketing)` | No | Contact page (hello@tinybaguette.com) |
+| `/privacy` | `(marketing)` | No | Privacy Policy |
+| `/terms` | `(marketing)` | No | Terms of Service |
+| `/share/[id]` | `(marketing)` | No | Read-only shared plan view |
 | `/login` | `(app)` | No (redirects to /dashboard if authed) | Login page (email/password) |
 | `/dashboard` | `(app)` | Yes | Project list dashboard |
 | `/project/new` | `(app)` | Yes | New project creation |
 | `/project/[id]` | `(app)` | Yes | Project canvas workspace |
-| `/share/[id]` | `(app)` | No | Read-only shared plan view |
+| `/api/waitlist` | `api/` | No | POST — Email waitlist capture |
 
 ### Auth Flow
 - Unauthenticated users on protected routes → redirected to `/login`
@@ -169,15 +183,17 @@ Planner/
 │   │   ├── layout.tsx                  # LandingNavBar + Footer wrapper
 │   │   ├── page.tsx                    # Landing page sections assembly
 │   │   ├── about/page.tsx              # About TinyBaguette (company story + philosophy)
-│   │   └── contact/page.tsx            # Contact page (hello@tinybaguette.com mailto)
+│   │   ├── contact/page.tsx            # Contact page (hello@tinybaguette.com mailto)
+│   │   ├── privacy/page.tsx            # Privacy Policy (/privacy)
+│   │   ├── terms/page.tsx              # Terms of Service (/terms)
+│   │   └── share/[id]/page.tsx         # Read-only shared plan (/share/[id])
 │   ├── (app)/
 │   │   ├── layout.tsx                  # AuthProvider + Header + ErrorBoundary
 │   │   ├── dashboard/page.tsx          # ProjectList dashboard
 │   │   ├── login/page.tsx              # Firebase auth (email/password)
-│   │   ├── project/
-│   │   │   ├── new/page.tsx            # New project: Onboarding → Chat + Canvas
-│   │   │   └── [id]/page.tsx           # Existing project: ProjectWorkspace
-│   │   └── share/[id]/page.tsx         # Read-only shared plan
+│   │   └── project/
+│   │       ├── new/page.tsx            # New project: Onboarding → Chat + Canvas
+│   │       └── [id]/page.tsx           # Existing project: ProjectWorkspace
 │   ├── api/ai/
 │   │   ├── chat/route.ts               # POST — Gemini chat
 │   │   ├── suggest-features/route.ts   # POST — AI feature suggestions
@@ -197,7 +213,6 @@ Planner/
 ├── components/
 │   ├── landing/                        # Landing page components (public)
 │   │   ├── nav-bar.tsx                 # Sticky nav, transparent → blur on scroll, mobile menu
-│   │   ├── hero-section.tsx            # Split-screen hero: headline + CTA / animated mockup (currently unused, kept for reference)
 │   │   ├── hero-prompt.tsx             # AI-powered prompt → page preview generator with email capture gate
 │   │   ├── hero-mockup.tsx             # SVG/CSS animated canvas mockup (nodes + edges)
 │   │   ├── trust-bar.tsx               # Social proof badges (Station 8, Pioneers VC)
@@ -209,7 +224,6 @@ Planner/
 │   ├── canvas/
 │   │   ├── graph-canvas.tsx            # React Flow canvas (blast radius, typed edges, onConnect)
 │   │   ├── canvas-toolbar.tsx          # Export dropdown, blast radius toggle, undo/redo
-│   │   ├── timeline-bar.tsx            # Goal progress circles
 │   │   ├── nodes/
 │   │   │   ├── base-plan-node.tsx      # Shared node (goal/subgoal/feature/task)
 │   │   │   ├── goal-node.tsx           # Goal wrapper
@@ -226,29 +240,30 @@ Planner/
 │   │       ├── pane-context-menu.tsx   # Right-click canvas (add node + smart mapping)
 │   │       └── context-submenu.tsx     # Flyout submenu helper
 │   ├── views/                          # Multiple view components
-│   │   ├── view-switcher.tsx           # Tab bar: Plan / Design / Agents / Manage (with sub-views)
 │   │   ├── list-view.tsx               # Hierarchical tree with expand/collapse
 │   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
 │   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
 │   │   ├── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
-│   │   ├── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat
+│   │   ├── design-view.tsx             # Lovable-quality Design tab: WebContainer preview, chat, inspector, code editor, export
+│   │   ├── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat (legacy)
 │   │   ├── backend-view.tsx            # Backend module architect on zoomable canvas
 │   │   └── agents-view.tsx             # Agent builder: config, knowledge, theme, preview, deploy tabs
 │   ├── sprints/
 │   │   └── sprint-board.tsx            # Sprint overview: create, drag backlog, progress bars
+│   ├── panels/
+│   │   ├── node-detail-panel.tsx       # Detail panel: edit, questions (category-aware, follow-ups, readiness), PRDs (stale indicator), prompts, images, children
+│   │   ├── prd-pipeline-panel.tsx      # PRD Pipeline panel: status tracking, filter tabs, Ralphy ZIP export
+│   │   ├── node-edit-form.tsx          # Title + description inline edit
+│   │   └── rich-text-editor.tsx        # Tiptap rich text editor
 │   ├── ai/
 │   │   ├── ai-suggestions-panel.tsx    # AI iteration suggestions (accept/dismiss per suggestion)
 │   │   └── smart-suggestions-panel.tsx # Ambient AI analysis with severity-ranked insights
 │   ├── comments/
-│   │   ├── comment-thread.tsx          # Comment thread with add/delete
-│   │   └── activity-feed.tsx           # Chronological project activity timeline
+│   │   └── comment-thread.tsx          # Comment thread with add/delete
 │   ├── editor/
 │   │   └── block-editor.tsx            # Notion-style block editor (headings, code, checklists, callouts)
 │   ├── versions/
 │   │   └── version-history.tsx         # Save/restore/delete version snapshots
-│   ├── collaboration/
-│   │   ├── presence-avatars.tsx        # Who's online avatars with status dots
-│   │   └── presence-cursors.tsx        # Live cursor rendering with name labels
 │   ├── integrations/
 │   │   └── integration-settings.tsx    # GitHub/Slack/Linear connect/disconnect UI
 │   ├── chat/
@@ -268,10 +283,6 @@ Planner/
 │   │   ├── project-onboarding.tsx      # Multi-step questionnaire (7 steps + summary)
 │   │   ├── new-project-chooser.tsx     # 3-option entry: AI Chat / Template / Import
 │   │   └── template-gallery.tsx        # Template cards with use button
-│   ├── panels/
-│   │   ├── node-detail-panel.tsx       # Full panel: edit, PRDs, prompts, images, priority, assignee, tags, document, comments
-│   │   ├── node-edit-form.tsx          # Title + description inline edit
-│   │   └── rich-text-editor.tsx        # Tiptap rich text editor
 │   ├── share/
 │   │   ├── share-button.tsx            # Share popover (public/private toggle, copy link)
 │   │   └── shared-plan-view.tsx        # Read-only canvas for shared plans
@@ -296,8 +307,8 @@ Planner/
 │   ├── use-ai-iterate.ts              # AI iteration actions (break down, audit, estimate)
 │   ├── use-ai-suggestions.ts          # Smart suggestions hook (analyze project)
 │   ├── use-agent-chat.ts              # Agent chat preview hook (send messages, manage state)
+│   ├── use-webcontainer.ts            # WebContainer lifecycle hook (boot, writeAppFiles, restart)
 │   ├── use-auto-layout.ts             # Dagre layout algorithm
-│   ├── use-collaboration.ts            # Collaboration provider hook (presence, cursors)
 │   └── use-project.ts                 # Persistence load/save with 2s debounce (saves all project fields)
 ├── stores/
 │   ├── project-store.ts               # Central state: project, nodes, edges, sprints, versions, 55+ mutations
@@ -307,14 +318,11 @@ Planner/
 │   ├── firebase.ts                    # Firebase init (null-guarded)
 │   ├── firestore.ts                   # CRUD (null-guarded)
 │   ├── auth.ts                        # Auth functions (null-guarded)
-│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion, pages, agent)
+│   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion, pages, agent, app generation, app edit, follow-up questions)
+│   ├── webcontainer.ts                # Singleton WebContainer boot, file ops (ensureDir), dev server, event emitter
 │   ├── persistence.ts                 # Persistence abstraction: Firestore → localStorage failover
 │   ├── local-storage.ts              # localStorage backend for offline persistence
-│   ├── collaboration.ts               # Collaboration provider abstraction (pluggable, local mock)
-│   └── integrations/
-│       ├── github.ts                  # GitHub issue creation/fetch
-│       ├── slack.ts                   # Slack webhook message builders
-│       └── linear.ts                  # Linear GraphQL client
+│   └── collaboration.ts               # Collaboration provider abstraction (pluggable, local mock)
 ├── prompts/
 │   ├── planning-system.ts             # Main AI system prompt
 │   ├── prd-generation.ts              # PRD generation system prompt
@@ -323,6 +331,9 @@ Planner/
 │   ├── iteration-system.ts            # AI iteration actions system prompt
 │   ├── suggestion-system.ts           # Ambient AI analysis system prompt
 │   ├── page-generation.ts             # AI page preview generation system prompt
+│   ├── app-generation.ts              # AI multi-file React+Tailwind app generation system prompt
+│   ├── app-edit.ts                    # AI app editing system prompt (receives file tree + instruction)
+│   ├── follow-up-generation.ts        # AI follow-up question generation system prompt
 │   ├── agent-generation.ts            # Agent config generation system prompt
 │   └── refinement-system.ts           # Refinement prompt (unused)
 ├── lib/
@@ -334,6 +345,11 @@ Planner/
 │   ├── export-project-files.ts        # .cursorrules, CLAUDE.md, plan.md, tasks.md generators
 │   ├── import-markdown.ts             # Markdown spec parser (headings, checklists, frontmatter)
 │   ├── blast-radius.ts                # Downstream impact analysis (getBlastRadius)
+│   ├── webcontainer-template.ts       # Vite + React 18 + Tailwind v4 + React Router scaffold (FileSystemTree)
+│   ├── build-app-context.ts           # Gathers project nodes, PRDs, Q&A into AI prompt context
+│   ├── element-selector-script.ts     # Injected into WebContainer iframe for visual click-to-edit
+│   ├── export-ralphy.ts               # Ralphy ZIP export (prd/*.md, .ralphy/config.yaml, PRD.md)
+│   ├── prd-status.ts                  # PRD status tracking (needs_questions → answering → ready → generated → stale → export_ready)
 │   ├── templates/                     # Seed plan templates
 │   │   ├── index.ts                   # Template registry (3 templates)
 │   │   ├── auth-system.ts             # SaaS Authentication System (24 nodes)
@@ -342,10 +358,11 @@ Planner/
 │   ├── feature-suggestions.ts         # AI feature suggestion schema
 │   ├── onboarding-config.ts           # Onboarding step definitions
 │   ├── onboarding-message.ts          # Formats answers into AI prompt
+│   ├── auth-fetch.ts                  # Sends Firebase ID token in Authorization header for /api/* requests
 │   ├── id.ts                          # generateId() — crypto.randomUUID
 │   └── utils.ts                       # cn() — clsx + tailwind-merge
 ├── types/
-│   ├── project.ts                     # PlanNode, ProjectPage, PageEdge, ProjectEdge, Sprint, ProjectVersion, Agent, etc.
+│   ├── project.ts                     # PlanNode, ProjectPage, PageEdge, ProjectEdge, Sprint, ProjectVersion, Agent, AppFile, AppChatMessage, etc.
 │   ├── agent.ts                       # Agent, AgentKnowledgeEntry, AgentAction, AgentBehaviorRule, AgentTheme
 │   ├── integrations.ts               # GitHub/Slack/Linear integration types
 │   ├── canvas.ts                      # FlowNode, FlowEdge, PlanNodeData
@@ -355,8 +372,9 @@ Planner/
 ├── public/
 │   ├── logo.png                       # App logo / favicon (referenced in layout.tsx metadata)
 │   └── favicon.svg                    # Legacy SVG favicon
+├── middleware.ts                      # Next.js middleware: enforces Authorization header on /api/* routes when Firebase is configured
 ├── netlify.toml                       # Netlify deploy config (optional, Vercel is primary)
-├── next.config.js                     # Next.js config (reactStrictMode: true)
+├── next.config.js                     # Next.js config (reactStrictMode: true, COOP/COEP headers for WebContainer)
 ├── tailwind.config.ts                 # Tailwind with custom node-type color tokens
 ├── tsconfig.json                      # TypeScript config with path aliases
 └── package.json                       # Dependencies and scripts
@@ -444,6 +462,9 @@ interface Project {
   backendModules?: BackendModule[]  // AI-generated backend architecture modules
   backendEdges?: BackendEdge[]      // Connections between backend modules
   agents?: Agent[]             // Embeddable AI chatbot agents
+  appFiles?: AppFile[]           // WebContainer-generated React app files
+  appDesignSummary?: string      // AI summary of generated app
+  appChatMessages?: AppChatMessage[]  // Design tab chat history
 }
 ```
 
@@ -507,6 +528,8 @@ type DocumentBlock = heading | paragraph | code | checklist | divider | callout
 interface NodeDocument { id, blocks: DocumentBlock[], updatedAt }
 interface ProjectPage { id, title, route, html, linkedNodeIds, position: { x, y } }
 interface PageEdge { id, source, target, label? }
+interface AppFile { path: string, content: string }
+interface AppChatMessage { id, role: 'user'|'ai', content, filesChanged?: string[], timestamp }
 ```
 
 ### Node Configuration (`lib/constants.ts`)
@@ -561,6 +584,10 @@ interface PageEdge { id, source, target, label? }
 **Pages**: `setPages`, `updatePageHtml`, `updatePagePosition`, `addPageEdge`, `removePageEdge`, `removePage`
 
 **Backend**: `setBackendModules`, `updateBackendModule`, `updateBackendModulePosition`, `removeBackendModule`, `addBackendEdge`, `removeBackendEdge`
+
+**App Files (Design Tab)**: `setAppFiles`, `updateAppFile`, `addAppChatMessage`, `clearAppChatMessages`
+
+**PRDs**: `addNodePRD` (with `referencedPrdIds`), `updateNodePRD` (propagates staleness to dependents), `removeNodePRD`
 
 **Agents**: `addAgent`, `updateAgent`, `removeAgent`, `addAgentKnowledge`, `removeAgentKnowledge`, `addAgentRule`, `removeAgentRule`, `updateAgentTheme`, `toggleAgentPublished`
 
@@ -701,10 +728,9 @@ This replaces the old skeleton card placeholders for a more branded experience.
 1. **Firestore "Database not found"** — On Vercel, if the Firestore database isn't provisioned in the Firebase console, the persistence layer catches this and silently falls back to localStorage. One warning is logged.
 2. **SWC warning on build** — pre-existing Windows environment issue, not code-related
 3. **`changeNodeType` has no hierarchy validation** — user can change a goal to a task
-4. **No middleware auth enforcement** — auth is client-side only via `AuthProvider`; API routes are unprotected
-5. **`refinement-system.ts` is unused** — only `planning-system.ts` is active
-6. **Base64 images can bloat state** — no size limits or compression currently
-7. **Share page under (app) group** — `/share/[id]` is in the `(app)` route group (has header) but doesn't strictly require auth; may want to move to its own group for cleaner UX
+4. **`refinement-system.ts` is unused** — only `planning-system.ts` is active
+5. ~~**Base64 images can bloat state**~~ — Fixed: images > 5MB rejected, > 1MB auto-compressed
+6. **WebContainer requires COOP/COEP headers** — `next.config.js` sets `Cross-Origin-Embedder-Policy: credentialless` and `Cross-Origin-Opener-Policy: same-origin`. This may affect third-party embeds.
 
 ---
 
@@ -769,6 +795,29 @@ npm run type-check  # Alias for tsc --noEmit
 - **Advanced canvas** — spring physics (d3-force), multi-select, level-of-detail zoom
 - **Image compression** — resize/compress base64 images to reduce state size
 - **Hierarchy validation** — enforce valid type changes based on position in hierarchy
+
+### Recent Changes (Feb 20-22, 2026 — Session 4)
+- **Lovable-Quality Design Tab (Phase 13)** — Complete rewrite of Design tab from static HTML previews to live WebContainer-powered app:
+  - **Phase 1**: WebContainer boots Vite+React 18+Tailwind v4 in-browser. AI generates multi-file React apps from Plan tab PRDs via `/api/ai/generate-app`. New files: `services/webcontainer.ts`, `lib/webcontainer-template.ts`, `lib/build-app-context.ts`, `prompts/app-generation.ts`, `hooks/use-webcontainer.ts`, `components/views/design-view.tsx`. COOP/COEP headers added to `next.config.js`.
+  - **Phase 2**: Chat sidebar (`AppChat` component) for iterative editing. User types instruction → AI returns only changed files via `/api/ai/edit-app` → merged into WebContainer → hot reload. Chat history persisted per project (`AppChatMessage` type + store methods).
+  - **Phase 3**: Visual click-to-edit. Element selector script (`lib/element-selector-script.ts`) injected into iframe. Hover/click overlays via postMessage. `ElementInspector` panel shows text (editable), colors (editable), layout info, and quick actions (make larger/smaller, bold, center, shadow, round corners).
+  - **Phase 4**: Monaco code editor (`@monaco-editor/react`, dynamic import) with file tabs and vs-dark theme. Live editing writes to WebContainer for hot reload. Export as zip (`jszip`) with full Vite project scaffold.
+- **New Types**: `AppFile` (path + content), `AppChatMessage` (id, role, content, filesChanged, timestamp) in `types/project.ts`. `appFiles`, `appDesignSummary`, `appChatMessages` fields on `Project`.
+- **New Store Methods**: `setAppFiles`, `updateAppFile`, `addAppChatMessage`, `clearAppChatMessages`
+- **New Gemini Schemas**: `appGenerationSchema`, `appEditSchema` in `services/gemini.ts`
+- **New Dependencies**: `@webcontainer/api`, `@monaco-editor/react`, `jszip`
+- **Design Tab Toolbar**: Viewport switcher (desktop/tablet/mobile) | Regenerate | Reload | [Live status] | Select | Chat | Code | Export | External Link
+
+**PRD Pipeline (by another agent):**
+- **Context-aware PRD generation** — `buildPrdContext()` wraps `buildNodeContext()` + Ralphy scope directive. `buildPrdEcosystem()` provides parent/child/sibling/dependency PRD context with truncated content.
+- **Deep question flow** — Follow-up question generation via `/api/ai/generate-followups` + `follow-up-generation.ts` prompt + `followUpGenerationSchema`. Category-aware, multi-turn.
+- **Ralphy export** — `lib/export-ralphy.ts`: `downloadRalphyZip()` generates ZIP with `prd/*.md` (YAML frontmatter), `.ralphy/config.yaml`, `PRD.md` (flat concatenated), `prd/README.md` index. `downloadFlatPrdMd()` for quick single-file export.
+- **PRD status tracking** — `lib/prd-status.ts`: 6 statuses (needs_questions → answering → ready → generated → stale → export_ready). `getNodePrdStatus()`, `getProjectPrdSummary()`. Stale detection in `updateNodePRD()` propagates to dependents.
+- **PRD Pipeline panel** — `components/panels/prd-pipeline-panel.tsx`: filter tabs (All/Ready/Stale/Generated/In Progress), summary strip, node list with status badges, Export ZIP + Export MD buttons. Toggled via PRD Pipeline button in canvas toolbar.
+- **New Gemini schema**: `followUpGenerationSchema` in `services/gemini.ts`
+- **Updated PRD schema**: `prdGenerationSchema` now includes `referencedPrdIds` for cross-referencing
+- **Updated types**: `NodePRD` now has `referencedPrdIds`, `isStale`, `staleReason`. `NodeQuestion` has `category`, `isFollowUp`, `followUpForId`.
+- **UI store**: Added `prdPipelineOpen` + `setPrdPipelineOpen`
 
 ### Recent Changes (Feb 19-20, 2026 — Session 3)
 - **Landing Page Hero Rewrite** — FeaturesTabs section header changed to "Big Ideas. TinyBaguette." with new subtitle about the spatial engine. `HeroSection` component removed from page (kept in codebase for reference).

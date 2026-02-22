@@ -31,6 +31,9 @@ TinyBaguette is a **visual DAG-based project planning tool** where you:
 - **AI Smart Suggestions** — Ambient project analysis with severity-ranked insights
 - **AI Page Generation** — Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas
 - **Inline Page Chat** — Click any generated page, describe changes, AI regenerates the HTML
+- **Deep Question Flow** — Category-aware questions per node with multi-turn follow-ups, readiness badge, and eligibility tracking (goal/subgoal/feature/task)
+- **PRD Pipeline Panel** — Per-node status tracking (needs_questions → ready → generated → stale), filter tabs, actionable-count badge on toolbar
+- **Ralphy Export** — ZIP with `prd/*.md` (YAML frontmatter), `.ralphy/config.yaml`, `PRD.md` manifest for autonomous AI coding loops
 - **Command Palette** — `Cmd+K` fuzzy search with keyboard shortcuts for all actions
 - **Rich Nodes** — Attach images, rich text, PRDs, IDE prompts, and Notion-style documents
 - **Team Management** — Assign members, set priority, due dates, estimates, tags
@@ -44,8 +47,8 @@ TinyBaguette is a **visual DAG-based project planning tool** where you:
 - **Import** — JSON projects, Markdown specs (paste or file upload with preview)
 - **Shareable Plans** — Toggle public sharing, get a read-only URL for stakeholders
 - **Template Library** — Pre-built plans (Auth System, CRUD API, Landing Page)
-- **Integrations** — GitHub, Slack, Linear service clients + settings UI; landing demo for Supabase + GitHub connection
-- **Collaboration** — Presence avatars, live cursors, pluggable provider (local mock + Yjs-ready)
+- **Integrations** — Settings UI for GitHub/Slack/Linear; landing demo for Supabase + GitHub connection flow (OAuth flows pending)
+- **Collaboration** — Pluggable provider architecture (real-time WebSocket backend pending)
 - **Dark Theme** — Near-black canvas with dashed bezier curve edges
 - **Interactive Gantt** — Drag bars to move tasks, drag edges to resize durations
 - **Unified Toolbar** — Project name, save status, view tabs, and actions in one compact bar
@@ -98,11 +101,11 @@ Planner/
 │   │   ├── dashboard/            # Project list dashboard
 │   │   ├── login/                # Auth page
 │   │   ├── project/[id]/         # Project workspace (canvas + views + chat)
-│   │   ├── project/new/          # New project chooser
-│   │   └── share/[id]/           # Read-only shared plan
+│   │   └── project/new/          # New project chooser
+│   ├── (marketing)/              # Public landing page route group (incl. /privacy, /terms, /share/[id])
 │   └── layout.tsx                # Root layout
 ├── components/
-│   ├── landing/                  # Public landing page (11 components incl. interactive demos)
+│   ├── landing/                  # Public landing page (10 components incl. interactive demos)
 │   ├── canvas/                   # React Flow canvas + nodes (7 types) + context menus
 │   ├── views/                    # View switcher + List, Table, Board, Timeline, Backend, Pages, Agents views
 │   ├── sprints/                  # Sprint board with drag-and-drop backlog
@@ -110,8 +113,7 @@ Planner/
 │   ├── comments/                 # Comment thread + activity feed
 │   ├── editor/                   # Notion-style block editor
 │   ├── versions/                 # Version history modal
-│   ├── collaboration/            # Presence avatars + cursors
-│   ├── integrations/             # GitHub/Slack/Linear settings UI
+│   ├── integrations/             # Integration settings UI
 │   ├── chat/                     # AI planning chat
 │   ├── panels/                   # Node detail panel (edit, PRDs, docs, comments)
 │   ├── project/                  # Project workspace + team manager
@@ -128,9 +130,8 @@ Planner/
 │   ├── firebase.ts / firestore.ts / auth.ts  # Firebase (null-guarded)
 │   ├── gemini.ts                 # Gemini client + schemas (chat, PRD, iteration, suggestion, pages)
 │   ├── persistence.ts            # Firestore → localStorage failover
-│   ├── collaboration.ts          # Pluggable collaboration provider
-│   └── integrations/             # GitHub, Slack, Linear service clients
-├── hooks/                        # AI chat, AI iterate, AI suggestions, agent chat, collaboration, auto-layout
+│   └── collaboration.ts          # Pluggable collaboration provider
+├── hooks/                        # AI chat, AI iterate, AI suggestions, agent chat, auto-layout
 ├── prompts/                      # AI system prompts (planning, PRD, iteration, suggestion, pages)
 ├── lib/                          # Constants, commands, export/import, blast radius, templates
 ├── types/
@@ -185,6 +186,10 @@ Every node can have:
 | Styling | Tailwind CSS | 3.4.1 |
 | Animation | Framer Motion | 11.x |
 | Icons | Lucide React | 0.462.0 |
+| Rich Text | @tiptap/react | 3.19.0 |
+| WebContainer | @webcontainer/api | latest |
+| Code Editor | @monaco-editor/react | latest |
+| Zip Export | jszip | latest |
 
 ---
 

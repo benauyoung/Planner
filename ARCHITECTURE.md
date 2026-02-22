@@ -1,6 +1,6 @@
 # TinyBaguette Architecture
 
-> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of February 16, 2026.
+> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of February 22, 2026.
 
 ---
 
@@ -33,8 +33,12 @@
 │              API Routes: /api/ai/refine                       │
 │              API Routes: /api/ai/generate-backend             │
 │              API Routes: /api/ai/edit-backend                 │
+│              API Routes: /api/ai/generate-app                 │
+│              API Routes: /api/ai/edit-app                     │
+│              API Routes: /api/ai/generate-followups           │
 │              API Routes: /api/agent/generate                  │
 │              API Routes: /api/agent/[agentId]/chat            │
+│              API Routes: /api/waitlist                        │
 ├──────────────────────────────────────────────────────────────┤
 │         Firebase (Optional, guarded, runtime failover)        │
 │              Auth + Firestore → localStorage fallback         │
@@ -84,6 +88,9 @@ interface NodeQuestion {
   answer: string
   options?: string[]
   isCustom?: boolean
+  category?: string           // e.g. "Technical Approach", "Data Model"
+  isFollowUp?: boolean        // true if AI generated based on prior answers
+  followUpForId?: string      // id of the question that triggered this follow-up
 }
 
 interface NodePRD {
@@ -91,9 +98,9 @@ interface NodePRD {
   title: string
   content: string
   updatedAt: number
-  referencedPrdIds?: string[]   // Cross-references to other PRDs
-  isStale?: boolean             // Staleness flag
-  staleReason?: string          // Why this PRD is stale
+  referencedPrdIds?: string[]   // Cross-references: compound key "nodeId:prdId"
+  isStale?: boolean             // True when answers changed after generation
+  staleReason?: string          // Human-readable reason for staleness
 }
 
 interface NodePrompt {
@@ -262,7 +269,7 @@ type FlowEdge = Edge
 |-------|------|---------|
 | `useProjectStore` | `stores/project-store.ts` | Project data, nodes, edges, flow state |
 | `useChatStore` | `stores/chat-store.ts` | AI chat message history |
-| `useUIStore` | `stores/ui-store.ts` | Selected node, panel state, blast radius, edge creation |
+| `useUIStore` | `stores/ui-store.ts` | Selected node, panel state, blast radius, edge creation, PRD pipeline toggle |
 
 ### Key ProjectStore Methods
 
@@ -384,9 +391,8 @@ The `planNodesToFlow(nodes, projectEdges, existingFlowNodes?)` function converts
 
 ```
 components/
-├── landing/                            # Public landing page (marketing, 11 components)
+├── landing/                            # Public landing page (marketing, 10 components)
 │   ├── nav-bar.tsx                     # Sticky nav, blur on scroll, mobile menu
-│   ├── hero-section.tsx                # Split-screen hero: headline + CTA / mockup (kept for reference)
 │   ├── hero-prompt.tsx                 # AI prompt → page preview generator with email capture
 │   ├── hero-mockup.tsx                 # SVG animated canvas mockup (nodes + edges)
 │   ├── features-tabs.tsx               # Interactive 4-tab demo: Planning, Design, Agents, Integrations
@@ -399,7 +405,6 @@ components/
 ├── canvas/
 │   ├── graph-canvas.tsx              # Main ReactFlow wrapper (blast radius, typed edges)
 │   ├── canvas-toolbar.tsx            # Export dropdown, blast radius toggle, undo/redo
-│   ├── timeline-bar.tsx              # Goal progress circles
 │   ├── context-menu/
 │   │   ├── node-context-menu.tsx     # Right-click on node (+ dependency edge actions)
 │   │   ├── pane-context-menu.tsx     # Right-click on empty canvas (smart mapping)
@@ -426,13 +431,13 @@ components/
 │   ├── chat-message.tsx              # Message bubble
 │   └── typing-indicator.tsx          # AI typing dots
 ├── views/                             # View tabs: Plan, Design, Agents, Manage (with sub-views)
-│   ├── view-switcher.tsx              # Tab bar: Plan / Design / Agents / Manage (with sub-views)
 │   ├── list-view.tsx                  # Manage sub-view: hierarchical tree with expand/collapse
 │   ├── table-view.tsx                 # Manage sub-view: sortable/filterable grid
 │   ├── board-view.tsx                 # Manage sub-view: Kanban by status with drag-and-drop
 │   ├── timeline-view.tsx              # Manage sub-view: interactive Gantt chart with drag-to-move/resize
 │   ├── backend-view.tsx               # Manage sub-view: backend module architect on zoomable canvas
-│   ├── pages-view.tsx                 # Design view: AI-generated page previews on zoomable canvas with inline chat
+│   ├── design-view.tsx                # Design tab: WebContainer Vite+React app, chat sidebar, element inspector, Monaco code editor
+│   ├── pages-view.tsx                 # Legacy: AI-generated page previews on canvas (pre-WebContainer)
 │   └── agents-view.tsx                # Agents view: agent builder with config, knowledge, theme, preview, deploy tabs
 ├── sprints/
 │   └── sprint-board.tsx               # Sprint overview: create, drag backlog, progress bars
@@ -440,19 +445,16 @@ components/
 │   ├── ai-suggestions-panel.tsx       # AI iteration accept/dismiss
 │   └── smart-suggestions-panel.tsx    # Ambient AI analysis panel
 ├── comments/
-│   ├── comment-thread.tsx             # Comment thread with add/delete
-│   └── activity-feed.tsx              # Activity timeline
+│   └── comment-thread.tsx             # Comment thread with add/delete
 ├── editor/
 │   └── block-editor.tsx               # Notion-style block editor
 ├── versions/
 │   └── version-history.tsx            # Save/restore/delete version snapshots
-├── collaboration/
-│   ├── presence-avatars.tsx           # Who's online with status dots
-│   └── presence-cursors.tsx           # Live cursors with name labels
 ├── integrations/
 │   └── integration-settings.tsx       # GitHub/Slack/Linear connect/disconnect
 ├── panels/
-│   ├── node-detail-panel.tsx          # Full detail panel (edit, PRDs, prompts, images, docs, comments)
+│   ├── node-detail-panel.tsx          # Detail panel: edit, questions (category/follow-up), PRDs (stale), prompts, images, children
+│   ├── prd-pipeline-panel.tsx         # PRD Pipeline: status tabs, per-node status badges, Ralphy ZIP export
 │   ├── node-edit-form.tsx             # Title/description edit form
 │   └── rich-text-editor.tsx           # Tiptap rich text editor
 ├── project/
@@ -664,5 +666,16 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2026-02 | 8 edge types | hierarchy + 7 dependency types for rich relationship modeling |
 | 2026-02 | Unified toolbar | Single bar: back, title, save status, view tabs, action icons |
 | 2026-02 | Interactive Gantt | Drag-to-move bars, edge-resize durations, snap-to-day |
-| 2026-02 | Pages View | AI-generated Tailwind page previews on zoomable canvas |
+| 2026-02 | Pages View | AI-generated Tailwind page previews on zoomable canvas (legacy, superseded by Design tab) |
 | 2026-02 | Inline page chat | Click page, describe changes, AI regenerates HTML |
+| 2026-02 | WebContainer Design tab | Live Vite+React app in-browser; replaces static previews |
+| 2026-02 | Chat-based app iteration | AI diffs files based on user instruction, hot reload |
+| 2026-02 | Visual click-to-edit | Element inspector: edit text/color/layout via click-to-select |
+| 2026-02 | Monaco code editor | File-tree + tabs; writes directly to WebContainer for hot reload |
+| 2026-02 | Deep question flow | Category-aware questions, multi-turn follow-ups, readiness badge |
+| 2026-02 | PRD status tracking | 6 statuses per node; stale detection when answers change |
+| 2026-02 | PRD Pipeline panel | Filter tabs, per-node status badges, Ralphy ZIP export |
+| 2026-02 | Ralphy export format | ZIP: prd/*.md + .ralphy/config.yaml + PRD.md for autonomous coding |
+| 2026-02 | Email waitlist | Hero prompt email capture → Firestore waitlist + optional Resend welcome |
+| 2026-02 | API auth middleware | middleware.ts enforces Authorization header on /api/* when Firebase configured |
+| 2026-02 | Panel simplification | Node detail panel stripped to essentials: edit, questions, PRDs, prompts |

@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { X, FileText, Sparkles, RefreshCw, ChevronRight, Package } from 'lucide-react'
+import { X, FileText, Sparkles, ChevronRight, Package } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
