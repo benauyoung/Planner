@@ -15,6 +15,42 @@ import {
 } from '@/services/webcontainer'
 import { BASE_TEMPLATE } from '@/lib/webcontainer-template'
 
+/**
+ * Strip BrowserRouter / HashRouter from AI-generated files.
+ * main.tsx already provides <BrowserRouter>, so any additional
+ * router wrapper causes a fatal "cannot render Router inside Router" crash.
+ */
+function sanitizeRouterImports(path: string, content: string): string {
+  // Only process .tsx/.jsx files
+  if (!/\.[jt]sx?$/.test(path)) return content
+  // Never touch main.tsx — that's our canonical router provider
+  if (path.endsWith('main.tsx')) return content
+
+  let result = content
+
+  // Remove BrowserRouter / HashRouter from import statements
+  // e.g. import { BrowserRouter, Routes, Route } from 'react-router-dom'
+  result = result.replace(
+    /import\s*\{([^}]*)\}\s*from\s*['"]react-router-dom['"]/g,
+    (_match, imports: string) => {
+      const cleaned = imports
+        .split(',')
+        .map((s: string) => s.trim())
+        .filter((s: string) => s && s !== 'BrowserRouter' && s !== 'HashRouter')
+      if (cleaned.length === 0) return '// removed: duplicate router import'
+      return `import { ${cleaned.join(', ')} } from 'react-router-dom'`
+    }
+  )
+
+  // Remove <BrowserRouter> and </BrowserRouter> wrapper tags (and HashRouter)
+  result = result.replace(/<BrowserRouter>/g, '')
+  result = result.replace(/<\/BrowserRouter>/g, '')
+  result = result.replace(/<HashRouter>/g, '')
+  result = result.replace(/<\/HashRouter>/g, '')
+
+  return result
+}
+
 export interface UseWebContainerReturn {
   status: WebContainerStatus
   error: string | null
@@ -67,7 +103,8 @@ export function useWebContainer(): UseWebContainerReturn {
   const writeAppFiles = useCallback(
     async (files: { path: string; content: string }[]) => {
       for (const file of files) {
-        await writeFile(file.path, file.content)
+        const content = sanitizeRouterImports(file.path, file.content)
+        await writeFile(file.path, content)
       }
     },
     []

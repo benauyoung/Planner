@@ -8,7 +8,7 @@ RULES:
 5. Maintain the existing design system, color palette, and code style unless the user explicitly asks to change them.
 6. Use Tailwind CSS v4 for all styling. No custom CSS, no inline styles.
 7. Use lucide-react for icons (already installed).
-8. Use React Router v6 for routing (already set up).
+8. Use React Router v6 for routing. BrowserRouter is ALREADY in main.tsx — NEVER import or use BrowserRouter in App.tsx or any other file. Only use Routes, Route, and Link.
 9. All files must be valid TSX with proper imports and exports.
 10. MULTI-PAGE EDITS (critical):
     - If the user asks to add a new page: create the page file in src/pages/, update src/App.tsx to import it and add a <Route>, AND update the navigation/Layout component to add a link to the new page.
