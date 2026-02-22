@@ -597,19 +597,17 @@ export function DesignView() {
         )}
 
 
-        {/* Chat toggle (single mode) */}
-        {designMode === 'single' && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className={cn('h-7 gap-1.5 text-xs', chatOpen && 'bg-accent')}
-            onClick={() => setChatOpen(!chatOpen)}
-            disabled={!selectedPage}
-          >
-            <MessageSquare className="h-3.5 w-3.5" />
-            Chat
-          </Button>
-        )}
+        {/* Chat toggle */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn('h-7 gap-1.5 text-xs', chatOpen && 'bg-accent')}
+          onClick={() => setChatOpen(!chatOpen)}
+          disabled={!selectedPage}
+        >
+          <MessageSquare className="h-3.5 w-3.5" />
+          {selectedPage ? `Edit: ${selectedPage.title}` : 'Chat'}
+        </Button>
       </div>
 
       {/* Main content */}
@@ -672,6 +670,11 @@ export function DesignView() {
             <DesignCanvas
               pages={pages}
               pageEdges={pageEdges}
+              selectedPageId={selectedPageId}
+              onSelectPage={(pageId) => {
+                setSelectedPageId(pageId)
+                setChatOpen(true)
+              }}
               onFocusPage={(pageId) => {
                 setDesignMode('single')
                 setSelectedPageId(pageId)
@@ -693,7 +696,7 @@ export function DesignView() {
         )}
 
         {/* Chat sidebar */}
-        {chatOpen && selectedPage && designMode === 'single' && (
+        {chatOpen && selectedPage && (
           <PageChat
             page={selectedPage}
             onPageUpdated={handlePageUpdated}

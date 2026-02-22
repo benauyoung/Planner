@@ -24,6 +24,8 @@ import type { ProjectPage, PageEdge } from '@/types/project'
 
 interface PageNodeData {
   page: ProjectPage
+  selected: boolean
+  onSelectPage: (pageId: string) => void
   onFocusPage: (pageId: string) => void
   onDeletePage: (pageId: string) => void
   onEditPage: (pageId: string, instruction: string) => Promise<void>
@@ -51,7 +53,7 @@ const PAGE_FRAME_WIDTH = 420
 const PAGE_FRAME_HEIGHT = 320
 
 const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
-  const { page, onFocusPage, onDeletePage, onEditPage } = data as unknown as PageNodeData
+  const { page, selected, onSelectPage, onFocusPage, onDeletePage, onEditPage } = data as unknown as PageNodeData
   const [editInput, setEditInput] = useState('')
   const [editing, setEditing] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
@@ -76,8 +78,9 @@ const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
 
   return (
     <div
-      className="group"
+      className={`group ${selected ? 'ring-2 ring-primary rounded-lg' : ''}`}
       style={{ width: PAGE_FRAME_WIDTH }}
+      onClick={() => onSelectPage(page.id)}
     >
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
@@ -183,6 +186,8 @@ const designNodeTypes: NodeTypes = {
 
 function buildNodes(
   pages: ProjectPage[],
+  selectedPageId: string | null,
+  onSelectPage: (pageId: string) => void,
   onFocusPage: (pageId: string) => void,
   onDeletePage: (pageId: string) => void,
   onEditPage: (pageId: string, instruction: string) => Promise<void>
@@ -194,7 +199,7 @@ function buildNodes(
       x: (i % 3) * (PAGE_FRAME_WIDTH + 80),
       y: Math.floor(i / 3) * (PAGE_FRAME_HEIGHT + 36 + 80),
     },
-    data: { page, onFocusPage, onDeletePage, onEditPage } as PageNodeData,
+    data: { page, selected: page.id === selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage } as PageNodeData,
     draggable: true,
     selectable: true,
   }))
@@ -217,6 +222,8 @@ function buildEdges(pageEdges: PageEdge[]): Edge[] {
 function DesignCanvasInner({
   pages,
   pageEdges,
+  selectedPageId,
+  onSelectPage,
   onFocusPage,
   onDeletePage,
   onEditPage,
@@ -224,22 +231,24 @@ function DesignCanvasInner({
 }: {
   pages: ProjectPage[]
   pageEdges: PageEdge[]
+  selectedPageId: string | null
+  onSelectPage: (pageId: string) => void
   onFocusPage: (pageId: string) => void
   onDeletePage: (pageId: string) => void
   onEditPage: (pageId: string, instruction: string) => Promise<void>
   onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
   const initialNodes = useMemo(
-    () => buildNodes(pages, onFocusPage, onDeletePage, onEditPage),
-    [pages, onFocusPage, onDeletePage, onEditPage]
+    () => buildNodes(pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage),
+    [pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage]
   )
   const edges = useMemo(() => buildEdges(pageEdges), [pageEdges])
 
   const [flowNodes, setFlowNodes] = useState<Node[]>(initialNodes)
 
   useEffect(() => {
-    setFlowNodes(buildNodes(pages, onFocusPage, onDeletePage, onEditPage))
-  }, [pages, onFocusPage, onDeletePage, onEditPage])
+    setFlowNodes(buildNodes(pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage))
+  }, [pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage])
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -293,6 +302,8 @@ function DesignCanvasInner({
 export function DesignCanvas({
   pages,
   pageEdges,
+  selectedPageId,
+  onSelectPage,
   onFocusPage,
   onDeletePage,
   onEditPage,
@@ -300,6 +311,8 @@ export function DesignCanvas({
 }: {
   pages: ProjectPage[]
   pageEdges: PageEdge[]
+  selectedPageId: string | null
+  onSelectPage: (pageId: string) => void
   onFocusPage: (pageId: string) => void
   onDeletePage: (pageId: string) => void
   onEditPage: (pageId: string, instruction: string) => Promise<void>
@@ -318,6 +331,8 @@ export function DesignCanvas({
       <DesignCanvasInner
         pages={pages}
         pageEdges={pageEdges}
+        selectedPageId={selectedPageId}
+        onSelectPage={onSelectPage}
         onFocusPage={onFocusPage}
         onDeletePage={onDeletePage}
         onEditPage={onEditPage}
