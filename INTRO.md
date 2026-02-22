@@ -61,8 +61,8 @@ You are working on **TinyBaguette**, a visual DAG-based project planning tool bu
 - **Team features**: assignees, priority, due dates, estimates, tags, comments, activity feed
 - **Sprint planning**: create sprints, drag tasks from backlog, progress tracking
 - **Version history**: save/restore named snapshots with branch support
-- **Collaboration infra**: presence avatars, live cursors (local mock, Yjs-ready)
-- **Integrations**: GitHub, Slack, Linear service clients + settings UI
+- **Collaboration infra**: pluggable provider architecture (real-time WebSocket backend pending)
+- **Integrations**: settings UI shell (service clients removed; OAuth flows pending)
 - **Command palette**: Cmd+K fuzzy search with keyboard shortcuts
 - **Export**: JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - **Import**: JSON projects, Markdown specs (paste/upload with preview)

@@ -264,7 +264,7 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 > Transform the Design tab from static HTML previews into a full Lovable-style experience:
 > Plan tab PRDs → AI generates a complete React+Tailwind app → WebContainer runs it live → User iterates via chat + visual click-to-edit.
 
-### Status: ✅ All 4 Phases Complete
+### Status: ✅ All 5 Phases Complete
 
 **Implemented:**
 - WebContainer (StackBlitz API) runs a real Vite+React+Tailwind dev server in-browser
@@ -274,6 +274,7 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 - Visual click-to-edit: click element in preview → inspect text/color/spacing → quick actions
 - Code editor (Monaco) for power users with file tabs + live editing
 - Export/download generated app as zip
+- Multi-page app support: page navigator dropdown, route change detection, "Add Page" button with AI generation
 - Chat history persisted per project
 - Load Preview button for revisiting saved apps
 
@@ -310,6 +311,15 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 - [x] File explorer sidebar (integrated into left sidebar `FileTree` component)
 - [x] Export/download generated app as zip (`jszip` — includes package.json, vite.config, index.html + all src files)
 - [ ] Version history of iterations (deferred to future)
+
+### Phase 5: Multi-Page App Support ✅
+- [x] Route detection utility (`lib/parse-app-routes.ts`) — parses `<Route path="...">` from App.tsx
+- [x] Page navigator dropdown in toolbar — shows all detected routes with labels, navigates iframe on select
+- [x] Route change detection — injected script patches `pushState`/`replaceState` + `popstate`, sends `tb-route-change` to parent
+- [x] Programmatic navigation — parent sends `tb-navigate` message to iframe, triggers React Router navigation
+- [x] "Add Page" button + dialog — user names a page → AI generates page component + updates App.tsx routes + updates Layout/nav
+- [x] Enhanced app-generation prompt — mandatory Layout component, shared nav with `<Link>`, active route highlighting, ≥3 pages
+- [x] Enhanced app-edit prompt — multi-page edit rules for add/remove pages, Layout awareness, `<Link>` enforcement
 
 ### Key Dependencies (all installed)
 - `@webcontainer/api` — WebContainer runtime
