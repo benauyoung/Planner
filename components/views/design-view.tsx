@@ -543,7 +543,19 @@ export function DesignView() {
           </div>
         )}
 
-        {designMode === 'single' && pages.length > 0 && (
+        {/* Add page (canvas mode) */}
+        {designMode === 'canvas' && pages.length > 0 && (
+          <button
+            onClick={() => setAddPageOpen(true)}
+            className="h-7 px-2 flex items-center gap-1 rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground text-xs"
+            title="Add a new page"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Add Page
+          </button>
+        )}
+
+        {pages.length > 0 && (
           <div className="w-px h-5 bg-border" />
         )}
 
