@@ -1,9 +1,7 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useProjectStore } from '@/stores/project-store'
-import { useWebContainer } from '@/hooks/use-webcontainer'
-import { buildAppGenerationContext } from '@/lib/build-app-context'
 import { cn } from '@/lib/utils'
 import {
   Sparkles,
@@ -12,23 +10,11 @@ import {
   Smartphone,
   Tablet,
   RotateCcw,
-  ExternalLink,
-  FileCode2,
-  ChevronDown,
-  ChevronRight,
   AlertTriangle,
-  CheckCircle2,
-  Circle,
-  Maximize2,
   RefreshCw,
   MessageSquare,
   Send,
   X,
-  MousePointerClick,
-  Paintbrush,
-  Type,
-  Code2,
-  Download,
   Plus,
   Globe,
   LayoutGrid,
@@ -37,12 +23,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { authFetch } from '@/lib/auth-fetch'
 import { generateId } from '@/lib/id'
-import type { AppChatMessage } from '@/types/project'
-import dynamic from 'next/dynamic'
-import { parseAppRoutes } from '@/lib/parse-app-routes'
+import type { ProjectPage, PageEdge, AppChatMessage } from '@/types/project'
 import { DesignCanvas } from './design-canvas'
-
-const MonacoEditor = dynamic(() => import('@monaco-editor/react').then((m) => m.default), { ssr: false })
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -54,219 +36,87 @@ const VIEWPORT_SIZES: Record<ViewportSize, { width: string; label: string }> = {
   mobile: { width: '375px', label: 'Mobile' },
 }
 
-type GenerationPhase =
-  | 'idle'
-  | 'booting'
-  | 'installing'
-  | 'generating'
-  | 'writing'
-  | 'starting'
-  | 'ready'
-  | 'error'
+type DesignPhase = 'idle' | 'generating' | 'ready' | 'error'
 
-interface PhaseStep {
-  phase: GenerationPhase
-  label: string
-  description: string
+// ─── Wrap page HTML in a full document with Tailwind CDN ─────
+
+function wrapHtmlPage(bodyHtml: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }</style>
+</head>
+<body>${bodyHtml}</body>
+</html>`
 }
 
-const PHASE_STEPS: PhaseStep[] = [
-  { phase: 'booting', label: 'Booting', description: 'Starting WebContainer runtime...' },
-  { phase: 'installing', label: 'Installing', description: 'Installing React, Tailwind, and dependencies...' },
-  { phase: 'generating', label: 'Generating', description: 'AI is building your app from the project plan...' },
-  { phase: 'writing', label: 'Writing', description: 'Writing generated files...' },
-  { phase: 'starting', label: 'Starting', description: 'Starting Vite dev server...' },
-  { phase: 'ready', label: 'Ready', description: 'Your app is live!' },
-]
+// ─── Page Chat Sidebar ──────────────────────────────────────
 
-// ─── Progress Indicator ──────────────────────────────────────
-
-function PhaseProgress({ currentPhase, error }: { currentPhase: GenerationPhase; error: string | null }) {
-  const currentIdx = PHASE_STEPS.findIndex((s) => s.phase === currentPhase)
-
-  return (
-    <div className="space-y-3">
-      {PHASE_STEPS.map((step, i) => {
-        const isActive = step.phase === currentPhase
-        const isDone = currentIdx > i || currentPhase === 'ready'
-        const isError = isActive && error
-
-        return (
-          <div key={step.phase} className="flex items-start gap-3">
-            <div className="mt-0.5">
-              {isError ? (
-                <AlertTriangle className="h-4 w-4 text-destructive" />
-              ) : isDone ? (
-                <CheckCircle2 className="h-4 w-4 text-green-500" />
-              ) : isActive ? (
-                <Loader2 className="h-4 w-4 text-primary animate-spin" />
-              ) : (
-                <Circle className="h-4 w-4 text-muted-foreground/30" />
-              )}
-            </div>
-            <div>
-              <p
-                className={cn(
-                  'text-sm font-medium',
-                  isActive && !isError && 'text-primary',
-                  isDone && 'text-foreground',
-                  isError && 'text-destructive',
-                  !isActive && !isDone && 'text-muted-foreground/50'
-                )}
-              >
-                {step.label}
-              </p>
-              {isActive && (
-                <p className={cn('text-xs mt-0.5', isError ? 'text-destructive/80' : 'text-muted-foreground')}>
-                  {isError ? error : step.description}
-                </p>
-              )}
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-// ─── File Tree Sidebar ───────────────────────────────────────
-
-function FileTree({ files }: { files: { path: string; content: string }[] }) {
-  const [expanded, setExpanded] = useState(true)
-
-  // Group files by directory
-  const tree = new Map<string, string[]>()
-  for (const f of files) {
-    const parts = f.path.split('/')
-    const dir = parts.length > 1 ? parts.slice(0, -1).join('/') : '.'
-    if (!tree.has(dir)) tree.set(dir, [])
-    tree.get(dir)!.push(parts[parts.length - 1])
-  }
-
-  return (
-    <div className="text-xs">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className="flex items-center gap-1 w-full px-2 py-1.5 text-muted-foreground hover:text-foreground transition-colors"
-      >
-        {expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-        <FileCode2 className="h-3 w-3" />
-        <span className="font-medium">Files ({files.length})</span>
-      </button>
-      {expanded && (
-        <div className="pl-2">
-          {Array.from(tree.entries()).map(([dir, fileNames]) => (
-            <div key={dir}>
-              {dir !== '.' && (
-                <div className="px-2 py-0.5 text-muted-foreground/60 font-mono">{dir}/</div>
-              )}
-              {fileNames.map((name) => (
-                <div
-                  key={`${dir}/${name}`}
-                  className="px-4 py-0.5 font-mono text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded cursor-default truncate"
-                  title={dir === '.' ? name : `${dir}/${name}`}
-                >
-                  {name}
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ─── App Chat Sidebar ────────────────────────────────────────
-
-function AppChat({
-  appFiles,
-  onFilesUpdated,
+function PageChat({
+  page,
+  onPageUpdated,
   onClose,
 }: {
-  appFiles: { path: string; content: string }[]
-  onFilesUpdated: (updatedFiles: { path: string; content: string }[], summary: string) => void
+  page: ProjectPage
+  onPageUpdated: (pageId: string, newHtml: string) => void
   onClose: () => void
 }) {
-  const currentProject = useProjectStore((s) => s.currentProject)
   const addAppChatMessage = useProjectStore((s) => s.addAppChatMessage)
-  const savedMessages = currentProject?.appChatMessages || []
 
-  const [messages, setMessages] = useState<AppChatMessage[]>(savedMessages)
+  const [messages, setMessages] = useState<AppChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    inputRef.current?.focus()
-  }, [])
-
+  useEffect(() => { inputRef.current?.focus() }, [])
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
 
-  // Sync saved messages on mount
-  useEffect(() => {
-    if (savedMessages.length > 0 && messages.length === 0) {
-      setMessages(savedMessages)
-    }
-  }, [])
-
   const handleSend = async () => {
     const instruction = input.trim()
     if (!instruction || loading) return
-
     setInput('')
 
     const userMsg: AppChatMessage = {
-      id: generateId(),
-      role: 'user',
-      content: instruction,
-      timestamp: Date.now(),
+      id: generateId(), role: 'user', content: instruction, timestamp: Date.now(),
     }
     setMessages((prev) => [...prev, userMsg])
     addAppChatMessage(userMsg)
     setLoading(true)
 
     try {
-      const res = await authFetch('/api/ai/edit-app', {
+      const res = await authFetch('/api/ai/edit-page', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          files: appFiles,
+          currentHtml: page.html,
           instruction,
+          pageTitle: page.title,
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to edit app')
+      if (!res.ok) throw new Error('Failed to edit page')
 
       const data = await res.json()
-      const updatedFiles: { path: string; content: string }[] = data.files || []
-      const summary: string = data.summary || 'Updated!'
-
       const aiMsg: AppChatMessage = {
-        id: generateId(),
-        role: 'ai',
-        content: summary,
-        filesChanged: updatedFiles.map((f) => f.path),
-        timestamp: Date.now(),
+        id: generateId(), role: 'ai', content: data.summary || 'Updated!', timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, aiMsg])
       addAppChatMessage(aiMsg)
 
-      if (updatedFiles.length > 0) {
-        onFilesUpdated(updatedFiles, summary)
+      if (data.html) {
+        onPageUpdated(page.id, data.html)
       }
-    } catch (err) {
+    } catch {
       const errMsg: AppChatMessage = {
-        id: generateId(),
-        role: 'ai',
-        content: 'Failed to update. Try again.',
-        timestamp: Date.now(),
+        id: generateId(), role: 'ai', content: 'Failed to update. Try again.', timestamp: Date.now(),
       }
       setMessages((prev) => [...prev, errMsg])
-      addAppChatMessage(errMsg)
     } finally {
       setLoading(false)
     }
@@ -274,26 +124,24 @@ function AppChat({
 
   return (
     <div className="w-80 border-l bg-background flex flex-col h-full">
-      {/* Header */}
       <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
         <MessageSquare className="h-3.5 w-3.5 text-primary" />
-        <span className="text-xs font-semibold flex-1">Edit with AI</span>
+        <span className="text-xs font-semibold flex-1 truncate">Edit: {page.title}</span>
         <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">
         {messages.length === 0 && (
           <div className="text-xs text-muted-foreground text-center pt-8">
             <MessageSquare className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="font-medium mb-1">Edit your app with AI</p>
-            <p>Describe what you want to change and the preview will update live.</p>
+            <p className="font-medium mb-1">Edit this page with AI</p>
+            <p>Describe what you want to change.</p>
             <div className="mt-4 space-y-1.5 text-left">
               <p className="italic text-muted-foreground/60">&quot;Make the header blue&quot;</p>
               <p className="italic text-muted-foreground/60">&quot;Add a pricing section&quot;</p>
-              <p className="italic text-muted-foreground/60">&quot;Add a dark mode toggle&quot;</p>
+              <p className="italic text-muted-foreground/60">&quot;Change the layout to 3 columns&quot;</p>
             </div>
           </div>
         )}
@@ -309,26 +157,16 @@ function AppChat({
             >
               {msg.content}
             </div>
-            {msg.role === 'ai' && msg.filesChanged && msg.filesChanged.length > 0 && (
-              <div className="mt-1 ml-1">
-                {msg.filesChanged.map((f) => (
-                  <span key={f} className="inline-block text-[10px] font-mono text-muted-foreground bg-muted/50 rounded px-1.5 py-0.5 mr-1 mb-0.5">
-                    {f}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         ))}
         {loading && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <Loader2 className="h-3 w-3 animate-spin" />
-            Updating app...
+            Updating page...
           </div>
         )}
       </div>
 
-      {/* Input */}
       <div className="border-t p-2 shrink-0">
         <div className="flex items-center gap-1">
           <input
@@ -340,309 +178,10 @@ function AppChat({
             className="flex-1 h-8 px-3 text-xs bg-muted rounded-md border-0 outline-none focus:ring-1 focus:ring-primary"
             disabled={loading}
           />
-          <Button
-            size="icon"
-            className="h-8 w-8 shrink-0"
-            onClick={handleSend}
-            disabled={!input.trim() || loading}
-          >
+          <Button size="icon" className="h-8 w-8 shrink-0" onClick={handleSend} disabled={!input.trim() || loading}>
             <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Element Inspector Panel ─────────────────────────────────
-
-interface SelectedElement {
-  tag: string
-  text: string | null
-  className: string
-  id: string | null
-  styles: {
-    color: string
-    backgroundColor: string
-    fontSize: string
-    fontWeight: string
-    padding: string
-    margin: string
-    borderRadius: string
-    width: string
-    height: string
-    display: string
-  }
-  rect: { x: number; y: number; width: number; height: number }
-  path: string
-}
-
-function ElementInspector({
-  element,
-  onEditRequest,
-  onClose,
-}: {
-  element: SelectedElement
-  onEditRequest: (instruction: string) => void
-  onClose: () => void
-}) {
-  const [editingText, setEditingText] = useState(false)
-  const [newText, setNewText] = useState(element.text || '')
-  const [editingColor, setEditingColor] = useState(false)
-  const [newColor, setNewColor] = useState('')
-
-  // Reset when element changes
-  useEffect(() => {
-    setEditingText(false)
-    setNewText(element.text || '')
-    setEditingColor(false)
-    setNewColor('')
-  }, [element.path])
-
-  const handleTextSubmit = () => {
-    if (newText && newText !== element.text) {
-      onEditRequest(`Change the text "${element.text}" to "${newText}" in the ${element.path} element`)
-    }
-    setEditingText(false)
-  }
-
-  const handleColorSubmit = () => {
-    if (newColor) {
-      onEditRequest(`Change the background color of the ${element.path} element to ${newColor}`)
-    }
-    setEditingColor(false)
-  }
-
-  const quickActions = [
-    { label: 'Make larger', action: `Make the ${element.path} element larger (increase font size and padding)` },
-    { label: 'Make smaller', action: `Make the ${element.path} element smaller (decrease font size and padding)` },
-    { label: 'Make bold', action: `Make the text in ${element.path} bold` },
-    { label: 'Center', action: `Center the ${element.path} element` },
-    { label: 'Add shadow', action: `Add a subtle shadow to the ${element.path} element` },
-    { label: 'Round corners', action: `Add rounded corners to the ${element.path} element` },
-  ]
-
-  return (
-    <div className="w-72 border-l bg-background flex flex-col h-full">
-      {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
-        <MousePointerClick className="h-3.5 w-3.5 text-purple-500" />
-        <span className="text-xs font-semibold flex-1 truncate">
-          &lt;{element.tag}&gt;
-          {element.id && <span className="text-muted-foreground">#{element.id}</span>}
-        </span>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
-        {/* Element path */}
-        <div className="px-3 py-2 border-b">
-          <p className="text-[10px] font-mono text-muted-foreground truncate" title={element.path}>
-            {element.path}
-          </p>
-        </div>
-
-        {/* Text content */}
-        {element.text && (
-          <div className="px-3 py-2 border-b">
-            <div className="flex items-center gap-1.5 mb-1.5">
-              <Type className="h-3 w-3 text-muted-foreground" />
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Text</span>
-            </div>
-            {editingText ? (
-              <div className="space-y-1.5">
-                <input
-                  value={newText}
-                  onChange={(e) => setNewText(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleTextSubmit()}
-                  className="w-full h-7 px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary"
-                  autoFocus
-                />
-                <div className="flex gap-1">
-                  <Button size="sm" className="h-6 text-[10px] flex-1" onClick={handleTextSubmit}>Apply</Button>
-                  <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setEditingText(false)}>Cancel</Button>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setEditingText(true)}
-                className="text-xs text-foreground hover:bg-accent/50 rounded px-1.5 py-1 -mx-1.5 w-full text-left truncate transition-colors"
-                title={element.text}
-              >
-                {element.text}
-              </button>
-            )}
-          </div>
-        )}
-
-        {/* Colors */}
-        <div className="px-3 py-2 border-b">
-          <div className="flex items-center gap-1.5 mb-1.5">
-            <Paintbrush className="h-3 w-3 text-muted-foreground" />
-            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Colors</span>
-          </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border" style={{ backgroundColor: element.styles.color }} />
-              <span className="text-[10px] font-mono text-muted-foreground">text: {element.styles.color}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded border" style={{ backgroundColor: element.styles.backgroundColor }} />
-              <span className="text-[10px] font-mono text-muted-foreground">bg: {element.styles.backgroundColor}</span>
-            </div>
-          </div>
-          {editingColor ? (
-            <div className="mt-2 space-y-1.5">
-              <input
-                value={newColor}
-                onChange={(e) => setNewColor(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleColorSubmit()}
-                placeholder="e.g. blue, #3b82f6, red-500"
-                className="w-full h-7 px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary"
-                autoFocus
-              />
-              <div className="flex gap-1">
-                <Button size="sm" className="h-6 text-[10px] flex-1" onClick={handleColorSubmit}>Apply</Button>
-                <Button size="sm" variant="ghost" className="h-6 text-[10px]" onClick={() => setEditingColor(false)}>Cancel</Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              onClick={() => setEditingColor(true)}
-              className="text-[10px] text-primary hover:underline mt-1.5 block"
-            >
-              Change color...
-            </button>
-          )}
-        </div>
-
-        {/* Computed styles */}
-        <div className="px-3 py-2 border-b">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Layout</span>
-          <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5">
-            {[
-              ['size', `${element.styles.width} × ${element.styles.height}`],
-              ['font', element.styles.fontSize],
-              ['weight', element.styles.fontWeight],
-              ['padding', element.styles.padding],
-              ['margin', element.styles.margin],
-              ['radius', element.styles.borderRadius],
-              ['display', element.styles.display],
-            ].map(([label, value]) => (
-              <div key={label} className="flex items-baseline gap-1">
-                <span className="text-[10px] text-muted-foreground/60 shrink-0">{label}:</span>
-                <span className="text-[10px] font-mono text-muted-foreground truncate">{value}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Quick actions */}
-        <div className="px-3 py-2">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Quick Actions</span>
-          <div className="mt-1.5 flex flex-wrap gap-1">
-            {quickActions.map((qa) => (
-              <button
-                key={qa.label}
-                onClick={() => onEditRequest(qa.action)}
-                className="text-[10px] px-2 py-1 rounded-full border bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              >
-                {qa.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// ─── Code Editor Panel ───────────────────────────────────────
-
-function CodeEditorPanel({
-  files,
-  onFileChange,
-  onClose,
-}: {
-  files: { path: string; content: string }[]
-  onFileChange: (path: string, content: string) => void
-  onClose: () => void
-}) {
-  const [activeFile, setActiveFile] = useState(files[0]?.path || '')
-  const activeContent = files.find((f) => f.path === activeFile)?.content || ''
-
-  // Sort files: App.tsx first, then pages, then components, then rest
-  const sortedFiles = [...files].sort((a, b) => {
-    if (a.path.includes('App.tsx')) return -1
-    if (b.path.includes('App.tsx')) return 1
-    if (a.path.includes('pages/') && !b.path.includes('pages/')) return -1
-    if (!a.path.includes('pages/') && b.path.includes('pages/')) return 1
-    return a.path.localeCompare(b.path)
-  })
-
-  const getFileName = (path: string) => {
-    const parts = path.split('/')
-    return parts[parts.length - 1]
-  }
-
-  return (
-    <div className="flex flex-col h-full border-l bg-background" style={{ width: '50%', minWidth: 400 }}>
-      {/* File tabs */}
-      <div className="flex items-center border-b shrink-0 overflow-x-auto">
-        <div className="flex items-center flex-1 min-w-0">
-          {sortedFiles.map((f) => (
-            <button
-              key={f.path}
-              onClick={() => setActiveFile(f.path)}
-              className={cn(
-                'px-3 py-1.5 text-xs font-mono border-r shrink-0 transition-colors',
-                activeFile === f.path
-                  ? 'bg-background text-foreground border-b-2 border-b-primary'
-                  : 'bg-muted/30 text-muted-foreground hover:text-foreground hover:bg-muted/50'
-              )}
-              title={f.path}
-            >
-              {getFileName(f.path)}
-            </button>
-          ))}
-        </div>
-        <button onClick={onClose} className="px-2 py-1.5 text-muted-foreground hover:text-foreground shrink-0">
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {/* Editor */}
-      <div className="flex-1 min-h-0">
-        <MonacoEditor
-          height="100%"
-          language="typescript"
-          theme="vs-dark"
-          value={activeContent}
-          onChange={(value) => {
-            if (value !== undefined) {
-              onFileChange(activeFile, value)
-            }
-          }}
-          options={{
-            minimap: { enabled: false },
-            fontSize: 13,
-            lineNumbers: 'on',
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-            tabSize: 2,
-            automaticLayout: true,
-            padding: { top: 8 },
-          }}
-        />
-      </div>
-
-      {/* Status bar */}
-      <div className="flex items-center px-3 py-1 border-t bg-muted/30 text-[10px] text-muted-foreground">
-        <span className="font-mono">{activeFile}</span>
-        <span className="mx-2">•</span>
-        <span>TypeScript JSX</span>
       </div>
     </div>
   )
@@ -652,378 +191,164 @@ function CodeEditorPanel({
 
 export function DesignView() {
   const currentProject = useProjectStore((s) => s.currentProject)
-  const setAppFiles = useProjectStore((s) => s.setAppFiles)
-  const addAppChatMessage = useProjectStore((s) => s.addAppChatMessage)
+  const setPages = useProjectStore((s) => s.setPages)
+  const updatePageHtml = useProjectStore((s) => s.updatePageHtml)
 
-  const {
-    status: wcStatus,
-    error: wcError,
-    serverUrl,
-    supported,
-    boot,
-    writeAppFiles,
-    restart,
-  } = useWebContainer()
-
-  const [phase, setPhase] = useState<GenerationPhase>('idle')
+  const [phase, setPhase] = useState<DesignPhase>('idle')
   const [genError, setGenError] = useState<string | null>(null)
   const [viewport, setViewport] = useState<ViewportSize>('desktop')
-  const [appFiles, setLocalAppFiles] = useState<{ path: string; content: string }[]>([])
-  const [summary, setSummary] = useState<string | null>(null)
+  const [designSystem, setDesignSystem] = useState<string | null>(null)
+  const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
   const [chatOpen, setChatOpen] = useState(false)
-  const [selectorEnabled, setSelectorEnabled] = useState(false)
-  const [selectedElement, setSelectedElement] = useState<SelectedElement | null>(null)
-  const [codeEditorOpen, setCodeEditorOpen] = useState(false)
-  const [currentRoute, setCurrentRoute] = useState('/')
+  const [designMode, setDesignMode] = useState<'single' | 'canvas'>('canvas')
   const [addPageOpen, setAddPageOpen] = useState(false)
   const [addPageName, setAddPageName] = useState('')
   const [addingPage, setAddingPage] = useState(false)
-  const [designMode, setDesignMode] = useState<'single' | 'canvas'>('single')
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
-  const routes = useMemo(() => parseAppRoutes(appFiles), [appFiles])
+  const pages = currentProject?.pages || []
+  const pageEdges = currentProject?.pageEdges || []
+  const selectedPage = pages.find((p) => p.id === selectedPageId) || pages[0] || null
 
-  // Listen for postMessage from iframe (element selector + route changes)
+  // Auto-select first page when pages load
   useEffect(() => {
-    function handleMessage(e: MessageEvent) {
-      if (e.data?.type === 'tb-element-selected') {
-        setSelectedElement(e.data.element as SelectedElement)
-      }
-      if (e.data?.type === 'tb-route-change' && typeof e.data.path === 'string') {
-        setCurrentRoute(e.data.path)
-      }
+    if (pages.length > 0 && !selectedPageId) {
+      setSelectedPageId(pages[0].id)
     }
-    window.addEventListener('message', handleMessage)
-    return () => window.removeEventListener('message', handleMessage)
-  }, [])
+  }, [pages, selectedPageId])
 
-  // Toggle selector in iframe
+  // If we already have pages, go straight to ready
   useEffect(() => {
-    if (!iframeRef.current?.contentWindow) return
-    iframeRef.current.contentWindow.postMessage(
-      { type: selectorEnabled ? 'tb-selector-enable' : 'tb-selector-disable' },
-      '*'
-    )
-  }, [selectorEnabled, serverUrl])
-
-  // Sync WebContainer status to our phase
-  useEffect(() => {
-    if (wcStatus === 'booting') setPhase('booting')
-    else if (wcStatus === 'installing') setPhase('installing')
-    else if (wcStatus === 'starting') setPhase('starting')
-    else if (wcStatus === 'ready' && phase === 'starting') setPhase('ready')
-    else if (wcStatus === 'error') {
-      setPhase('error')
-      setGenError(wcError)
+    if (pages.length > 0 && phase === 'idle') {
+      setPhase('ready')
     }
-  }, [wcStatus, wcError, phase])
-
-  // Load existing app files from project
-  useEffect(() => {
-    if (currentProject?.appFiles && currentProject.appFiles.length > 0) {
-      setLocalAppFiles(currentProject.appFiles)
-      if (currentProject.appDesignSummary) setSummary(currentProject.appDesignSummary)
-    }
-  }, [currentProject?.appFiles, currentProject?.appDesignSummary])
+  }, [pages.length, phase])
 
   const handleGenerate = useCallback(async () => {
-    if (!currentProject) {
-      console.warn('[DesignView] handleGenerate: no currentProject, aborting')
-      return
-    }
+    if (!currentProject) return
 
-    console.log('[DesignView] handleGenerate: starting, project =', currentProject.title)
     setGenError(null)
-    setPhase('booting')
+    setPhase('generating')
 
     try {
-      // Step 1-3: Boot WebContainer + install deps + start server
-      console.log('[DesignView] Booting WebContainer...')
-      await boot()
-      console.log('[DesignView] WebContainer booted successfully')
+      const nodes = currentProject.nodes || []
 
-      // Step 4: Generate app via AI
-      setPhase('generating')
-      console.log('[DesignView] Generating app via AI...')
-      const context = buildAppGenerationContext(currentProject)
-
-      const res = await authFetch('/api/ai/generate-app', {
+      const res = await authFetch('/api/ai/generate-pages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ context }),
+        body: JSON.stringify({
+          projectTitle: currentProject.title,
+          projectDescription: currentProject.description,
+          nodes: nodes.map((n) => ({
+            id: n.id,
+            type: n.type,
+            title: n.title,
+            description: n.description,
+            parentId: n.parentId,
+          })),
+        }),
       })
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        throw new Error(data.error || 'Failed to generate app')
+        throw new Error(data.error || 'Failed to generate pages')
       }
 
       const data = await res.json()
-      const files: { path: string; content: string }[] = data.files || []
+      const generatedPages: ProjectPage[] = (data.pages || []).map(
+        (p: { id: string; title: string; route: string; html: string; linkedNodeIds: string[] }, i: number) => ({
+          id: p.id || generateId(),
+          title: p.title,
+          route: p.route,
+          html: p.html,
+          linkedNodeIds: p.linkedNodeIds || [],
+          position: { x: (i % 3) * 500, y: Math.floor(i / 3) * 440 },
+        })
+      )
 
-      if (files.length === 0) {
-        throw new Error('AI returned no files')
+      const generatedEdges: PageEdge[] = (data.edges || []).map(
+        (e: { source: string; target: string; label: string }) => ({
+          id: generateId(),
+          source: e.source,
+          target: e.target,
+          label: e.label,
+        })
+      )
+
+      if (generatedPages.length === 0) {
+        throw new Error('AI returned no pages')
       }
 
-      // Step 5: Write files to WebContainer
-      setPhase('writing')
-      await writeAppFiles(files)
-
-      // Save to project store
-      setLocalAppFiles(files)
-      setSummary(data.summary || null)
-      setAppFiles(files, data.summary)
-
-      // The server should already be running and will hot-reload
+      setPages(generatedPages, generatedEdges)
+      setDesignSystem(data.designSystem || null)
+      setSelectedPageId(generatedPages[0].id)
       setPhase('ready')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       setGenError(msg)
       setPhase('error')
-      console.error('Generate app error:', err)
+      console.error('Generate pages error:', err)
     }
-  }, [currentProject, boot, writeAppFiles, setAppFiles])
+  }, [currentProject, setPages])
 
   const handleRegenerate = useCallback(async () => {
-    setLocalAppFiles([])
-    setSummary(null)
+    setDesignSystem(null)
+    setSelectedPageId(null)
     await handleGenerate()
   }, [handleGenerate])
 
-  const handleChatFilesUpdated = useCallback(
-    async (updatedFiles: { path: string; content: string }[], _summary: string) => {
-      // Merge updated files into local state
-      const merged = [...appFiles]
-      for (const uf of updatedFiles) {
-        const idx = merged.findIndex((f) => f.path === uf.path)
-        if (idx >= 0) {
-          merged[idx] = uf
-        } else {
-          merged.push(uf)
-        }
-      }
-      setLocalAppFiles(merged)
-      setAppFiles(merged)
-
-      // Write to WebContainer for hot reload
-      try {
-        await writeAppFiles(updatedFiles)
-      } catch (err) {
-        console.error('Failed to write updated files to WebContainer:', err)
-      }
+  const handlePageUpdated = useCallback(
+    (pageId: string, newHtml: string) => {
+      updatePageHtml(pageId, newHtml)
     },
-    [appFiles, writeAppFiles, setAppFiles]
+    [updatePageHtml]
   )
 
-  const handleInspectorEditRequest = useCallback(
-    async (instruction: string) => {
-      // Send the edit through the same AI pipeline as chat
-      try {
-        const res = await authFetch('/api/ai/edit-app', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ files: appFiles, instruction }),
-        })
+  const handleAddPage = useCallback(async () => {
+    if (!addPageName.trim() || addingPage || !currentProject) return
+    setAddingPage(true)
 
-        if (!res.ok) throw new Error('Failed to edit app')
-
-        const data = await res.json()
-        const updatedFiles: { path: string; content: string }[] = data.files || []
-
-        if (updatedFiles.length > 0) {
-          await handleChatFilesUpdated(updatedFiles, data.summary || 'Visual edit applied')
-        }
-      } catch (err) {
-        console.error('Inspector edit failed:', err)
-      }
-    },
-    [appFiles, handleChatFilesUpdated]
-  )
-
-  const handleCloseInspector = useCallback(() => {
-    setSelectedElement(null)
-    setSelectorEnabled(false)
-  }, [])
-
-  const handleCodeFileChange = useCallback(
-    async (path: string, content: string) => {
-      // Update local state
-      const updated = appFiles.map((f) => f.path === path ? { ...f, content } : f)
-      setLocalAppFiles(updated)
-      setAppFiles(updated)
-
-      // Write to WebContainer for hot reload
-      try {
-        await writeAppFiles([{ path, content }])
-      } catch (err) {
-        console.error('Failed to write code change to WebContainer:', err)
-      }
-    },
-    [appFiles, writeAppFiles, setAppFiles]
-  )
-
-  const handleExportZip = useCallback(async () => {
-    if (appFiles.length === 0) return
-
-    // Dynamic import JSZip only when needed
-    const JSZip = (await import('jszip')).default
-    const zip = new JSZip()
-
-    for (const file of appFiles) {
-      zip.file(file.path, file.content)
-    }
-
-    // Add the template config files too
-    zip.file('package.json', JSON.stringify({
-      name: 'tinybaguette-export',
-      private: true,
-      type: 'module',
-      scripts: { dev: 'vite', build: 'vite build', preview: 'vite preview' },
-      dependencies: {
-        react: '^18.3.1',
-        'react-dom': '^18.3.1',
-        'react-router-dom': '^6.28.0',
-        'lucide-react': '^0.468.0',
-      },
-      devDependencies: {
-        '@vitejs/plugin-react': '^4.3.4',
-        tailwindcss: '^4.0.0',
-        '@tailwindcss/vite': '^4.0.0',
-        vite: '^6.0.0',
-      },
-    }, null, 2))
-
-    zip.file('vite.config.js', `import { defineConfig } from 'vite'\nimport react from '@vitejs/plugin-react'\nimport tailwindcss from '@tailwindcss/vite'\n\nexport default defineConfig({\n  plugins: [react(), tailwindcss()],\n})\n`)
-
-    zip.file('index.html', `<!DOCTYPE html>\n<html lang="en">\n  <head>\n    <meta charset="UTF-8" />\n    <meta name="viewport" content="width=device-width, initial-scale=1.0" />\n    <title>App</title>\n  </head>\n  <body>\n    <div id="root"></div>\n    <script type="module" src="/src/main.tsx"></script>\n  </body>\n</html>\n`)
-
-    const blob = await zip.generateAsync({ type: 'blob' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${currentProject?.title || 'app'}-export.zip`
-    a.click()
-    URL.revokeObjectURL(url)
-  }, [appFiles, currentProject?.title])
-
-  const handleReloadPreview = useCallback(() => {
-    if (iframeRef.current && serverUrl) {
-      iframeRef.current.src = serverUrl
-    }
-  }, [serverUrl])
-
-  const handleOpenExternal = useCallback(() => {
-    if (serverUrl) {
-      window.open(serverUrl, '_blank')
-    }
-  }, [serverUrl])
-
-  // ─── Load existing app files into WebContainer on revisit ──
-  const handleLoadExisting = useCallback(async () => {
-    if (!currentProject?.appFiles || currentProject.appFiles.length === 0) return
-
-    setGenError(null)
-    setPhase('booting')
+    const pageName = addPageName.trim()
+    const slug = pageName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+    const routePath = `/${slug}`
 
     try {
-      await boot()
-      setPhase('writing')
-      await writeAppFiles(currentProject.appFiles)
-      setLocalAppFiles(currentProject.appFiles)
-      if (currentProject.appDesignSummary) setSummary(currentProject.appDesignSummary)
-      setPhase('ready')
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to load existing app'
-      setGenError(msg)
-      setPhase('error')
-    }
-  }, [currentProject, boot, writeAppFiles])
+      const res = await authFetch('/api/ai/edit-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentHtml: '<div class="p-8"><h1 class="text-2xl font-bold">New Page</h1></div>',
+          instruction: `Create a full, polished page for "${pageName}" that matches the design system of the existing pages. Include proper header, content sections, and footer.`,
+          pageTitle: pageName,
+        }),
+      })
 
-  const handleNavigateRoute = useCallback(
-    (path: string) => {
-      if (!iframeRef.current?.contentWindow) return
-      iframeRef.current.contentWindow.postMessage(
-        { type: 'tb-navigate', path },
-        '*'
-      )
-    },
-    []
-  )
+      if (!res.ok) throw new Error('Failed to generate page')
 
-  const handleAddPage = useCallback(
-    async () => {
-      if (!addPageName.trim() || addingPage) return
-      setAddingPage(true)
-
-      const pageName = addPageName.trim()
-      const slug = pageName
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-      const routePath = `/${slug}`
-
-      try {
-        const instruction = `Add a new page called "${pageName}" at route "${routePath}". Create the page component at src/pages/${pageName.replace(/\s+/g, '')}.tsx with a full, polished UI that fits the existing app's design system. Update src/App.tsx to import the new page and add a <Route path="${routePath}"> for it. If the app has a navigation/header component, add a link to "${pageName}" there too.`
-
-        const res = await authFetch('/api/ai/edit-app', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ files: appFiles, instruction }),
-        })
-
-        if (!res.ok) throw new Error('Failed to add page')
-
-        const data = await res.json()
-        const updatedFiles: { path: string; content: string }[] = data.files || []
-
-        if (updatedFiles.length > 0) {
-          await handleChatFilesUpdated(updatedFiles, data.summary || `Added ${pageName} page`)
-
-          const msg: AppChatMessage = {
-            id: generateId(),
-            role: 'ai',
-            content: `Added new page: **${pageName}** at \`${routePath}\``,
-            filesChanged: updatedFiles.map((f) => f.path),
-            timestamp: Date.now(),
-          }
-          addAppChatMessage(msg)
+      const data = await res.json()
+      if (data.html) {
+        const newPage: ProjectPage = {
+          id: generateId(),
+          title: pageName,
+          route: routePath,
+          html: data.html,
+          linkedNodeIds: [],
+          position: { x: pages.length % 3 * 500, y: Math.floor(pages.length / 3) * 440 },
         }
-
+        setPages([...pages, newPage], pageEdges)
+        setSelectedPageId(newPage.id)
         setAddPageOpen(false)
         setAddPageName('')
-
-        // Navigate to the new page after a short delay for hot reload
-        setTimeout(() => handleNavigateRoute(routePath), 1000)
-      } catch (err) {
-        console.error('Failed to add page:', err)
-      } finally {
-        setAddingPage(false)
       }
-    },
-    [addPageName, addingPage, appFiles, handleChatFilesUpdated, addAppChatMessage, handleNavigateRoute]
-  )
-
-  // ─── Browser Not Supported ─────────────────────────────────
-  if (!supported) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center max-w-md">
-          <div className="w-16 h-16 rounded-2xl bg-destructive/10 flex items-center justify-center mx-auto mb-4">
-            <AlertTriangle className="h-8 w-8 text-destructive" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Browser Not Supported</h3>
-          <p className="text-sm text-muted-foreground">
-            The Design tab requires a modern browser with SharedArrayBuffer support.
-            Please use the latest version of Chrome, Edge, or Firefox.
-          </p>
-        </div>
-      </div>
-    )
-  }
+    } catch (err) {
+      console.error('Failed to add page:', err)
+    } finally {
+      setAddingPage(false)
+    }
+  }, [addPageName, addingPage, currentProject, pages, pageEdges, setPages])
 
   // ─── Empty / Idle State ─────────────────────────────────────
-  const hasSavedFiles = currentProject?.appFiles && currentProject.appFiles.length > 0
-  if (phase === 'idle' && appFiles.length === 0) {
+  if (phase === 'idle' && pages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center max-w-lg">
@@ -1039,29 +364,21 @@ export function DesignView() {
           ) : (
             <>
               <p className="text-sm text-muted-foreground mb-2 max-w-md mx-auto">
-                {hasSavedFiles
-                  ? 'You have a previously generated app. Load the preview or regenerate from scratch.'
-                  : 'Generate a complete React + Tailwind application from your project plan. The AI will read your goals, features, and PRDs to build a fully functional preview.'}
+                AI will read your goals, features, and PRDs from the Plan tab, then generate polished webpage previews for every screen in your app.
               </p>
-              {!hasSavedFiles && currentProject.nodes.length === 0 && (
+              {currentProject.nodes.length === 0 && (
                 <p className="text-xs text-amber-500 mb-4">
                   Tip: Add some goals and features in the Plan tab first for better results.
                 </p>
               )}
               <div className="flex items-center justify-center gap-3 mt-4">
-                {hasSavedFiles && (
-                  <Button onClick={handleLoadExisting} size="lg" className="gap-2">
-                    <Monitor className="h-5 w-5" />
-                    Load Preview
-                  </Button>
-                )}
-                <Button onClick={handleGenerate} size="lg" variant={hasSavedFiles ? 'outline' : 'default'} className="gap-2">
+                <Button onClick={handleGenerate} size="lg" className="gap-2">
                   <Sparkles className="h-5 w-5" />
-                  {hasSavedFiles ? 'Regenerate' : 'Generate App'}
+                  Generate Pages
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground mt-4">
-                This may take 30-60 seconds on first run (installing dependencies).
+                Takes 15-30 seconds. No special browser requirements.
               </p>
             </>
           )}
@@ -1070,20 +387,23 @@ export function DesignView() {
     )
   }
 
-  // ─── Loading / Generating State ─────────────────────────────
-  if (phase !== 'idle' && phase !== 'ready' && phase !== 'error' && appFiles.length === 0) {
+  // ─── Generating State ──────────────────────────────────────
+  if (phase === 'generating') {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="max-w-sm">
-          <h3 className="text-lg font-semibold mb-6">Building your app...</h3>
-          <PhaseProgress currentPhase={phase} error={genError} />
+        <div className="text-center max-w-sm">
+          <Loader2 className="h-10 w-10 animate-spin mx-auto mb-4 text-primary" />
+          <h3 className="text-lg font-semibold mb-2">Generating pages...</h3>
+          <p className="text-sm text-muted-foreground">
+            AI is reading your project plan and building polished page previews.
+          </p>
         </div>
       </div>
     )
   }
 
   // ─── Error State ────────────────────────────────────────────
-  if (phase === 'error' && appFiles.length === 0) {
+  if (phase === 'error' && pages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center max-w-md">
@@ -1092,48 +412,44 @@ export function DesignView() {
           </div>
           <h3 className="text-lg font-semibold mb-2">Generation Failed</h3>
           <p className="text-sm text-muted-foreground mb-4">{genError}</p>
-          <div className="flex items-center justify-center gap-2">
-            <Button onClick={handleGenerate} variant="default" className="gap-2">
-              <RotateCcw className="h-4 w-4" />
-              Retry
-            </Button>
-            <Button onClick={restart} variant="outline" className="gap-2">
-              <RefreshCw className="h-4 w-4" />
-              Reset Container
-            </Button>
-          </div>
+          <Button onClick={handleGenerate} variant="default" className="gap-2">
+            <RotateCcw className="h-4 w-4" />
+            Retry
+          </Button>
         </div>
       </div>
     )
   }
 
-  // ─── Ready State — Preview + Sidebar ────────────────────────
+  // ─── Ready State — Preview ─────────────────────────────────
   return (
     <div className="h-full flex flex-col">
       {/* Toolbar */}
       <div className="flex items-center gap-2 px-3 py-2 border-b bg-background/90 backdrop-blur-sm shrink-0">
-        {/* Viewport switcher */}
-        <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
-          {([
-            { size: 'desktop' as ViewportSize, icon: Monitor },
-            { size: 'tablet' as ViewportSize, icon: Tablet },
-            { size: 'mobile' as ViewportSize, icon: Smartphone },
-          ]).map(({ size, icon: Icon }) => (
-            <button
-              key={size}
-              onClick={() => setViewport(size)}
-              className={cn(
-                'p-1.5 rounded transition-colors',
-                viewport === size
-                  ? 'bg-background shadow-sm text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-              title={VIEWPORT_SIZES[size].label}
-            >
-              <Icon className="h-3.5 w-3.5" />
-            </button>
-          ))}
-        </div>
+        {/* Viewport switcher (single mode only) */}
+        {designMode === 'single' && (
+          <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
+            {([
+              { size: 'desktop' as ViewportSize, icon: Monitor },
+              { size: 'tablet' as ViewportSize, icon: Tablet },
+              { size: 'mobile' as ViewportSize, icon: Smartphone },
+            ]).map(({ size, icon: Icon }) => (
+              <button
+                key={size}
+                onClick={() => setViewport(size)}
+                className={cn(
+                  'p-1.5 rounded transition-colors',
+                  viewport === size
+                    ? 'bg-background shadow-sm text-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+                title={VIEWPORT_SIZES[size].label}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* View mode toggle */}
         <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
@@ -1165,18 +481,18 @@ export function DesignView() {
 
         <div className="w-px h-5 bg-border" />
 
-        {/* Page navigator */}
-        {routes.length > 0 && phase === 'ready' && (
+        {/* Page navigator (single mode) */}
+        {designMode === 'single' && pages.length > 0 && (
           <div className="relative flex items-center gap-1">
             <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <select
-              value={currentRoute}
-              onChange={(e) => handleNavigateRoute(e.target.value)}
+              value={selectedPageId || ''}
+              onChange={(e) => setSelectedPageId(e.target.value)}
               className="h-7 text-xs bg-transparent border rounded-md px-2 pr-6 appearance-none cursor-pointer hover:bg-muted transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
             >
-              {routes.map((r) => (
-                <option key={r.path} value={r.path}>
-                  {r.label} ({r.path})
+              {pages.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.title} ({p.route})
                 </option>
               ))}
             </select>
@@ -1190,7 +506,7 @@ export function DesignView() {
           </div>
         )}
 
-        {routes.length > 0 && phase === 'ready' && (
+        {designMode === 'single' && pages.length > 0 && (
           <div className="w-px h-5 bg-border" />
         )}
 
@@ -1200,7 +516,7 @@ export function DesignView() {
           size="sm"
           className="h-7 gap-1.5 text-xs"
           onClick={handleRegenerate}
-          disabled={phase !== 'ready' && phase !== 'idle' && phase !== 'error'}
+          disabled={phase !== 'ready'}
         >
           <Sparkles className="h-3.5 w-3.5" />
           Regenerate
@@ -1210,8 +526,12 @@ export function DesignView() {
           variant="ghost"
           size="sm"
           className="h-7 gap-1.5 text-xs"
-          onClick={handleReloadPreview}
-          disabled={!serverUrl}
+          onClick={() => {
+            if (iframeRef.current && selectedPage) {
+              iframeRef.current.srcdoc = wrapHtmlPage(selectedPage.html)
+            }
+          }}
+          disabled={!selectedPage}
         >
           <RefreshCw className="h-3.5 w-3.5" />
           Reload
@@ -1219,109 +539,58 @@ export function DesignView() {
 
         <div className="flex-1" />
 
-        {/* Status indicator */}
+        {/* Status */}
         {phase === 'ready' && (
           <div className="flex items-center gap-1.5 text-xs text-green-600">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            Live
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+            {pages.length} page{pages.length !== 1 ? 's' : ''}
           </div>
         )}
 
-        {phase !== 'ready' && phase !== 'idle' && phase !== 'error' && (
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            {PHASE_STEPS.find((s) => s.phase === phase)?.label || 'Working...'}
-          </div>
+
+        {/* Chat toggle (single mode) */}
+        {designMode === 'single' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className={cn('h-7 gap-1.5 text-xs', chatOpen && 'bg-accent')}
+            onClick={() => setChatOpen(!chatOpen)}
+            disabled={!selectedPage}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Chat
+          </Button>
         )}
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn('h-7 gap-1.5 text-xs', selectorEnabled && 'bg-purple-500/10 text-purple-600')}
-          onClick={() => {
-            const next = !selectorEnabled
-            setSelectorEnabled(next)
-            if (!next) setSelectedElement(null)
-          }}
-          disabled={phase !== 'ready'}
-          title="Click elements in the preview to inspect and edit them"
-        >
-          <MousePointerClick className="h-3.5 w-3.5" />
-          Select
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn('h-7 gap-1.5 text-xs', chatOpen && 'bg-accent')}
-          onClick={() => setChatOpen(!chatOpen)}
-          disabled={phase !== 'ready'}
-        >
-          <MessageSquare className="h-3.5 w-3.5" />
-          Chat
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn('h-7 gap-1.5 text-xs', codeEditorOpen && 'bg-accent')}
-          onClick={() => setCodeEditorOpen(!codeEditorOpen)}
-          disabled={phase !== 'ready' || appFiles.length === 0}
-        >
-          <Code2 className="h-3.5 w-3.5" />
-          Code
-        </Button>
-
-        <div className="w-px h-5 bg-border" />
-
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 gap-1.5 text-xs"
-          onClick={handleExportZip}
-          disabled={appFiles.length === 0}
-          title="Download app as zip"
-        >
-          <Download className="h-3.5 w-3.5" />
-          Export
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7"
-          onClick={handleOpenExternal}
-          disabled={!serverUrl}
-          title="Open in new tab"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-        </Button>
       </div>
 
       {/* Main content */}
       <div className="flex-1 flex min-h-0">
-        {designMode === 'single' && (
+        {designMode === 'single' && selectedPage && (
           <>
-            {/* Sidebar */}
+            {/* Page list sidebar */}
             <div className="w-56 border-r bg-muted/30 flex flex-col shrink-0 overflow-y-auto">
-              {/* Summary */}
-              {summary && (
+              {designSystem && (
                 <div className="p-3 border-b">
-                  <p className="text-xs text-muted-foreground leading-relaxed">{summary}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{designSystem}</p>
                 </div>
               )}
-
-              {/* File tree */}
-              <div className="py-2">
-                <FileTree files={appFiles} />
+              <div className="py-1">
+                {pages.map((p) => (
+                  <button
+                    key={p.id}
+                    onClick={() => setSelectedPageId(p.id)}
+                    className={cn(
+                      'w-full text-left px-3 py-2 text-xs transition-colors',
+                      p.id === selectedPageId
+                        ? 'bg-accent text-foreground font-medium'
+                        : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                    )}
+                  >
+                    <div className="font-medium truncate">{p.title}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground">{p.route}</div>
+                  </button>
+                ))}
               </div>
-
-              {/* Generation progress (when regenerating) */}
-              {phase !== 'ready' && phase !== 'idle' && (
-                <div className="p-3 border-t mt-auto">
-                  <PhaseProgress currentPhase={phase} error={genError} />
-                </div>
-              )}
             </div>
 
             {/* Preview iframe */}
@@ -1337,74 +606,46 @@ export function DesignView() {
                   maxWidth: '100%',
                 }}
               >
-                {serverUrl ? (
-                  <iframe
-                    ref={iframeRef}
-                    src={serverUrl}
-                    title="App Preview"
-                    className="w-full h-full border-0"
-                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                    <div className="text-center">
-                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-                      <p className="text-sm">Starting preview server...</p>
-                    </div>
-                  </div>
-                )}
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={wrapHtmlPage(selectedPage.html)}
+                  title={`Preview: ${selectedPage.title}`}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts"
+                />
               </div>
             </div>
           </>
         )}
 
-        {designMode === 'canvas' && serverUrl && (
+        {designMode === 'canvas' && pages.length > 0 && (
           <div className="flex-1">
             <DesignCanvas
-              routes={routes}
-              serverUrl={serverUrl}
-              appFiles={appFiles}
-              onFocusPage={(path) => {
+              pages={pages}
+              pageEdges={pageEdges}
+              onFocusPage={(pageId) => {
                 setDesignMode('single')
-                setCurrentRoute(path)
-                handleNavigateRoute(path)
+                setSelectedPageId(pageId)
+              }}
+              onPagePositionChange={(pageId: string, position: { x: number; y: number }) => {
+                const updatePagePosition = useProjectStore.getState().updatePagePosition
+                updatePagePosition(pageId, position)
               }}
             />
           </div>
         )}
 
-        {designMode === 'canvas' && !serverUrl && (
+        {designMode === 'canvas' && pages.length === 0 && (
           <div className="flex-1 flex items-center justify-center text-muted-foreground">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-              <p className="text-sm">Starting preview server...</p>
-            </div>
+            <p className="text-sm">No pages generated yet.</p>
           </div>
         )}
 
-        {/* Code editor */}
-        {codeEditorOpen && !chatOpen && designMode === 'single' && (
-          <CodeEditorPanel
-            files={appFiles}
-            onFileChange={handleCodeFileChange}
-            onClose={() => setCodeEditorOpen(false)}
-          />
-        )}
-
-        {/* Element inspector */}
-        {selectedElement && !chatOpen && !codeEditorOpen && designMode === 'single' && (
-          <ElementInspector
-            element={selectedElement}
-            onEditRequest={handleInspectorEditRequest}
-            onClose={handleCloseInspector}
-          />
-        )}
-
         {/* Chat sidebar */}
-        {chatOpen && (
-          <AppChat
-            appFiles={appFiles}
-            onFilesUpdated={handleChatFilesUpdated}
+        {chatOpen && selectedPage && designMode === 'single' && (
+          <PageChat
+            page={selectedPage}
+            onPageUpdated={handlePageUpdated}
             onClose={() => setChatOpen(false)}
           />
         )}
@@ -1426,7 +667,7 @@ export function DesignView() {
               disabled={addingPage}
             />
             <p className="text-[11px] text-muted-foreground mt-1.5 mb-4">
-              AI will generate the page, add it to your routes, and update the navigation.
+              AI will generate a new page matching your design system.
             </p>
             <div className="flex items-center justify-end gap-2">
               <Button

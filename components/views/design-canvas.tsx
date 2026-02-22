@@ -7,7 +7,6 @@ import {
   Background,
   Controls,
   MiniMap,
-  useReactFlow,
   applyNodeChanges,
   type Node,
   type Edge,
@@ -18,16 +17,30 @@ import {
   Position,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Globe, ExternalLink, Maximize2 } from 'lucide-react'
-import type { AppRoute } from '@/lib/parse-app-routes'
+import { Globe, Maximize2 } from 'lucide-react'
+import type { ProjectPage, PageEdge } from '@/types/project'
 
 // ─── Types ───────────────────────────────────────────────────
 
 interface PageNodeData {
-  route: AppRoute
-  serverUrl: string
-  onFocusPage: (path: string) => void
+  page: ProjectPage
+  onFocusPage: (pageId: string) => void
   [key: string]: unknown
+}
+
+// ─── Wrap HTML for srcdoc ────────────────────────────────────
+
+function wrapHtml(bodyHtml: string): string {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com"><\/script>
+  <style>body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }</style>
+</head>
+<body>${bodyHtml}</body>
+</html>`
 }
 
 // ─── Page Frame Node ─────────────────────────────────────────
@@ -36,54 +49,41 @@ const PAGE_FRAME_WIDTH = 420
 const PAGE_FRAME_HEIGHT = 320
 
 const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
-  const { route, serverUrl, onFocusPage } = data as unknown as PageNodeData
-  const iframeSrc = `${serverUrl}${route.path === '/' ? '' : route.path}`
+  const { page, onFocusPage } = data as unknown as PageNodeData
 
   return (
     <div
       className="group"
       style={{ width: PAGE_FRAME_WIDTH, height: PAGE_FRAME_HEIGHT + 36 }}
     >
-      {/* Source handle (outgoing links) */}
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
-      {/* Target handle (incoming links) */}
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
 
       {/* Frame header */}
       <div className="flex items-center gap-2 px-3 py-1.5 bg-background border border-b-0 rounded-t-lg">
         <Globe className="h-3 w-3 text-muted-foreground shrink-0" />
-        <span className="text-xs font-medium truncate flex-1">{route.label}</span>
-        <span className="text-[10px] font-mono text-muted-foreground">{route.path}</span>
+        <span className="text-xs font-medium truncate flex-1">{page.title}</span>
+        <span className="text-[10px] font-mono text-muted-foreground">{page.route}</span>
         <button
           onClick={(e) => {
             e.stopPropagation()
-            onFocusPage(route.path)
+            onFocusPage(page.id)
           }}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
           title="Focus this page"
         >
           <Maximize2 className="h-3 w-3 text-muted-foreground" />
         </button>
-        <a
-          href={iframeSrc}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
-          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
-          title="Open in new tab"
-        >
-          <ExternalLink className="h-3 w-3 text-muted-foreground" />
-        </a>
       </div>
 
-      {/* Iframe preview */}
+      {/* Iframe preview via srcdoc */}
       <div
         className="border rounded-b-lg overflow-hidden bg-white"
         style={{ width: PAGE_FRAME_WIDTH, height: PAGE_FRAME_HEIGHT }}
       >
         <iframe
-          src={iframeSrc}
-          title={`Preview: ${route.label}`}
+          srcDoc={wrapHtml(page.html)}
+          title={`Preview: ${page.title}`}
           className="border-0 origin-top-left"
           style={{
             width: 1280,
@@ -92,7 +92,7 @@ const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
             transformOrigin: 'top left',
             pointerEvents: 'none',
           }}
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+          sandbox="allow-scripts"
           loading="lazy"
         />
       </div>
@@ -106,99 +106,31 @@ const designNodeTypes: NodeTypes = {
   pageFrame: PageFrameNode,
 }
 
-// ─── Link Parsing ────────────────────────────────────────────
+// ─── Layout + Edges ──────────────────────────────────────────
 
-/**
- * Parse <Link to="..."> references from app files to build edges between pages.
- */
-function parsePageLinks(
-  appFiles: { path: string; content: string }[],
-  routes: AppRoute[]
-): { source: string; target: string }[] {
-  const routePaths = new Set(routes.map((r) => r.path))
-  const links: { source: string; target: string }[] = []
-  const seen = new Set<string>()
-
-  // Map file paths to route paths
-  const fileToRoute = new Map<string, string>()
-  for (const route of routes) {
-    // Convention: /about → src/pages/About.tsx or similar
-    const slug = route.path === '/' ? 'Home' : route.path.replace(/^\//, '').split('/').map(
-      s => s.charAt(0).toUpperCase() + s.slice(1)
-    ).join('')
-    // Try to find the file that defines this page
-    for (const f of appFiles) {
-      if (f.path.toLowerCase().includes(slug.toLowerCase()) && f.path.endsWith('.tsx')) {
-        fileToRoute.set(f.path, route.path)
-      }
-    }
-  }
-  // Also map App.tsx to "/" for links in the layout
-  const appFile = appFiles.find(f => f.path === 'src/App.tsx')
-  if (appFile) fileToRoute.set(appFile.path, '/')
-
-  // Find <Link to="..."> patterns in each file
-  const linkPattern = /<Link\s+[^>]*to\s*=\s*["']([^"']+)["']/g
-  const navLinkPattern = /<NavLink\s+[^>]*to\s*=\s*["']([^"']+)["']/g
-
-  for (const file of appFiles) {
-    const sourceRoute = fileToRoute.get(file.path)
-    if (!sourceRoute) continue
-
-    for (const pattern of [linkPattern, navLinkPattern]) {
-      pattern.lastIndex = 0
-      let match: RegExpExecArray | null
-      while ((match = pattern.exec(file.content)) !== null) {
-        const targetPath = match[1]
-        if (routePaths.has(targetPath) && targetPath !== sourceRoute) {
-          const key = `${sourceRoute}->${targetPath}`
-          if (!seen.has(key)) {
-            seen.add(key)
-            links.push({ source: sourceRoute, target: targetPath })
-          }
-        }
-      }
-    }
-  }
-
-  return links
-}
-
-// ─── Layout Helper ───────────────────────────────────────────
-
-const GRID_COLS = 3
-const GAP_X = 80
-const GAP_Y = 80
-
-function layoutPageNodes(
-  routes: AppRoute[],
-  serverUrl: string,
-  onFocusPage: (path: string) => void
+function buildNodes(
+  pages: ProjectPage[],
+  onFocusPage: (pageId: string) => void
 ): Node[] {
-  return routes.map((route, i) => {
-    const col = i % GRID_COLS
-    const row = Math.floor(i / GRID_COLS)
-    return {
-      id: `page-${route.path}`,
-      type: 'pageFrame',
-      position: {
-        x: col * (PAGE_FRAME_WIDTH + GAP_X),
-        y: row * (PAGE_FRAME_HEIGHT + 36 + GAP_Y),
-      },
-      data: { route, serverUrl, onFocusPage } as PageNodeData,
-      draggable: true,
-      selectable: true,
-    }
-  })
+  return pages.map((page, i) => ({
+    id: page.id,
+    type: 'pageFrame',
+    position: page.position || {
+      x: (i % 3) * (PAGE_FRAME_WIDTH + 80),
+      y: Math.floor(i / 3) * (PAGE_FRAME_HEIGHT + 36 + 80),
+    },
+    data: { page, onFocusPage } as PageNodeData,
+    draggable: true,
+    selectable: true,
+  }))
 }
 
-function buildPageEdges(
-  links: { source: string; target: string }[]
-): Edge[] {
-  return links.map((link, i) => ({
-    id: `link-${i}`,
-    source: `page-${link.source}`,
-    target: `page-${link.target}`,
+function buildEdges(pageEdges: PageEdge[]): Edge[] {
+  return pageEdges.map((e) => ({
+    id: e.id,
+    source: e.source,
+    target: e.target,
+    label: e.label,
     type: 'default',
     animated: true,
     style: { stroke: 'hsl(var(--primary) / 0.3)', strokeWidth: 1.5 },
@@ -208,38 +140,39 @@ function buildPageEdges(
 // ─── Canvas Inner ────────────────────────────────────────────
 
 function DesignCanvasInner({
-  routes,
-  serverUrl,
-  appFiles,
+  pages,
+  pageEdges,
   onFocusPage,
+  onPagePositionChange,
 }: {
-  routes: AppRoute[]
-  serverUrl: string
-  appFiles: { path: string; content: string }[]
-  onFocusPage: (path: string) => void
+  pages: ProjectPage[]
+  pageEdges: PageEdge[]
+  onFocusPage: (pageId: string) => void
+  onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
-  const { fitView } = useReactFlow()
+  const initialNodes = useMemo(() => buildNodes(pages, onFocusPage), [pages, onFocusPage])
+  const edges = useMemo(() => buildEdges(pageEdges), [pageEdges])
 
-  const nodes = useMemo(
-    () => layoutPageNodes(routes, serverUrl, onFocusPage),
-    [routes, serverUrl, onFocusPage]
-  )
+  const [flowNodes, setFlowNodes] = useState<Node[]>(initialNodes)
 
-  const links = useMemo(() => parsePageLinks(appFiles, routes), [appFiles, routes])
-  const edges = useMemo(() => buildPageEdges(links), [links])
-
-  const [flowNodes, setFlowNodes] = useState<Node[]>(nodes)
-
-  // Update nodes when routes change
   useEffect(() => {
-    setFlowNodes(nodes)
-  }, [nodes])
+    setFlowNodes(buildNodes(pages, onFocusPage))
+  }, [pages, onFocusPage])
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setFlowNodes((nds) => applyNodeChanges(changes, nds))
+      setFlowNodes((nds) => {
+        const updated = applyNodeChanges(changes, nds)
+        // Persist position changes
+        for (const change of changes) {
+          if (change.type === 'position' && change.position && change.id) {
+            onPagePositionChange(change.id, change.position)
+          }
+        }
+        return updated
+      })
     },
-    []
+    [onPagePositionChange]
   )
 
   return (
@@ -276,20 +209,20 @@ function DesignCanvasInner({
 // ─── Exported Component ──────────────────────────────────────
 
 export function DesignCanvas({
-  routes,
-  serverUrl,
-  appFiles,
+  pages,
+  pageEdges,
   onFocusPage,
+  onPagePositionChange,
 }: {
-  routes: AppRoute[]
-  serverUrl: string
-  appFiles: { path: string; content: string }[]
-  onFocusPage: (path: string) => void
+  pages: ProjectPage[]
+  pageEdges: PageEdge[]
+  onFocusPage: (pageId: string) => void
+  onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
-  if (routes.length === 0) {
+  if (pages.length === 0) {
     return (
       <div className="h-full flex items-center justify-center text-muted-foreground">
-        <p className="text-sm">No pages detected. Generate an app first.</p>
+        <p className="text-sm">No pages detected. Generate pages first.</p>
       </div>
     )
   }
@@ -297,10 +230,10 @@ export function DesignCanvas({
   return (
     <ReactFlowProvider>
       <DesignCanvasInner
-        routes={routes}
-        serverUrl={serverUrl}
-        appFiles={appFiles}
+        pages={pages}
+        pageEdges={pageEdges}
         onFocusPage={onFocusPage}
+        onPagePositionChange={onPagePositionChange}
       />
     </ReactFlowProvider>
   )
