@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, Send, PenLine, AlertTriangle, Settings, CornerDownRight } from 'lucide-react'
+import { X, Trash2, Copy, ChevronDown, ChevronRight, Plus, HelpCircle, Check, ImagePlus, Link, Upload, FileText, Terminal, Clipboard, Pencil, Sparkles, Loader2, AlertCircle, MessageSquarePlus, PenLine, AlertTriangle, CornerDownRight } from 'lucide-react'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
 import { Button } from '@/components/ui/button'
@@ -10,64 +10,18 @@ import { Badge } from '@/components/ui/badge'
 import { NodeEditForm } from './node-edit-form'
 import { RichTextEditor } from './rich-text-editor'
 import { NODE_CONFIG, STATUS_COLORS, NODE_CHILD_TYPE, QUESTION_CATEGORIES } from '@/lib/constants'
-import type { NodeStatus, NodeType, Priority, TeamMember } from '@/types/project'
+import type { NodeType } from '@/types/project'
 import { cn } from '@/lib/utils'
 import { buildNodeContext, buildPrdContext } from '@/lib/node-context'
-import { PrioritySelector } from '@/components/ui/priority-badge'
-import { AssigneePicker } from '@/components/ui/assignee-picker'
-import { TagInput } from '@/components/ui/tag-input'
-import { CommentThread } from '@/components/comments/comment-thread'
-import { BlockEditor } from '@/components/editor/block-editor'
 import { authFetch } from '@/lib/auth-fetch'
-
-const STATUS_OPTIONS: { value: NodeStatus; label: string }[] = [
-  { value: 'not_started', label: 'Not Started' },
-  { value: 'in_progress', label: 'In Progress' },
-  { value: 'completed', label: 'Completed' },
-  { value: 'blocked', label: 'Blocked' },
-]
-
-const TYPE_OPTIONS: NodeType[] = ['goal', 'subgoal', 'feature', 'task', 'moodboard', 'notes', 'connector', 'spec', 'prd', 'schema', 'prompt', 'reference']
-
-const DOC_NODE_TYPES: NodeType[] = ['spec', 'prd', 'schema', 'prompt', 'reference']
-
-const SCHEMA_TYPE_OPTIONS = [
-  { value: 'data_model', label: 'Data Model' },
-  { value: 'api_contract', label: 'API Contract' },
-  { value: 'database', label: 'Database' },
-  { value: 'other', label: 'Other' },
-] as const
-
-const PROMPT_TYPE_OPTIONS = [
-  { value: 'implementation', label: 'Implementation' },
-  { value: 'refactor', label: 'Refactor' },
-  { value: 'test', label: 'Test' },
-  { value: 'review', label: 'Review' },
-] as const
-
-const TARGET_TOOL_OPTIONS = [
-  { value: 'cursor', label: 'Cursor' },
-  { value: 'windsurf', label: 'Windsurf' },
-  { value: 'claude', label: 'Claude' },
-  { value: 'generic', label: 'Generic' },
-] as const
-
-const REFERENCE_TYPE_OPTIONS = [
-  { value: 'link', label: 'Link' },
-  { value: 'file', label: 'File' },
-  { value: 'image', label: 'Image' },
-] as const
-const EMPTY_TEAM: TeamMember[] = []
 
 export function NodeDetailPanel() {
   const { selectedNodeId, detailPanelOpen, closeDetailPanel } = useUIStore()
   const currentProject = useProjectStore((s) => s.currentProject)
-  const updateNodeStatus = useProjectStore((s) => s.updateNodeStatus)
   const deleteNode = useProjectStore((s) => s.deleteNode)
   const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
   const addChildNode = useProjectStore((s) => s.addChildNode)
   const duplicateNode = useProjectStore((s) => s.duplicateNode)
-  const changeNodeType = useProjectStore((s) => s.changeNodeType)
   const answerNodeQuestion = useProjectStore((s) => s.answerNodeQuestion)
 
   const [addingChild, setAddingChild] = useState(false)
@@ -84,22 +38,8 @@ export function NodeDetailPanel() {
   const addNodePrompt = useProjectStore((s) => s.addNodePrompt)
   const updateNodePrompt = useProjectStore((s) => s.updateNodePrompt)
   const removeNodePrompt = useProjectStore((s) => s.removeNodePrompt)
-
   const addNodeQuestions = useProjectStore((s) => s.addNodeQuestions)
   const addCustomNodeQuestion = useProjectStore((s) => s.addCustomNodeQuestion)
-  const setNodeAssignee = useProjectStore((s) => s.setNodeAssignee)
-  const setNodePriority = useProjectStore((s) => s.setNodePriority)
-  const setNodeDueDate = useProjectStore((s) => s.setNodeDueDate)
-  const setNodeEstimate = useProjectStore((s) => s.setNodeEstimate)
-  const setNodeTags = useProjectStore((s) => s.setNodeTags)
-  const team = useProjectStore((s) => s.currentProject?.team ?? EMPTY_TEAM)
-  const updateNodeVersion = useProjectStore((s) => s.updateNodeVersion)
-  const updateNodeSchemaType = useProjectStore((s) => s.updateNodeSchemaType)
-  const updateNodePromptType = useProjectStore((s) => s.updateNodePromptType)
-  const updateNodeTargetTool = useProjectStore((s) => s.updateNodeTargetTool)
-  const updateNodeReferenceType = useProjectStore((s) => s.updateNodeReferenceType)
-  const updateNodeUrl = useProjectStore((s) => s.updateNodeUrl)
-  const updateNodeAcceptanceCriteria = useProjectStore((s) => s.updateNodeAcceptanceCriteria)
 
   const [editingPRD, setEditingPRD] = useState<string | null>(null)
   const [prdTitle, setPrdTitle] = useState('')
@@ -116,7 +56,6 @@ export function NodeDetailPanel() {
   const [submittingAnswers, setSubmittingAnswers] = useState(false)
   const [showCustomInput, setShowCustomInput] = useState(false)
   const [customQuestion, setCustomQuestion] = useState('')
-  const [advancedOpen, setAdvancedOpen] = useState(false)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
 
   const node = currentProject?.nodes.find((n) => n.id === selectedNodeId)
@@ -126,8 +65,8 @@ export function NodeDetailPanel() {
   const children = currentProject?.nodes.filter((n) => n.parentId === selectedNodeId) || []
   const childType = node ? NODE_CHILD_TYPE[node.type] : null
 
-  const MAX_IMAGE_SIZE = 5 * 1024 * 1024 // 5MB
-  const COMPRESS_THRESHOLD = 1 * 1024 * 1024 // 1MB
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+  const COMPRESS_THRESHOLD = 1 * 1024 * 1024
   const MAX_DIMENSION = 1200
 
   const compressImage = useCallback((file: File): Promise<string> => {
@@ -384,7 +323,6 @@ export function NodeDetailPanel() {
   const answeredCount = node?.questions.filter((q) => (q.answer ?? '').trim()).length ?? 0
   const totalCount = node?.questions.length ?? 0
   const readinessPct = totalCount > 0 ? Math.round((answeredCount / totalCount) * 100) : 0
-  const isDocNode = node ? DOC_NODE_TYPES.includes(node.type) : false
 
   // Group questions by category
   const questionsByCategory = (() => {
@@ -393,39 +331,13 @@ export function NodeDetailPanel() {
       ? (QUESTION_CATEGORIES as Record<string, string[]>)[node.type]
       : []
     const grouped = new Map<string, typeof node.questions>()
-    // Initialize known categories in order
     nodeCategories.forEach((cat) => grouped.set(cat, []))
-    // Place questions
     node.questions.forEach((q) => {
       const cat = q.category && nodeCategories.includes(q.category) ? q.category : 'Other'
       if (!grouped.has(cat)) grouped.set(cat, [])
       grouped.get(cat)!.push(q)
     })
-    // Remove empty known categories, keep Other if non-empty
-    return Array.from(grouped.entries())
-      .filter(([cat, qs]) => cat === 'Other' ? qs.length > 0 : qs.length > 0)
-  })()
-
-  // Build document lineage breadcrumb by traversing informs/defines/implements edges backwards
-  const docLineage = (() => {
-    if (!node || !isDocNode || !currentProject) return []
-    const chain: { id: string; title: string }[] = []
-    const visited = new Set<string>()
-    let currentId: string | undefined = node.id
-    const docEdgeTypes = ['informs', 'defines', 'implements']
-    while (currentId && !visited.has(currentId)) {
-      visited.add(currentId)
-      // Find an incoming doc edge pointing to currentId
-      const incomingEdge = currentProject.edges.find(
-        (e) => e.target === currentId && docEdgeTypes.includes(e.edgeType || '')
-      )
-      if (!incomingEdge) break
-      const sourceNode = currentProject.nodes.find((n) => n.id === incomingEdge.source)
-      if (!sourceNode) break
-      chain.unshift({ id: sourceNode.id, title: sourceNode.title })
-      currentId = sourceNode.id
-    }
-    return chain
+    return Array.from(grouped.entries()).filter(([, qs]) => qs.length > 0)
   })()
 
   return (
@@ -618,7 +530,7 @@ export function NodeDetailPanel() {
                 </button>
               )}
 
-              {/* Custom Input */}
+              {/* Custom question */}
               {showCustomInput ? (
                 <div className="mt-2 flex gap-1.5">
                   <input
@@ -673,327 +585,6 @@ export function NodeDetailPanel() {
               )}
             </div>
 
-            {/* Node Type */}
-            <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                Type
-              </label>
-              <div className="relative">
-                <div
-                  className="absolute left-2.5 top-1/2 -translate-y-1/2 w-2 h-2 rounded-full pointer-events-none"
-                  style={{ backgroundColor: NODE_CONFIG[node.type].color }}
-                />
-                <select
-                  value={node.type}
-                  onChange={(e) => changeNodeType(node.id, e.target.value as NodeType)}
-                  className="w-full h-8 pl-7 pr-2 text-sm rounded-md border bg-background text-foreground appearance-none cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-                >
-                  {TYPE_OPTIONS.map((t) => (
-                    <option key={t} value={t}>{NODE_CONFIG[t].label}</option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Doc-specific fields */}
-            {isDocNode && (
-              <div className="mt-4 space-y-3">
-                <div className="h-px bg-border" />
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Document Fields
-                </div>
-
-                {/* Version (spec, prd, schema) */}
-                {(node.type === 'spec' || node.type === 'prd' || node.type === 'schema') && (
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Version</label>
-                    <input
-                      type="text"
-                      value={node.version || ''}
-                      onChange={(e) => updateNodeVersion(node.id, e.target.value)}
-                      placeholder="e.g. 1.0"
-                      className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground font-mono"
-                    />
-                  </div>
-                )}
-
-                {/* Schema Type (schema) */}
-                {node.type === 'schema' && (
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Schema Type</label>
-                    <select
-                      value={node.schemaType || 'other'}
-                      onChange={(e) => updateNodeSchemaType(node.id, e.target.value as 'data_model' | 'api_contract' | 'database' | 'other')}
-                      className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
-                    >
-                      {SCHEMA_TYPE_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                      ))}
-                    </select>
-                  </div>
-                )}
-
-                {/* Prompt Type + Target Tool (prompt) */}
-                {node.type === 'prompt' && (
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Prompt Type</label>
-                      <select
-                        value={node.promptType || 'implementation'}
-                        onChange={(e) => updateNodePromptType(node.id, e.target.value as 'implementation' | 'refactor' | 'test' | 'review')}
-                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
-                      >
-                        {PROMPT_TYPE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Target Tool</label>
-                      <select
-                        value={node.targetTool || 'generic'}
-                        onChange={(e) => updateNodeTargetTool(node.id, e.target.value as 'cursor' | 'windsurf' | 'claude' | 'generic')}
-                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
-                      >
-                        {TARGET_TOOL_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
-
-                {/* Reference Type + URL (reference) */}
-                {node.type === 'reference' && (
-                  <>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Reference Type</label>
-                      <select
-                        value={node.referenceType || 'link'}
-                        onChange={(e) => updateNodeReferenceType(node.id, e.target.value as 'link' | 'file' | 'image')}
-                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground cursor-pointer"
-                      >
-                        {REFERENCE_TYPE_OPTIONS.map((opt) => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">URL</label>
-                      <input
-                        type="url"
-                        value={node.url || ''}
-                        onChange={(e) => updateNodeUrl(node.id, e.target.value)}
-                        placeholder="https://..."
-                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground font-mono"
-                      />
-                    </div>
-                  </>
-                )}
-
-                {/* Acceptance Criteria (prd) */}
-                {node.type === 'prd' && (
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                      Acceptance Criteria ({(node.acceptanceCriteria || []).length})
-                    </label>
-                    <div className="space-y-1.5">
-                      {(node.acceptanceCriteria || []).map((criterion, idx) => (
-                        <div key={idx} className="flex items-center gap-1.5">
-                          <span className="text-[10px] text-muted-foreground shrink-0 w-4 text-right">{idx + 1}.</span>
-                          <input
-                            type="text"
-                            value={criterion}
-                            onChange={(e) => {
-                              const updated = [...(node.acceptanceCriteria || [])]
-                              updated[idx] = e.target.value
-                              updateNodeAcceptanceCriteria(node.id, updated)
-                            }}
-                            className="flex-1 h-6 px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground"
-                          />
-                          <button
-                            onClick={() => {
-                              const updated = (node.acceptanceCriteria || []).filter((_, i) => i !== idx)
-                              updateNodeAcceptanceCriteria(node.id, updated)
-                            }}
-                            className="text-muted-foreground hover:text-red-500 shrink-0"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        onClick={() => {
-                          updateNodeAcceptanceCriteria(node.id, [...(node.acceptanceCriteria || []), ''])
-                        }}
-                        className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors"
-                      >
-                        <Plus className="h-3 w-3" />
-                        Add criterion
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Document Lineage Breadcrumb */}
-            {isDocNode && docLineage.length > 0 && (
-              <div className="mt-4">
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Lineage</label>
-                <div className="flex items-center gap-1 flex-wrap text-xs">
-                  {docLineage.map((item, idx) => (
-                    <span key={item.id} className="flex items-center gap-1">
-                      <button
-                        onClick={() => useUIStore.getState().selectNode(item.id)}
-                        className="text-primary hover:underline truncate max-w-[120px]"
-                      >
-                        {item.title}
-                      </button>
-                      {idx < docLineage.length - 1 && (
-                        <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                      )}
-                    </span>
-                  ))}
-                  <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0" />
-                  <span className="font-medium truncate max-w-[120px]">{node.title}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Document */}
-            <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1.5">
-                <FileText className="h-3.5 w-3.5" />
-                Document
-              </label>
-              <div className="border rounded-lg p-3 bg-muted/10">
-                <BlockEditor
-                  nodeId={node.id}
-                  blocks={node.document?.blocks || []}
-                />
-              </div>
-            </div>
-
-            {/* Comments */}
-            <div className="mt-4">
-              <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                Comments ({(node.comments || []).length})
-              </label>
-              <CommentThread
-                nodeId={node.id}
-                comments={node.comments || []}
-              />
-            </div>
-
-            {/* Notes Rich Text Editor */}
-            {node.type === 'notes' && (
-              <div className="mt-4">
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                  Content
-                </label>
-                <RichTextEditor
-                  content={node.content || ''}
-                  onChange={(html) => updateNodeRichContent(node.id, html)}
-                  placeholder="Write your notes here..."
-                />
-              </div>
-            )}
-
-            {/* Moodboard Image Manager */}
-            {node.type === 'moodboard' && (
-              <div className="mt-4" onPaste={handlePaste}>
-                <label className="text-xs font-medium text-muted-foreground mb-2 block">
-                  Images ({(node.images || []).length})
-                </label>
-                {(node.images || []).length > 0 && (
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    {(node.images || []).map((url, i) => (
-                      <div key={i} className="relative group/img aspect-video rounded overflow-hidden bg-muted">
-                        <img src={url} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
-                        <button
-                          onClick={() => removeNodeImage(node.id, url)}
-                          className="absolute top-1 right-1 p-0.5 rounded bg-black/60 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Drag-drop + file picker zone */}
-                <div
-                  className={cn(
-                    'border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer mb-2',
-                    isDragging
-                      ? 'border-primary bg-primary/5'
-                      : 'border-muted-foreground/25 hover:border-muted-foreground/50'
-                  )}
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
-                  onDragLeave={() => setIsDragging(false)}
-                  onDrop={async (e) => {
-                    e.preventDefault()
-                    setIsDragging(false)
-                    if (e.dataTransfer.files.length > 0) {
-                      await handleImageFiles(e.dataTransfer.files)
-                    }
-                  }}
-                >
-                  <Upload className="h-5 w-5 mx-auto mb-1.5 text-muted-foreground" />
-                  <p className="text-xs text-muted-foreground">
-                    Drop images, click to browse, or <span className="font-medium">Ctrl+V</span> to paste
-                  </p>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    className="hidden"
-                    onChange={async (e) => {
-                      if (e.target.files) await handleImageFiles(e.target.files)
-                      e.target.value = ''
-                    }}
-                  />
-                </div>
-
-                {/* URL input */}
-                <div className="flex gap-1.5">
-                  <div className="relative flex-1">
-                    <Link className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-                    <input
-                      value={imageUrl}
-                      onChange={(e) => setImageUrl(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' && imageUrl.trim()) {
-                          addNodeImage(node.id, imageUrl.trim())
-                          setImageUrl('')
-                        }
-                      }}
-                      placeholder="Or paste image URL..."
-                      className="w-full text-sm pl-7 pr-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-8 px-2"
-                    disabled={!imageUrl.trim()}
-                    onClick={() => {
-                      if (imageUrl.trim()) {
-                        addNodeImage(node.id, imageUrl.trim())
-                        setImageUrl('')
-                      }
-                    }}
-                  >
-                    <ImagePlus className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            )}
-
             {/* Generate Error */}
             {generateError && (
               <div className="mt-4 flex items-start gap-2 rounded-lg border border-destructive/50 bg-destructive/10 px-3 py-2">
@@ -1031,11 +622,7 @@ export function NodeDetailPanel() {
                     </button>
                   )}
                   <button
-                    onClick={() => {
-                      setEditingPRD('new')
-                      setPrdTitle('')
-                      setPrdContent('')
-                    }}
+                    onClick={() => { setEditingPRD('new'); setPrdTitle(''); setPrdContent('') }}
                     className="p-1 rounded hover:bg-accent transition-colors"
                     title="Add PRD"
                   >
@@ -1051,7 +638,7 @@ export function NodeDetailPanel() {
                       {prd.isStale && (
                         <span
                           className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0"
-                          title={prd.staleReason || 'A referenced PRD was updated'}
+                          title={prd.staleReason || 'Questions updated after generation'}
                         >
                           <AlertTriangle className="h-2.5 w-2.5" />
                           Stale
@@ -1075,11 +662,7 @@ export function NodeDetailPanel() {
                         )}
                       </button>
                       <button
-                        onClick={() => {
-                          setEditingPRD(prd.id)
-                          setPrdTitle(prd.title)
-                          setPrdContent(prd.content)
-                        }}
+                        onClick={() => { setEditingPRD(prd.id); setPrdTitle(prd.title); setPrdContent(prd.content) }}
                         className="p-1 rounded hover:bg-accent transition-colors"
                         title="Edit"
                       >
@@ -1111,17 +694,11 @@ export function NodeDetailPanel() {
                         className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                       />
                       <div className="flex gap-1.5 justify-end">
-                        <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPRD(null)}>
-                          Cancel
-                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPRD(null)}>Cancel</Button>
                         <Button
-                          size="sm"
-                          className="h-7"
+                          size="sm" className="h-7"
                           disabled={!prdTitle.trim() || !prdContent.trim()}
-                          onClick={() => {
-                            updateNodePRD(node.id, prd.id, prdTitle.trim(), prdContent.trim())
-                            setEditingPRD(null)
-                          }}
+                          onClick={() => { updateNodePRD(node.id, prd.id, prdTitle.trim(), prdContent.trim()); setEditingPRD(null) }}
                         >
                           Save
                         </Button>
@@ -1175,19 +752,11 @@ export function NodeDetailPanel() {
                     className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                   />
                   <div className="flex gap-1.5 justify-end">
-                    <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPRD(null)}>
-                      Cancel
-                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPRD(null)}>Cancel</Button>
                     <Button
-                      size="sm"
-                      className="h-7"
+                      size="sm" className="h-7"
                       disabled={!prdTitle.trim() || !prdContent.trim()}
-                      onClick={() => {
-                        addNodePRD(node.id, prdTitle.trim(), prdContent.trim())
-                        setEditingPRD(null)
-                        setPrdTitle('')
-                        setPrdContent('')
-                      }}
+                      onClick={() => { addNodePRD(node.id, prdTitle.trim(), prdContent.trim()); setEditingPRD(null); setPrdTitle(''); setPrdContent('') }}
                     >
                       Create PRD
                     </Button>
@@ -1219,11 +788,7 @@ export function NodeDetailPanel() {
                     </button>
                   )}
                   <button
-                    onClick={() => {
-                      setEditingPrompt('new')
-                      setPromptTitle('')
-                      setPromptContent('')
-                    }}
+                    onClick={() => { setEditingPrompt('new'); setPromptTitle(''); setPromptContent('') }}
                     className="p-1 rounded hover:bg-accent transition-colors"
                     title="Add Prompt"
                   >
@@ -1252,11 +817,7 @@ export function NodeDetailPanel() {
                         )}
                       </button>
                       <button
-                        onClick={() => {
-                          setEditingPrompt(prompt.id)
-                          setPromptTitle(prompt.title)
-                          setPromptContent(prompt.content)
-                        }}
+                        onClick={() => { setEditingPrompt(prompt.id); setPromptTitle(prompt.title); setPromptContent(prompt.content) }}
                         className="p-1 rounded hover:bg-accent transition-colors"
                         title="Edit"
                       >
@@ -1288,17 +849,11 @@ export function NodeDetailPanel() {
                         className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                       />
                       <div className="flex gap-1.5 justify-end">
-                        <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPrompt(null)}>
-                          Cancel
-                        </Button>
+                        <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPrompt(null)}>Cancel</Button>
                         <Button
-                          size="sm"
-                          className="h-7"
+                          size="sm" className="h-7"
                           disabled={!promptTitle.trim() || !promptContent.trim()}
-                          onClick={() => {
-                            updateNodePrompt(node.id, prompt.id, promptTitle.trim(), promptContent.trim())
-                            setEditingPrompt(null)
-                          }}
+                          onClick={() => { updateNodePrompt(node.id, prompt.id, promptTitle.trim(), promptContent.trim()); setEditingPrompt(null) }}
                         >
                           Save
                         </Button>
@@ -1331,19 +886,11 @@ export function NodeDetailPanel() {
                     className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                   />
                   <div className="flex gap-1.5 justify-end">
-                    <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPrompt(null)}>
-                      Cancel
-                    </Button>
+                    <Button size="sm" variant="ghost" className="h-7" onClick={() => setEditingPrompt(null)}>Cancel</Button>
                     <Button
-                      size="sm"
-                      className="h-7"
+                      size="sm" className="h-7"
                       disabled={!promptTitle.trim() || !promptContent.trim()}
-                      onClick={() => {
-                        addNodePrompt(node.id, promptTitle.trim(), promptContent.trim())
-                        setEditingPrompt(null)
-                        setPromptTitle('')
-                        setPromptContent('')
-                      }}
+                      onClick={() => { addNodePrompt(node.id, promptTitle.trim(), promptContent.trim()); setEditingPrompt(null); setPromptTitle(''); setPromptContent('') }}
                     >
                       Create Prompt
                     </Button>
@@ -1352,13 +899,103 @@ export function NodeDetailPanel() {
               )}
             </div>
 
+            {/* Notes content */}
+            {node.type === 'notes' && (
+              <div className="mt-4">
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">Content</label>
+                <RichTextEditor
+                  content={node.content || ''}
+                  onChange={(html) => updateNodeRichContent(node.id, html)}
+                  placeholder="Write your notes here..."
+                />
+              </div>
+            )}
+
+            {/* Moodboard images */}
+            {node.type === 'moodboard' && (
+              <div className="mt-4" onPaste={handlePaste}>
+                <label className="text-xs font-medium text-muted-foreground mb-2 block">
+                  Images ({(node.images || []).length})
+                </label>
+                {(node.images || []).length > 0 && (
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {(node.images || []).map((url, i) => (
+                      <div key={i} className="relative group/img aspect-video rounded overflow-hidden bg-muted">
+                        <img src={url} alt={`Image ${i + 1}`} className="w-full h-full object-cover" />
+                        <button
+                          onClick={() => removeNodeImage(node.id, url)}
+                          className="absolute top-1 right-1 p-0.5 rounded bg-black/60 text-white opacity-0 group-hover/img:opacity-100 transition-opacity"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div
+                  className={cn(
+                    'border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer mb-2',
+                    isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+                  )}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
+                  onDragLeave={() => setIsDragging(false)}
+                  onDrop={async (e) => {
+                    e.preventDefault()
+                    setIsDragging(false)
+                    if (e.dataTransfer.files.length > 0) await handleImageFiles(e.dataTransfer.files)
+                  }}
+                >
+                  <Upload className="h-5 w-5 mx-auto mb-1.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    Drop images, click to browse, or <span className="font-medium">Ctrl+V</span> to paste
+                  </p>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      if (e.target.files) await handleImageFiles(e.target.files)
+                      e.target.value = ''
+                    }}
+                  />
+                </div>
+                <div className="flex gap-1.5">
+                  <div className="relative flex-1">
+                    <Link className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <input
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && imageUrl.trim()) { addNodeImage(node.id, imageUrl.trim()); setImageUrl('') }
+                      }}
+                      placeholder="Or paste image URL..."
+                      className="w-full text-sm pl-7 pr-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    />
+                  </div>
+                  <Button
+                    size="sm" variant="ghost" className="h-8 px-2"
+                    disabled={!imageUrl.trim()}
+                    onClick={() => { if (imageUrl.trim()) { addNodeImage(node.id, imageUrl.trim()); setImageUrl('') } }}
+                  >
+                    <ImagePlus className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Parent */}
             {parent && (
               <div className="mt-4">
-                <label className="text-xs font-medium text-muted-foreground mb-1 block">
-                  Parent
-                </label>
-                <p className="text-sm">{parent.title}</p>
+                <label className="text-xs font-medium text-muted-foreground mb-1 block">Parent</label>
+                <button
+                  onClick={() => useUIStore.getState().selectNode(parent.id)}
+                  className="text-sm text-primary hover:underline"
+                >
+                  {parent.title}
+                </button>
               </div>
             )}
 
@@ -1373,11 +1010,7 @@ export function NodeDetailPanel() {
                     onClick={() => toggleNodeCollapse(node.id)}
                     className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {node.collapsed ? (
-                      <ChevronRight className="h-3.5 w-3.5" />
-                    ) : (
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    )}
+                    {node.collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                     {node.collapsed ? 'Expand' : 'Collapse'}
                   </button>
                 )}
@@ -1431,115 +1064,15 @@ export function NodeDetailPanel() {
               )}
             </div>
 
-            {/* Advanced */}
-            <div className="mt-4">
-              <button
-                onClick={() => setAdvancedOpen(!advancedOpen)}
-                className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors w-full"
-              >
-                <Settings className="h-3.5 w-3.5" />
-                Advanced
-                <ChevronDown className={cn('h-3.5 w-3.5 ml-auto transition-transform', advancedOpen && 'rotate-180')} />
-              </button>
-              {advancedOpen && (
-                <div className="mt-3 space-y-3 pl-0.5">
-                  {/* Status */}
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Status</label>
-                    <div className="flex flex-wrap gap-1.5">
-                      {STATUS_OPTIONS.map((opt) => (
-                        <button
-                          key={opt.value}
-                          onClick={() => updateNodeStatus(node.id, opt.value)}
-                          className={cn(
-                            'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs border transition-colors',
-                            node.status === opt.value
-                              ? 'border-primary bg-primary/10 font-medium'
-                              : 'hover:bg-accent'
-                          )}
-                        >
-                          <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[opt.value])} />
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Priority & Assignee */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Priority</label>
-                      <PrioritySelector
-                        value={node.priority || 'none'}
-                        onChange={(p: Priority) => setNodePriority(node.id, p)}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Assignee</label>
-                      <AssigneePicker
-                        team={team}
-                        value={node.assigneeId}
-                        onChange={(id) => setNodeAssignee(node.id, id)}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Due Date & Estimate */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Due Date</label>
-                      <input
-                        type="date"
-                        value={node.dueDate ? new Date(node.dueDate).toISOString().split('T')[0] : ''}
-                        onChange={(e) => setNodeDueDate(node.id, e.target.value ? new Date(e.target.value).getTime() : undefined)}
-                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Estimate (hrs)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={node.estimatedHours ?? ''}
-                        onChange={(e) => setNodeEstimate(node.id, e.target.value ? parseFloat(e.target.value) : undefined)}
-                        placeholder="0"
-                        className="h-7 w-full px-2 text-xs bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary text-foreground"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Tags */}
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Tags</label>
-                    <TagInput
-                      tags={node.tags || []}
-                      onChange={(tags) => setNodeTags(node.id, tags)}
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Danger zone */}
+            {/* Actions */}
             <div className="mt-6 pt-4 border-t flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={handleDuplicate}
-              >
+              <Button variant="outline" size="sm" className="flex-1" onClick={handleDuplicate}>
                 <Copy className="h-4 w-4" />
                 Duplicate
               </Button>
               <Button
-                variant="destructive"
-                size="sm"
-                className="flex-1"
-                onClick={() => {
-                  deleteNode(node.id)
-                  closeDetailPanel()
-                }}
+                variant="destructive" size="sm" className="flex-1"
+                onClick={() => { deleteNode(node.id); closeDetailPanel() }}
               >
                 <Trash2 className="h-4 w-4" />
                 Delete
