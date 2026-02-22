@@ -1,7 +1,7 @@
 'use client'
 
-import { memo, useMemo } from 'react'
-import { Handle, Position } from '@xyflow/react'
+import { memo, useMemo, useEffect } from 'react'
+import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG, STATUS_COLORS } from '@/lib/constants'
@@ -47,6 +47,10 @@ export const BasePlanNode = memo(function BasePlanNode({
   const isSelected = selectedNodeId === id
   const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
   const lod = useZoomLevel()
+  const updateNodeInternals = useUpdateNodeInternals()
+  useEffect(() => {
+    updateNodeInternals(id)
+  }, [lod, id, updateNodeInternals])
 
   const nodes = useProjectStore((s) => s.currentProject?.nodes)
   const children = useMemo(
