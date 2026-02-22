@@ -723,17 +723,24 @@ export function DesignView() {
   }, [currentProject?.appFiles, currentProject?.appDesignSummary])
 
   const handleGenerate = useCallback(async () => {
-    if (!currentProject) return
+    if (!currentProject) {
+      console.warn('[DesignView] handleGenerate: no currentProject, aborting')
+      return
+    }
 
+    console.log('[DesignView] handleGenerate: starting, project =', currentProject.title)
     setGenError(null)
     setPhase('booting')
 
     try {
       // Step 1-3: Boot WebContainer + install deps + start server
+      console.log('[DesignView] Booting WebContainer...')
       await boot()
+      console.log('[DesignView] WebContainer booted successfully')
 
       // Step 4: Generate app via AI
       setPhase('generating')
+      console.log('[DesignView] Generating app via AI...')
       const context = buildAppGenerationContext(currentProject)
 
       const res = await authFetch('/api/ai/generate-app', {

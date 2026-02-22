@@ -97,6 +97,7 @@ export function useWebContainer(): UseWebContainerReturn {
     } catch (err) {
       bootedRef.current = false
       console.error('WebContainer boot failed:', err)
+      throw err
     }
   }, [])
 

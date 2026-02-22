@@ -82,7 +82,12 @@ export async function bootWebContainer(): Promise<WebContainer> {
       setStatus('booting')
       log('Booting WebContainer...')
 
-      const wc = await WebContainer.boot()
+      const wc = await Promise.race([
+        WebContainer.boot(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('WebContainer boot timed out after 60 seconds')), 60_000)
+        ),
+      ])
       instance = wc
 
       log('WebContainer booted successfully.')
