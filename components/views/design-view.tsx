@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button'
 import { authFetch } from '@/lib/auth-fetch'
 import { generateId } from '@/lib/id'
 import type { ProjectPage, PageEdge, AppChatMessage } from '@/types/project'
+import type { Agent } from '@/types/agent'
 import { DesignCanvas } from './design-canvas'
 
 // ─── Types ───────────────────────────────────────────────────
@@ -209,6 +210,7 @@ export function DesignView() {
 
   const pages = currentProject?.pages || []
   const pageEdges = currentProject?.pageEdges || []
+  const agents: Agent[] = currentProject?.agents || []
   const selectedPage = pages.find((p) => p.id === selectedPageId) || pages[0] || null
 
   // Auto-select first page when pages load
@@ -339,6 +341,50 @@ export function DesignView() {
       }
     },
     [pages, updatePageHtml]
+  )
+
+  const handleDropAgent = useCallback(
+    (pageId: string, agentId: string) => {
+      const page = pages.find((p) => p.id === pageId)
+      const agent = agents.find((a) => a.id === agentId)
+      if (!page || !agent) return
+
+      const color = agent.theme.primaryColor
+      const pos = agent.theme.position === 'bottom-left' ? 'left: 24px;' : 'right: 24px;'
+      const greeting = agent.greeting.replace(/'/g, '\\&#39;')
+
+      const widgetHtml = `
+<!-- Agent Widget: ${agent.name} -->
+<div id="agent-widget-${agent.id}" style="position: fixed; bottom: 24px; ${pos} z-index: 9999; font-family: system-ui, sans-serif;">
+  <div id="agent-chat-${agent.id}" style="display: none; width: 360px; height: 480px; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); overflow: hidden; flex-direction: column; margin-bottom: 12px;">
+    <div style="background: ${color}; padding: 16px; display: flex; align-items: center; gap: 10px;">
+      <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
+        <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.07A7 7 0 0 1 14 23h-4a7 7 0 0 1-6.93-4H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 12 2zm-1 7a5 5 0 0 0-5 5v1h12v-1a5 5 0 0 0-5-5h-2zm-1 8a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2h-4z"/></svg>
+      </div>
+      <div>
+        <div style="color: white; font-weight: 600; font-size: 14px;">${agent.name}</div>
+        <div style="color: rgba(255,255,255,0.7); font-size: 11px;">Online</div>
+      </div>
+    </div>
+    <div style="flex: 1; padding: 16px; overflow-y: auto;">
+      <div style="background: #f3f4f6; border-radius: 12px; border-top-left-radius: 4px; padding: 10px 14px; font-size: 13px; max-width: 80%;">${greeting}</div>
+    </div>
+    <div style="border-top: 1px solid #e5e7eb; padding: 12px; display: flex; gap: 8px;">
+      <input type="text" placeholder="Type a message..." style="flex: 1; border: 1px solid #e5e7eb; border-radius: 20px; padding: 8px 14px; font-size: 13px; outline: none;" />
+      <button style="width: 36px; height: 36px; border-radius: 50%; background: ${color}; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+        <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+  <button onclick="var c=document.getElementById('agent-chat-${agent.id}');c.style.display=c.style.display==='none'?'flex':'none'" style="width: 56px; height: 56px; border-radius: 50%; background: ${color}; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+    <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  </button>
+</div>`
+
+      const updatedHtml = page.html + widgetHtml
+      updatePageHtml(pageId, updatedHtml)
+    },
+    [pages, agents, updatePageHtml]
   )
 
   const handleAddPage = useCallback(async () => {
@@ -670,6 +716,7 @@ export function DesignView() {
             <DesignCanvas
               pages={pages}
               pageEdges={pageEdges}
+              agents={agents}
               selectedPageId={selectedPageId}
               onSelectPage={(pageId) => {
                 setSelectedPageId(pageId)
@@ -681,6 +728,7 @@ export function DesignView() {
               }}
               onDeletePage={handleDeletePage}
               onEditPage={handleEditPageOnCanvas}
+              onDropAgent={handleDropAgent}
               onPagePositionChange={(pageId: string, position: { x: number; y: number }) => {
                 const updatePagePosition = useProjectStore.getState().updatePagePosition
                 updatePagePosition(pageId, position)

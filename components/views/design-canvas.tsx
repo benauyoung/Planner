@@ -17,8 +17,9 @@ import {
   Position,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Globe, Maximize2, Trash2, Send, Loader2, MessageSquare } from 'lucide-react'
+import { Globe, Maximize2, Trash2, Send, Loader2, MessageSquare, Bot, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ProjectPage, PageEdge } from '@/types/project'
+import type { Agent } from '@/types/agent'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -29,6 +30,7 @@ interface PageNodeData {
   onFocusPage: (pageId: string) => void
   onDeletePage: (pageId: string) => void
   onEditPage: (pageId: string, instruction: string) => Promise<void>
+  onDropAgent: (pageId: string, agentId: string) => void
   [key: string]: unknown
 }
 
@@ -53,10 +55,11 @@ const PAGE_FRAME_WIDTH = 420
 const PAGE_FRAME_HEIGHT = 320
 
 const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
-  const { page, selected, onSelectPage, onFocusPage, onDeletePage, onEditPage } = data as unknown as PageNodeData
+  const { page, selected, onSelectPage, onFocusPage, onDeletePage, onEditPage, onDropAgent } = data as unknown as PageNodeData
   const [editInput, setEditInput] = useState('')
   const [editing, setEditing] = useState(false)
   const [showEdit, setShowEdit] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -78,9 +81,23 @@ const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
 
   return (
     <div
-      className={`group ${selected ? 'ring-2 ring-primary rounded-lg' : ''}`}
+      className={`group ${selected ? 'ring-2 ring-primary rounded-lg' : ''} ${dragOver ? 'ring-2 ring-green-500 rounded-lg' : ''}`}
       style={{ width: PAGE_FRAME_WIDTH }}
       onClick={() => onSelectPage(page.id)}
+      onDragOver={(e) => {
+        if (e.dataTransfer.types.includes('application/agent-id')) {
+          e.preventDefault()
+          e.dataTransfer.dropEffect = 'copy'
+          setDragOver(true)
+        }
+      }}
+      onDragLeave={() => setDragOver(false)}
+      onDrop={(e) => {
+        e.preventDefault()
+        setDragOver(false)
+        const agentId = e.dataTransfer.getData('application/agent-id')
+        if (agentId) onDropAgent(page.id, agentId)
+      }}
     >
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
@@ -190,7 +207,8 @@ function buildNodes(
   onSelectPage: (pageId: string) => void,
   onFocusPage: (pageId: string) => void,
   onDeletePage: (pageId: string) => void,
-  onEditPage: (pageId: string, instruction: string) => Promise<void>
+  onEditPage: (pageId: string, instruction: string) => Promise<void>,
+  onDropAgent: (pageId: string, agentId: string) => void
 ): Node[] {
   return pages.map((page, i) => ({
     id: page.id,
@@ -199,10 +217,66 @@ function buildNodes(
       x: (i % 3) * (PAGE_FRAME_WIDTH + 80),
       y: Math.floor(i / 3) * (PAGE_FRAME_HEIGHT + 36 + 80),
     },
-    data: { page, selected: page.id === selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage } as PageNodeData,
+    data: { page, selected: page.id === selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage, onDropAgent } as PageNodeData,
     draggable: true,
     selectable: true,
   }))
+}
+
+// ─── Agents Panel ────────────────────────────────────────────
+
+function AgentsPanel({ agents }: { agents: Agent[] }) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  if (agents.length === 0) return null
+
+  return (
+    <div className="absolute top-3 left-3 z-10 flex">
+      <div
+        className={`bg-background border rounded-lg shadow-lg transition-all overflow-hidden ${
+          collapsed ? 'w-0 border-0 p-0' : 'w-52'
+        }`}
+      >
+        <div className="px-3 py-2 border-b flex items-center gap-2">
+          <Bot className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold flex-1">Agents</span>
+          <span className="text-[10px] text-muted-foreground">{agents.length}</span>
+        </div>
+        <div className="p-2 space-y-1 max-h-64 overflow-y-auto">
+          <p className="text-[10px] text-muted-foreground px-1 mb-1.5">Drag onto a page to insert widget</p>
+          {agents.map((agent) => (
+            <div
+              key={agent.id}
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.setData('application/agent-id', agent.id)
+                e.dataTransfer.effectAllowed = 'copy'
+              }}
+              className="flex items-center gap-2 px-2 py-1.5 rounded-md border bg-muted/30 cursor-grab active:cursor-grabbing hover:bg-muted/60 transition-colors"
+            >
+              <GripVertical className="h-3 w-3 text-muted-foreground/50 shrink-0" />
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
+                style={{ backgroundColor: agent.theme.primaryColor + '20', color: agent.theme.primaryColor }}
+              >
+                <Bot className="h-2.5 w-2.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-medium truncate">{agent.name}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="h-8 w-5 flex items-center justify-center bg-background border rounded-r-md shadow-sm hover:bg-muted transition-colors -ml-px"
+        title={collapsed ? 'Show agents' : 'Hide agents'}
+      >
+        {collapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
+      </button>
+    </div>
+  )
 }
 
 function buildEdges(pageEdges: PageEdge[]): Edge[] {
@@ -222,33 +296,37 @@ function buildEdges(pageEdges: PageEdge[]): Edge[] {
 function DesignCanvasInner({
   pages,
   pageEdges,
+  agents,
   selectedPageId,
   onSelectPage,
   onFocusPage,
   onDeletePage,
   onEditPage,
+  onDropAgent,
   onPagePositionChange,
 }: {
   pages: ProjectPage[]
   pageEdges: PageEdge[]
+  agents: Agent[]
   selectedPageId: string | null
   onSelectPage: (pageId: string) => void
   onFocusPage: (pageId: string) => void
   onDeletePage: (pageId: string) => void
   onEditPage: (pageId: string, instruction: string) => Promise<void>
+  onDropAgent: (pageId: string, agentId: string) => void
   onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
   const initialNodes = useMemo(
-    () => buildNodes(pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage),
-    [pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage]
+    () => buildNodes(pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage, onDropAgent),
+    [pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage, onDropAgent]
   )
   const edges = useMemo(() => buildEdges(pageEdges), [pageEdges])
 
   const [flowNodes, setFlowNodes] = useState<Node[]>(initialNodes)
 
   useEffect(() => {
-    setFlowNodes(buildNodes(pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage))
-  }, [pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage])
+    setFlowNodes(buildNodes(pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage, onDropAgent))
+  }, [pages, selectedPageId, onSelectPage, onFocusPage, onDeletePage, onEditPage, onDropAgent])
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -267,7 +345,8 @@ function DesignCanvasInner({
   )
 
   return (
-    <div className="h-full w-full">
+    <div className="h-full w-full relative">
+      <AgentsPanel agents={agents} />
       <ReactFlow
         nodes={flowNodes}
         edges={edges}
@@ -302,20 +381,24 @@ function DesignCanvasInner({
 export function DesignCanvas({
   pages,
   pageEdges,
+  agents,
   selectedPageId,
   onSelectPage,
   onFocusPage,
   onDeletePage,
   onEditPage,
+  onDropAgent,
   onPagePositionChange,
 }: {
   pages: ProjectPage[]
   pageEdges: PageEdge[]
+  agents: Agent[]
   selectedPageId: string | null
   onSelectPage: (pageId: string) => void
   onFocusPage: (pageId: string) => void
   onDeletePage: (pageId: string) => void
   onEditPage: (pageId: string, instruction: string) => Promise<void>
+  onDropAgent: (pageId: string, agentId: string) => void
   onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
   if (pages.length === 0) {
@@ -331,11 +414,13 @@ export function DesignCanvas({
       <DesignCanvasInner
         pages={pages}
         pageEdges={pageEdges}
+        agents={agents}
         selectedPageId={selectedPageId}
         onSelectPage={onSelectPage}
         onFocusPage={onFocusPage}
         onDeletePage={onDeletePage}
         onEditPage={onEditPage}
+        onDropAgent={onDropAgent}
         onPagePositionChange={onPagePositionChange}
       />
     </ReactFlowProvider>
