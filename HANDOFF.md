@@ -32,13 +32,13 @@ TinyBaguette is an **AI-powered visual project planning tool**. Users describe a
 - **Integrations**: GitHub, Slack, Linear service clients + settings UI
 - **Collaboration infrastructure**: Presence avatars, live cursors, pluggable provider
 
-- **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing
-- **AI agent builder**: Create embeddable AI chatbots — configure persona, knowledge base, behavior rules, theme, preview live, deploy with embed snippet
-- **Lovable-quality Design tab**: WebContainer runs a live Vite+React+Tailwind app in-browser. AI generates multi-file apps from Plan tab PRDs. Iterate via chat sidebar, visual click-to-edit inspector, or Monaco code editor. Export as zip.
+- **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing, drag-and-drop agent widget insertion
+- **AI agent builder**: Create embeddable AI chatbots — configure persona, knowledge base, behavior rules, theme, preview live, deploy with embed snippet, drag onto Design canvas pages to insert widget
+- **Design tab (srcdoc iframes)**: AI generates standalone HTML pages with Tailwind CSS, rendered via `srcdoc` iframes — no WebContainer, no SharedArrayBuffer, works on all browsers. Two modes: single-page preview with viewport switcher, or zoomable React Flow canvas with all pages. Inline AI editing per node, AI chat sidebar, page selection, add/delete pages, drag-and-drop agent insertion.
 - **Advanced canvas**: Multi-select (rubber-band + Shift+click + Ctrl+A) with bulk actions toolbar (status, align, distribute, duplicate, delete). Spring physics force-directed layout. Level-of-detail zoom (full → compact → dot).
 - **Territory file sync**: Bidirectional canvas ↔ Markdown. Export project as `.territory/` folder (one `.md` per node with YAML frontmatter). Import back with diff review — per-node accept/reject. File System Access API for direct folder read/write, or bundle download/upload.
 
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview live app → Iterate with AI chat + visual editing → Export code.
+**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview live app → Iterate with AI chat + visual editing → Drag agents onto pages → Export.
 
 ---
 
@@ -246,8 +246,9 @@ Planner/
 │   │   ├── table-view.tsx              # Sortable/filterable grid with priority + assignee columns
 │   │   ├── board-view.tsx              # Kanban by status with drag-and-drop
 │   │   ├── timeline-view.tsx           # Interactive Gantt: drag-to-move, edge-resize, day grid
-│   │   ├── design-view.tsx             # Lovable-quality Design tab: WebContainer preview, chat, inspector, code editor, export
-│   │   ├── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat (legacy)
+│   │   ├── design-view.tsx             # Design tab: srcdoc iframe previews, AI page generation, PageChat sidebar, single/canvas modes, agent drop handler
+│   │   ├── design-canvas.tsx           # React Flow canvas for Design tab: PageFrameNode (srcdoc iframes), AgentsPanel (drag-and-drop), inline AI edit bar
+│   │   ├── pages-view.tsx              # AI-generated page previews on zoomable canvas with inline chat (legacy, unused)
 │   │   ├── backend-view.tsx            # Backend module architect on zoomable canvas
 │   │   └── agents-view.tsx             # Agent builder: config, knowledge, theme, preview, deploy tabs
 │   ├── sprints/
@@ -743,7 +744,8 @@ This replaces the old skeleton card placeholders for a more branded experience.
 3. ~~**`changeNodeType` has no hierarchy validation**~~ — Fixed: validates parent + children compatibility before allowing type change
 4. ~~**`refinement-system.ts` is unused**~~ — Actually used by `planning-chat.tsx` and `refinement-question-card.tsx`
 5. ~~**Base64 images can bloat state**~~ — Fixed: images > 5MB rejected, > 1MB auto-compressed
-6. **WebContainer requires COOP/COEP headers** — `next.config.js` sets `Cross-Origin-Embedder-Policy: credentialless` and `Cross-Origin-Opener-Policy: same-origin`. This may affect third-party embeds.
+6. ~~**WebContainer requires COOP/COEP headers**~~ — No longer relevant. The Design tab was rewritten to use srcdoc iframes (no WebContainer). COOP/COEP headers are still set in `next.config.js` but are no longer needed by the active codebase. They can be safely removed.
+7. **Legacy WebContainer files still in codebase** — `services/webcontainer.ts`, `hooks/use-webcontainer.ts`, `lib/webcontainer-template.ts`, `lib/build-app-context.ts`, `lib/element-selector-script.ts`, `lib/parse-app-routes.ts`, `prompts/app-generation.ts`, `prompts/app-edit.ts`, and their API routes (`/api/ai/generate-app`, `/api/ai/edit-app`) are still present but unused by the current Design tab. Dependencies `@webcontainer/api`, `@monaco-editor/react`, `jszip` are still in `package.json`. All can be removed in a future cleanup pass.
 
 ---
 
@@ -806,12 +808,40 @@ npm run type-check  # Alias for tsc --noEmit
 - **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth for production integration use
 - **Email infrastructure** — Set up email receiving at `hello@tinybaguette.com`
 
-### Recent Changes (Feb 22, 2026 — Session 5)
+### Recent Changes (Feb 20-22, 2026 — Sessions 4-6)
+
+**Design Tab Complete Rewrite (replaced WebContainer with srcdoc iframes):**
+- **Why**: WebContainer required SharedArrayBuffer + COOP/COEP headers that fail on most deployed hosts (Vercel, Netlify). The new approach uses `/api/ai/generate-pages` to generate standalone HTML with Tailwind CSS, rendered via `srcdoc` iframes — works everywhere.
+- **`components/views/design-view.tsx`** (~808 lines) — Complete rewrite. Removed: WebContainer, `useWebContainer` hook, boot/install/start phases, `AppChat` (old), `FileTree`, `ElementInspector`, `CodeEditorPanel`, `MonacoEditor`, `parseAppRoutes`. Added: `handleGenerate` calls `/api/ai/generate-pages`, `PageChat` sidebar using `/api/ai/edit-page`, `handleDropAgent` for agent widget injection, `handleDeletePage`, `handleEditPageOnCanvas`, `handleAddPage`. Two modes: `designMode: 'single' | 'canvas'` (default: canvas). `wrapHtmlPage()` wraps body HTML in full document with Tailwind CDN.
+- **`components/views/design-canvas.tsx`** (~429 lines) — Rewritten to accept `ProjectPage[]` + `PageEdge[]` + `Agent[]`. `PageFrameNode` renders srcdoc iframe (1280×800 scaled to 420×320). `AgentsPanel` — collapsible floating panel (top-left) with draggable agent cards. Drag-over green ring highlight on page nodes. Drop handler calls `onDropAgent(pageId, agentId)`.
+
+**Canvas Page Interactions (6 commits):**
+1. **Inline AI editing** (`e07dcb0`) — Each `PageFrameNode` has a MessageSquare button → opens inline edit bar → type instruction → AI edits that page via `/api/ai/edit-page`
+2. **Delete page** (`e07dcb0`) — Trash2 button on each canvas node, wired to `removePage` store method
+3. **Focus page** (`e07dcb0`) — Maximize2 button switches to single-page view for that page
+4. **Add Page in canvas mode** (`b6c2e3d`) — "Add Page" button in canvas toolbar opens dialog → AI generates matching HTML
+5. **Select page → open chat** (`6034a0f`) — Click a page node on canvas → selects it (blue ring) + auto-opens PageChat sidebar
+6. **Agent drag-and-drop** (`bdebc40`) — `AgentsPanel` shows all project agents as draggable cards. Drop onto a page → injects a fully styled chat widget HTML (floating bubble + expandable chat panel using agent's name, color, greeting, position)
+
+**Agent Widget HTML Injection:**
+When an agent is dropped onto a page, `handleDropAgent` generates inline HTML/CSS/JS for a chat widget:
+- Fixed-position floating bubble (56px circle) in agent's `primaryColor`, positioned per `agent.theme.position` (bottom-right or bottom-left)
+- Click bubble → toggles a 360×480px chat panel with agent name, "Online" status, greeting message, text input, send button
+- All styled with inline CSS (no external dependencies), uses agent's `primaryColor` throughout
+- Widget HTML is appended to the page's existing HTML via `updatePageHtml()`
+
+**Bug Fixes:**
+- **LOD edge routing** (`b7c05d4`) — `base-plan-node.tsx` now calls `useUpdateNodeInternals()` on zoom tier change so React Flow re-routes edges when nodes change size between full/compact/dot LOD tiers
+- **WebContainer boot reliability** (`6c8f4b1`) — Added 60-second timeout to `WebContainer.boot()` to prevent indefinite hangs; `use-webcontainer.ts` re-throws errors instead of swallowing them
+- **Nested BrowserRouter crash** (`2b59b52`) — `sanitizeRouterImports()` strips duplicate Router imports/JSX from AI-generated files before writing to WebContainer
+- **Canvas layout direction** (`338f951`) — Switched dagre layout from LR (left-to-right) to TB (top-to-bottom), fixed node overlap
+- **Firestore fallback UX** (`441fffd`) — Improved project-not-found UI to explain possible Firestore permission issues, added actionable links to dashboard and new project creation
+
+**Earlier in this window (Feb 20, Session 4):**
 - **Advanced Canvas (Phase 14)** — Three sub-phases:
   - **Phase A: Multi-Select + Bulk Actions** — `selectedNodeIds: Set<string>` in UI store with `toggleNodeSelection`, `setSelectedNodes`, `clearSelection`. `selectionOnDrag` rubber-band + `Shift` multi-select in ReactFlow. Blue dashed ring highlighting across all 12 node types. `Ctrl+A` select all, `Escape` clears, `Delete` bulk delete, `Ctrl+D` bulk duplicate. `deleteNodes(ids[])` and `duplicateNodes(ids[])` in project store. `BulkActionsBar` floating toolbar (Set Status, Align 8 options, Distribute H/V, Duplicate, Delete). `lib/canvas-align.ts` alignment helpers.
   - **Phase B: Spring Physics Layout** — `lib/canvas-physics.ts` force-directed engine (repulsion, edge attraction, hierarchy gravity, damping, 80 iterations). Dagre/Spring toggle in toolbar with `Atom` icon. `layoutMode: 'dagre' | 'spring'` in UI store.
   - **Phase C: Level-of-Detail Zoom** — `hooks/use-zoom-level.ts` reads ReactFlow viewport zoom → LOD tier. 3 tiers: `full` (≥0.6), `compact` (0.3–0.6, 180×40px title+status), `dot` (<0.3, 48×28px colored pill). `base-plan-node.tsx` renders progressively.
-- **Multi-Page App Support (Design Tab Phase 5)** — `lib/parse-app-routes.ts` parses `<Route>` from App.tsx. Page navigator dropdown in toolbar (Globe + select + Plus). Route change detection in injected script (patches pushState/replaceState). "Add Page" dialog → AI generates page + updates routes + nav. Enhanced prompts for mandatory Layout component, shared nav, ≥3 pages.
 - **Territory File Sync (Phase 15)** — Bidirectional canvas ↔ Markdown file sync:
   - `lib/territory-serialize.ts` — `nodeToMarkdown()` / `markdownToNode()` round-trip, `projectToTerritory()` / `territoryToProject()`, minimal YAML serializer/parser (zero deps), bundle format
   - `lib/territory-sync.ts` — `diffTerritoryToCanvas()` diff engine, `applyMerge()` with selective accept, field-level change detection
@@ -820,29 +850,7 @@ npm run type-check  # Alias for tsc --noEmit
   - `stores/project-store.ts` — `mergeFromTerritory(nodes, edges)` bulk merge
   - `stores/ui-store.ts` — `territorySyncOpen` + `setTerritorySyncOpen`
   - `canvas-toolbar.tsx` — FolderSync icon button, `Ctrl+T` keyboard shortcut
-
-### Recent Changes (Feb 20-22, 2026 — Session 4)
-- **Lovable-Quality Design Tab (Phase 13)** — Complete rewrite of Design tab from static HTML previews to live WebContainer-powered app:
-  - **Phase 1**: WebContainer boots Vite+React 18+Tailwind v4 in-browser. AI generates multi-file React apps from Plan tab PRDs via `/api/ai/generate-app`. New files: `services/webcontainer.ts`, `lib/webcontainer-template.ts`, `lib/build-app-context.ts`, `prompts/app-generation.ts`, `hooks/use-webcontainer.ts`, `components/views/design-view.tsx`. COOP/COEP headers added to `next.config.js`.
-  - **Phase 2**: Chat sidebar (`AppChat` component) for iterative editing. User types instruction → AI returns only changed files via `/api/ai/edit-app` → merged into WebContainer → hot reload. Chat history persisted per project (`AppChatMessage` type + store methods).
-  - **Phase 3**: Visual click-to-edit. Element selector script (`lib/element-selector-script.ts`) injected into iframe. Hover/click overlays via postMessage. `ElementInspector` panel shows text (editable), colors (editable), layout info, and quick actions (make larger/smaller, bold, center, shadow, round corners).
-  - **Phase 4**: Monaco code editor (`@monaco-editor/react`, dynamic import) with file tabs and vs-dark theme. Live editing writes to WebContainer for hot reload. Export as zip (`jszip`) with full Vite project scaffold.
-- **New Types**: `AppFile` (path + content), `AppChatMessage` (id, role, content, filesChanged, timestamp) in `types/project.ts`. `appFiles`, `appDesignSummary`, `appChatMessages` fields on `Project`.
-- **New Store Methods**: `setAppFiles`, `updateAppFile`, `addAppChatMessage`, `clearAppChatMessages`
-- **New Gemini Schemas**: `appGenerationSchema`, `appEditSchema` in `services/gemini.ts`
-- **New Dependencies**: `@webcontainer/api`, `@monaco-editor/react`, `jszip`
-- **Design Tab Toolbar**: Viewport switcher (desktop/tablet/mobile) | Regenerate | Reload | [Live status] | Select | Chat | Code | Export | External Link
-
-**PRD Pipeline (by another agent):**
-- **Context-aware PRD generation** — `buildPrdContext()` wraps `buildNodeContext()` + Ralphy scope directive. `buildPrdEcosystem()` provides parent/child/sibling/dependency PRD context with truncated content.
-- **Deep question flow** — Follow-up question generation via `/api/ai/generate-followups` + `follow-up-generation.ts` prompt + `followUpGenerationSchema`. Category-aware, multi-turn.
-- **Ralphy export** — `lib/export-ralphy.ts`: `downloadRalphyZip()` generates ZIP with `prd/*.md` (YAML frontmatter), `.ralphy/config.yaml`, `PRD.md` (flat concatenated), `prd/README.md` index. `downloadFlatPrdMd()` for quick single-file export.
-- **PRD status tracking** — `lib/prd-status.ts`: 6 statuses (needs_questions → answering → ready → generated → stale → export_ready). `getNodePrdStatus()`, `getProjectPrdSummary()`. Stale detection in `updateNodePRD()` propagates to dependents.
-- **PRD Pipeline panel** — `components/panels/prd-pipeline-panel.tsx`: filter tabs (All/Ready/Stale/Generated/In Progress), summary strip, node list with status badges, Export ZIP + Export MD buttons. Toggled via PRD Pipeline button in canvas toolbar.
-- **New Gemini schema**: `followUpGenerationSchema` in `services/gemini.ts`
-- **Updated PRD schema**: `prdGenerationSchema` now includes `referencedPrdIds` for cross-referencing
-- **Updated types**: `NodePRD` now has `referencedPrdIds`, `isStale`, `staleReason`. `NodeQuestion` has `category`, `isFollowUp`, `followUpForId`.
-- **UI store**: Added `prdPipelineOpen` + `setPrdPipelineOpen`
+- **PRD Pipeline (by another agent)** — `buildPrdContext()`, `buildPrdEcosystem()`, `follow-up-generation.ts` prompt, `followUpGenerationSchema`, `lib/export-ralphy.ts`, `downloadRalphyZip()`, `downloadFlatPrdMd()`. PRD Pipeline panel with filter tabs, summary strip, Export ZIP + Export MD buttons. `prdPipelineOpen` + `setPrdPipelineOpen` in UI store. Updated PRD schema with `referencedPrdIds`. `NodePRD` now has `isStale`, `staleReason`. `NodeQuestion` has `category`, `isFollowUp`, `followUpForId`.
 
 ### Recent Changes (Feb 19-20, 2026 — Session 3)
 - **Landing Page Hero Rewrite** — FeaturesTabs section header changed to "Big Ideas. TinyBaguette." with new subtitle about the spatial engine. `HeroSection` component removed from page (kept in codebase for reference).
