@@ -83,10 +83,10 @@ export const BasePlanNode = memo(function BasePlanNode({
         onClick={() => selectNode(id)}
       >
         {data.parentId && (
-          <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+          <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-1.5 !h-1.5" />
         )}
         <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[data.status])} />
-        <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+        <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-1.5 !h-1.5" />
       </div>
     )
   }
@@ -108,13 +108,13 @@ export const BasePlanNode = memo(function BasePlanNode({
         onClick={() => selectNode(id)}
       >
         {data.parentId && (
-          <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-2 !h-2" />
+          <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-2 !h-2" />
         )}
         <div className="p-2 flex items-center gap-2">
           <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_COLORS[data.status])} />
           <span className="text-xs font-medium leading-tight truncate">{data.label}</span>
         </div>
-        <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-2 !h-2" />
+        <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-2 !h-2" />
       </div>
     )
   }
@@ -150,7 +150,7 @@ export const BasePlanNode = memo(function BasePlanNode({
       {data.parentId && (
         <Handle
           type="target"
-          position={Position.Left}
+          position={Position.Top}
           className="!bg-muted-foreground !w-2 !h-2"
         />
       )}
@@ -227,7 +227,7 @@ export const BasePlanNode = memo(function BasePlanNode({
 
       <Handle
         type="source"
-        position={Position.Right}
+        position={Position.Bottom}
         className="!bg-muted-foreground !w-2 !h-2"
       />
     </div>

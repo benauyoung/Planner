@@ -173,11 +173,11 @@ export const NODE_CHILD_TYPE: Record<NodeType, NodeType | null> = {
 }
 
 export const DAGRE_CONFIG = {
-  rankdir: 'LR' as const,
-  nodesep: 40,
-  ranksep: 100,
-  marginx: 40,
-  marginy: 40,
+  rankdir: 'TB' as const,
+  nodesep: 50,    // horizontal gap between sibling nodes
+  ranksep: 120,   // vertical gap between hierarchy levels (generous to absorb minHeight overflow)
+  marginx: 60,
+  marginy: 60,
 }
 
 export const STATUS_COLORS = {

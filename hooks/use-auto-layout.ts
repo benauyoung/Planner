@@ -24,7 +24,8 @@ export function useAutoLayout() {
         const config = NODE_CONFIG[nodeType] || NODE_CONFIG.task
         g.setNode(node.id, {
           width: config.width,
-          height: config.height,
+          // +40 safety margin: nodes use minHeight so actual render can exceed config.height
+          height: config.height + 40,
         })
       })
 
@@ -42,7 +43,7 @@ export function useAutoLayout() {
           ...node,
           position: {
             x: dagreNode.x - config.width / 2,
-            y: dagreNode.y - config.height / 2,
+            y: dagreNode.y - (config.height + 40) / 2,
           },
         }
       })

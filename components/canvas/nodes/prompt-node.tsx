@@ -72,7 +72,7 @@ export const PromptNode = memo(function PromptNode({ id, data }: NodeProps) {
       {nodeData.parentId && (
         <Handle
           type="target"
-          position={Position.Left}
+          position={Position.Top}
           className="!bg-muted-foreground !w-2 !h-2"
         />
       )}
@@ -110,7 +110,7 @@ export const PromptNode = memo(function PromptNode({ id, data }: NodeProps) {
 
       <Handle
         type="source"
-        position={Position.Right}
+        position={Position.Bottom}
         className="!bg-muted-foreground !w-2 !h-2"
       />
     </div>
