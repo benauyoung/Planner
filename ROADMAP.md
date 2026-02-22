@@ -1,6 +1,6 @@
 # TinyBaguette Roadmap
 
-> Milestone tracking. Updated February 12, 2026 to reflect actual progress.
+> Milestone tracking. Updated February 22, 2026 to reflect actual progress.
 
 ---
 
@@ -194,16 +194,136 @@
 
 ---
 
-### M13: Remaining Polish 🟡
+### M13: AI Agent Builder & Landing Polish ✅
+**Status**: Complete
+
+**Delivered** (Feb 19, 2026):
+- Full embeddable AI chatbot builder: `types/agent.ts` (Agent, AgentKnowledgeEntry, AgentAction, AgentBehaviorRule, AgentTheme)
+- `agents?: Agent[]` on Project, 9 CRUD store methods
+- `agents-view.tsx` with 5 tabs: Config, Knowledge, Theme, Preview, Deploy
+- `/api/agent/generate` and `/api/agent/[agentId]/chat` API routes
+- `use-agent-chat.ts` hook for live preview
+- Agents demo tab on landing page (animated bot builder + floating chat widget)
+- Interactive feature demos: Planning, Design, Agents, Integrations tabs
+- View restructuring: `'plan' | 'design' | 'agents' | 'manage'` (Backend moved under Manage)
+- Auto-save fix: saves all project fields (was only saving title/description/phase/nodes/edges)
+
+---
+
+### M13.5: Landing Page & Marketing ✅
+**Status**: Complete
+
+**Delivered** (Feb 19-20, 2026):
+- Landing page hero rewrite: "Big Ideas. TinyBaguette." with spatial engine subtitle
+- Hero prompt rewrite: 4-phase flow (input → loading → preview → email) with glassmorphism UI
+- Email capture gate: all CTAs scroll to `#hero-prompt` instead of `/login`
+- About page (`/about`) and Contact page (`/contact`)
+- Footer updates: removed Blog, added About/Contact links
+- Demo size reduction (75% width constraint)
+- Email capture to Firestore waitlist + optional Resend welcome email
+
+---
+
+### M14: Advanced Canvas ✅
+**Status**: Complete
+
+**Delivered** (Feb 20, 2026):
+- **Phase A: Multi-Select + Bulk Actions** — `selectedNodeIds: Set<string>`, rubber-band selection, Shift+click, Ctrl+A. Blue dashed ring highlighting across 12 node types. `BulkActionsBar` floating toolbar (Set Status, Align 8 options, Distribute H/V, Duplicate, Delete). `lib/canvas-align.ts` helpers.
+- **Phase B: Spring Physics Layout** — `lib/canvas-physics.ts` force-directed engine (repulsion, edge attraction, hierarchy gravity, damping, 80 iterations). Dagre/Spring toggle in toolbar. `layoutMode: 'dagre' | 'spring'` in UI store.
+- **Phase C: Level-of-Detail Zoom** — `hooks/use-zoom-level.ts` reads viewport zoom → LOD tier. 3 tiers: `full` (≥0.6), `compact` (0.3–0.6, 180×40px), `dot` (<0.3, 48×28px). `base-plan-node.tsx` renders progressively.
+
+---
+
+### M15: Territory File Sync ✅
+**Status**: Complete
+
+**Delivered** (Feb 20, 2026):
+- Bidirectional canvas ↔ Markdown file sync
+- `lib/territory-serialize.ts` — round-trip node↔markdown, minimal YAML (zero deps), bundle format
+- `lib/territory-sync.ts` — diff engine, selective merge, field-level change detection
+- `hooks/use-territory-sync.ts` — export bundle/folder, import bundle/folder, diff + merge
+- `components/canvas/territory-sync-panel.tsx` — UI with export/import, per-node accept/reject diff review
+- `mergeFromTerritory(nodes, edges)` in project store
+- FolderSync icon button + `Ctrl+T` shortcut in canvas toolbar
+
+---
+
+### M15.5: PRD Pipeline ✅
+**Status**: Complete
+
+**Delivered** (Feb 20, 2026):
+- Context-aware PRD generation: `buildPrdContext()`, `buildPrdEcosystem()`
+- Deep question flow: follow-up generation via `/api/ai/generate-followups`
+- Ralphy export: `downloadRalphyZip()` (ZIP with YAML frontmatter), `downloadFlatPrdMd()`
+- PRD status tracking: 6 statuses (needs_questions → answering → ready → generated → stale → export_ready)
+- Stale detection propagates to dependents via `updateNodePRD()`
+- PRD Pipeline panel: filter tabs, summary strip, Export ZIP + Export MD buttons
+- Updated types: `NodePRD.referencedPrdIds`, `isStale`, `staleReason`; `NodeQuestion.category`, `isFollowUp`
+
+---
+
+### M16: Design Tab Rewrite & Agent Integration ✅
+**Status**: Complete
+
+**Delivered** (Feb 20-22, 2026):
+- **Design tab rewritten** — Replaced WebContainer with srcdoc iframes (no SharedArrayBuffer needed, works on all browsers)
+- AI generates standalone HTML pages with Tailwind CSS via `/api/ai/generate-pages`
+- Two view modes: single-page (viewport switcher) and canvas (React Flow with all pages)
+- `PageChat` sidebar for AI-driven page editing via `/api/ai/edit-page`
+- Canvas page interactions: inline AI editing, delete, focus, select-to-chat
+- Add Page dialog: AI generates new pages matching design system
+- **Agent drag-and-drop**: collapsible AgentsPanel with draggable agent cards, green ring highlight on drag-over, drop injects styled chat widget HTML into page
+- LOD edge routing fix: `useUpdateNodeInternals()` on zoom tier change
+- Canvas layout switched from LR to TB, fixed node overlap
+- Improved Firestore fallback UX with actionable error messages
+
+---
+
+### M17: Production Polish 🟡
+**Status**: In Progress
+
+**Remaining**:
+- [ ] Remove legacy WebContainer files and unused dependencies (`@webcontainer/api`, `@monaco-editor/react`, `jszip`)
+- [ ] Remove COOP/COEP headers from `next.config.js` (no longer needed)
+- [ ] Performance audit: bundle size, lazy loading, code splitting
+- [ ] Accessibility audit: keyboard navigation, screen reader support, ARIA labels
+- [ ] Error boundaries on all major views
+- [ ] E2E tests (Playwright) for critical flows
+
+---
+
+### M18: Real-Time Collaboration (Production) 🔴
 **Status**: Planned
 
 **Planned**:
-- Multi-select on canvas
-- Spring physics (d3-force)
-- Territory file sync
-- Image compression
-- Hierarchy validation on type change
-- Production OAuth for integrations
+- Deploy WebSocket backend (PartyKit or Liveblocks)
+- Connect Yjs CRDT document to Zustand store
+- Conflict resolution for concurrent edits
+- Real-time cursor + selection sync (infrastructure already built in M9)
+
+---
+
+### M19: Production Integrations 🔴
+**Status**: Planned
+
+**Planned**:
+- Server-side OAuth flows for GitHub, Slack, Linear (currently client-side stubs)
+- Webhook receivers for real-time sync
+- Two-way issue sync (Linear ↔ TinyBaguette nodes)
+- GitHub PR creation from task nodes
+
+---
+
+### M20: Monetization & Scale 🔴
+**Status**: Planned
+
+**Planned**:
+- User accounts with project ownership (currently single-user)
+- Team workspaces with role-based access
+- Usage-based billing for AI features (Gemini API)
+- Custom domain for deployed agents
+- Agent analytics dashboard
+- Email infrastructure at `hello@tinybaguette.com`
 
 ---
 
@@ -250,7 +370,7 @@
 - Chat state reset on new project
 - Bug fixes: Tiptap SSR, React Flow edge type, Firestore provisioning
 
-### v0.9.6 - Pages View & Landing ✅ (Current)
+### v0.9.6 - Pages View & Landing ✅
 - Pages View: AI-generated full-fidelity Tailwind page previews on zoomable canvas
 - 4 view tabs with Design (Pages), Agents, and 6 Manage sub-views incl. Backend
 - Inline chat per page for AI editing
@@ -259,12 +379,46 @@
 - 2 new API routes (generate-pages, edit-page)
 - 6 new store actions for page management
 
+### v0.9.7 - AI Agents & Landing Polish ✅
+- Full AI agent builder (config, knowledge, theme, preview, deploy)
+- Embeddable chatbot with persona, knowledge base, behavior rules
+- Interactive landing page demos (Planning, Design, Agents, Integrations)
+- Hero prompt with 4-phase flow + email capture
+- About and Contact pages
+- Auto-save fix for all project fields
+
+### v0.9.8 - Advanced Canvas & Sync ✅
+- Multi-select + bulk actions (rubber-band, Shift+click, Ctrl+A, BulkActionsBar)
+- Spring physics force-directed layout
+- Level-of-detail zoom (full → compact → dot)
+- Territory file sync (bidirectional canvas ↔ Markdown)
+- PRD pipeline with status tracking, stale detection, Ralphy export
+
+### v0.9.9 - Design Tab Rewrite & Agent Integration ✅ (Current)
+- Design tab rewritten: srcdoc iframes replace WebContainer (no SharedArrayBuffer needed)
+- Canvas page interactions: inline AI editing, delete, focus, select-to-chat, add page
+- Agent drag-and-drop onto Design canvas pages (injects chat widget HTML)
+- LOD edge routing fix, canvas layout TB, Firestore fallback UX
+
 ### v1.0.0 - Launch (Planned)
-- Production WebSocket backend for real-time collaboration
-- OAuth flows for GitHub/Slack/Linear
-- Territory file sync
-- Image compression + performance polish
-- Production ready
+- Legacy code cleanup (remove WebContainer files, unused deps)
+- Performance + accessibility audit
+- E2E test coverage
+- Production ready for single-user
+
+### v1.1.0 - Collaboration (Planned)
+- Production WebSocket backend for real-time multi-user editing
+- Yjs CRDT integration
+
+### v1.2.0 - Integrations (Planned)
+- Server-side OAuth for GitHub/Slack/Linear
+- Two-way issue sync, webhook receivers
+
+### v2.0.0 - Scale (Planned)
+- Multi-user workspaces with roles
+- Usage-based billing
+- Custom agent domains
+- Agent analytics
 
 ---
 
@@ -284,3 +438,11 @@
 | 2026-02-12 | v0.9.0 Feature Complete: 55+ store mutations, 6 views, 7 API routes, 3 integration clients |
 | 2026-02-12 | v0.9.5 UX Polish: unified toolbar, interactive Gantt, 5 new node types, 5 new edge types, bug fixes |
 | 2026-02-12 | v0.9.6 Pages View: AI page generation, inline chat editing, auto-layout fix, new landing page |
+| 2026-02-19 | M13: AI Agent Builder, interactive landing demos, view restructuring, auto-save fix |
+| 2026-02-19 | v0.9.7: Landing page hero/prompt rewrite, email capture, about/contact pages |
+| 2026-02-20 | M14: Advanced Canvas (multi-select, spring physics, LOD zoom) |
+| 2026-02-20 | M15: Territory File Sync (bidirectional canvas ↔ Markdown) |
+| 2026-02-20 | M15.5: PRD Pipeline (status tracking, stale detection, Ralphy export) |
+| 2026-02-20 | v0.9.8: Advanced Canvas + Sync milestone |
+| 2026-02-22 | M16: Design Tab rewrite (srcdoc iframes), canvas page interactions, agent drag-and-drop |
+| 2026-02-22 | v0.9.9: Current version — Design tab + agent integration milestone |
