@@ -31,6 +31,8 @@ import {
   Download,
   Plus,
   Globe,
+  LayoutGrid,
+  AppWindow,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { authFetch } from '@/lib/auth-fetch'
@@ -38,6 +40,7 @@ import { generateId } from '@/lib/id'
 import type { AppChatMessage } from '@/types/project'
 import dynamic from 'next/dynamic'
 import { parseAppRoutes } from '@/lib/parse-app-routes'
+import { DesignCanvas } from './design-canvas'
 
 const MonacoEditor = dynamic(() => import('@monaco-editor/react').then((m) => m.default), { ssr: false })
 
@@ -675,6 +678,7 @@ export function DesignView() {
   const [addPageOpen, setAddPageOpen] = useState(false)
   const [addPageName, setAddPageName] = useState('')
   const [addingPage, setAddingPage] = useState(false)
+  const [designMode, setDesignMode] = useState<'single' | 'canvas'>('single')
   const iframeRef = useRef<HTMLIFrameElement>(null)
 
   const routes = useMemo(() => parseAppRoutes(appFiles), [appFiles])
@@ -1131,6 +1135,34 @@ export function DesignView() {
           ))}
         </div>
 
+        {/* View mode toggle */}
+        <div className="flex items-center gap-0.5 bg-muted rounded-md p-0.5">
+          <button
+            onClick={() => setDesignMode('single')}
+            className={cn(
+              'p-1.5 rounded transition-colors',
+              designMode === 'single'
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+            title="Single page view"
+          >
+            <AppWindow className="h-3.5 w-3.5" />
+          </button>
+          <button
+            onClick={() => setDesignMode('canvas')}
+            className={cn(
+              'p-1.5 rounded transition-colors',
+              designMode === 'canvas'
+                ? 'bg-background shadow-sm text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+            title="All pages canvas"
+          >
+            <LayoutGrid className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
         <div className="w-px h-5 bg-border" />
 
         {/* Page navigator */}
@@ -1268,62 +1300,90 @@ export function DesignView() {
 
       {/* Main content */}
       <div className="flex-1 flex min-h-0">
-        {/* Sidebar */}
-        <div className="w-56 border-r bg-muted/30 flex flex-col shrink-0 overflow-y-auto">
-          {/* Summary */}
-          {summary && (
-            <div className="p-3 border-b">
-              <p className="text-xs text-muted-foreground leading-relaxed">{summary}</p>
-            </div>
-          )}
-
-          {/* File tree */}
-          <div className="py-2">
-            <FileTree files={appFiles} />
-          </div>
-
-          {/* Generation progress (when regenerating) */}
-          {phase !== 'ready' && phase !== 'idle' && (
-            <div className="p-3 border-t mt-auto">
-              <PhaseProgress currentPhase={phase} error={genError} />
-            </div>
-          )}
-        </div>
-
-        {/* Preview iframe */}
-        <div className="flex-1 bg-muted/20 flex items-start justify-center p-4 overflow-auto">
-          <div
-            className={cn(
-              'bg-background border rounded-lg shadow-lg overflow-hidden transition-all duration-300',
-              viewport === 'desktop' && 'w-full h-full',
-              viewport !== 'desktop' && 'h-[90%]'
-            )}
-            style={{
-              width: viewport !== 'desktop' ? VIEWPORT_SIZES[viewport].width : undefined,
-              maxWidth: '100%',
-            }}
-          >
-            {serverUrl ? (
-              <iframe
-                ref={iframeRef}
-                src={serverUrl}
-                title="App Preview"
-                className="w-full h-full border-0"
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                <div className="text-center">
-                  <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
-                  <p className="text-sm">Starting preview server...</p>
+        {designMode === 'single' && (
+          <>
+            {/* Sidebar */}
+            <div className="w-56 border-r bg-muted/30 flex flex-col shrink-0 overflow-y-auto">
+              {/* Summary */}
+              {summary && (
+                <div className="p-3 border-b">
+                  <p className="text-xs text-muted-foreground leading-relaxed">{summary}</p>
                 </div>
+              )}
+
+              {/* File tree */}
+              <div className="py-2">
+                <FileTree files={appFiles} />
               </div>
-            )}
+
+              {/* Generation progress (when regenerating) */}
+              {phase !== 'ready' && phase !== 'idle' && (
+                <div className="p-3 border-t mt-auto">
+                  <PhaseProgress currentPhase={phase} error={genError} />
+                </div>
+              )}
+            </div>
+
+            {/* Preview iframe */}
+            <div className="flex-1 bg-muted/20 flex items-start justify-center p-4 overflow-auto">
+              <div
+                className={cn(
+                  'bg-background border rounded-lg shadow-lg overflow-hidden transition-all duration-300',
+                  viewport === 'desktop' && 'w-full h-full',
+                  viewport !== 'desktop' && 'h-[90%]'
+                )}
+                style={{
+                  width: viewport !== 'desktop' ? VIEWPORT_SIZES[viewport].width : undefined,
+                  maxWidth: '100%',
+                }}
+              >
+                {serverUrl ? (
+                  <iframe
+                    ref={iframeRef}
+                    src={serverUrl}
+                    title="App Preview"
+                    className="w-full h-full border-0"
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <div className="text-center">
+                      <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+                      <p className="text-sm">Starting preview server...</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {designMode === 'canvas' && serverUrl && (
+          <div className="flex-1">
+            <DesignCanvas
+              routes={routes}
+              serverUrl={serverUrl}
+              appFiles={appFiles}
+              onFocusPage={(path) => {
+                setDesignMode('single')
+                setCurrentRoute(path)
+                handleNavigateRoute(path)
+              }}
+            />
           </div>
-        </div>
+        )}
+
+        {designMode === 'canvas' && !serverUrl && (
+          <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-3 text-primary" />
+              <p className="text-sm">Starting preview server...</p>
+            </div>
+          </div>
+        )}
 
         {/* Code editor */}
-        {codeEditorOpen && !chatOpen && (
+        {codeEditorOpen && !chatOpen && designMode === 'single' && (
           <CodeEditorPanel
             files={appFiles}
             onFileChange={handleCodeFileChange}
@@ -1332,7 +1392,7 @@ export function DesignView() {
         )}
 
         {/* Element inspector */}
-        {selectedElement && !chatOpen && !codeEditorOpen && (
+        {selectedElement && !chatOpen && !codeEditorOpen && designMode === 'single' && (
           <ElementInspector
             element={selectedElement}
             onEditRequest={handleInspectorEditRequest}
