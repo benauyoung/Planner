@@ -1027,31 +1027,40 @@ export function DesignView() {
             <Monitor className="h-10 w-10 text-primary" />
           </div>
           <h3 className="text-2xl font-bold mb-3">Design Your App</h3>
-          <p className="text-sm text-muted-foreground mb-2 max-w-md mx-auto">
-            {hasSavedFiles
-              ? 'You have a previously generated app. Load the preview or regenerate from scratch.'
-              : 'Generate a complete React + Tailwind application from your project plan. The AI will read your goals, features, and PRDs to build a fully functional preview.'}
-          </p>
-          {!hasSavedFiles && currentProject && currentProject.nodes.length === 0 && (
-            <p className="text-xs text-amber-500 mb-4">
-              Tip: Add some goals and features in the Plan tab first for better results.
-            </p>
+          {!currentProject ? (
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Loading project data...</p>
+              <Loader2 className="h-5 w-5 animate-spin mx-auto text-muted-foreground" />
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-muted-foreground mb-2 max-w-md mx-auto">
+                {hasSavedFiles
+                  ? 'You have a previously generated app. Load the preview or regenerate from scratch.'
+                  : 'Generate a complete React + Tailwind application from your project plan. The AI will read your goals, features, and PRDs to build a fully functional preview.'}
+              </p>
+              {!hasSavedFiles && currentProject.nodes.length === 0 && (
+                <p className="text-xs text-amber-500 mb-4">
+                  Tip: Add some goals and features in the Plan tab first for better results.
+                </p>
+              )}
+              <div className="flex items-center justify-center gap-3 mt-4">
+                {hasSavedFiles && (
+                  <Button onClick={handleLoadExisting} size="lg" className="gap-2">
+                    <Monitor className="h-5 w-5" />
+                    Load Preview
+                  </Button>
+                )}
+                <Button onClick={handleGenerate} size="lg" variant={hasSavedFiles ? 'outline' : 'default'} className="gap-2">
+                  <Sparkles className="h-5 w-5" />
+                  {hasSavedFiles ? 'Regenerate' : 'Generate App'}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-4">
+                This may take 30-60 seconds on first run (installing dependencies).
+              </p>
+            </>
           )}
-          <div className="flex items-center justify-center gap-3 mt-4">
-            {hasSavedFiles && (
-              <Button onClick={handleLoadExisting} size="lg" className="gap-2">
-                <Monitor className="h-5 w-5" />
-                Load Preview
-              </Button>
-            )}
-            <Button onClick={handleGenerate} size="lg" variant={hasSavedFiles ? 'outline' : 'default'} className="gap-2">
-              <Sparkles className="h-5 w-5" />
-              {hasSavedFiles ? 'Regenerate' : 'Generate App'}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground mt-4">
-            This may take 30-60 seconds on first run (installing dependencies).
-          </p>
         </div>
       </div>
     )

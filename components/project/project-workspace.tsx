@@ -369,7 +369,20 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   if (!currentProject) {
     return (
       <div className="h-full flex items-center justify-center">
-        <p className="text-muted-foreground">Project not found</p>
+        <div className="text-center max-w-md space-y-3">
+          <h3 className="text-lg font-semibold">Project not found</h3>
+          <p className="text-sm text-muted-foreground">
+            This project couldn&apos;t be loaded. It may have been deleted, or the database connection failed.
+          </p>
+          <div className="flex items-center justify-center gap-2 pt-2">
+            <a href="/dashboard" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors">
+              Back to Dashboard
+            </a>
+            <a href="/project/new" className="inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 border border-input bg-background hover:bg-accent hover:text-accent-foreground transition-colors">
+              New Project
+            </a>
+          </div>
+        </div>
       </div>
     )
   }

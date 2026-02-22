@@ -70,7 +70,8 @@
       "Bash(do echo \"=== $svc ===\" grep -r \"from ''@/services/$svc''\" /c/Users/Benjamin/Desktop/Projects/Planner --include=\"*.ts\" --include=\"*.tsx\")",
       "Bash(cat:*)",
       "Bash(git checkout:*)",
-      "Bash(echo EXIT:$?:*)"
+      "Bash(echo EXIT:$?:*)",
+      "Bash(grep:*)"
     ]
   }
 }
