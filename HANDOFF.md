@@ -791,6 +791,8 @@ npm run type-check  # Alias for tsc --noEmit
 | `ROADMAP.md` | Milestone tracking, version targets, change log | Reference |
 | `VISION.md` | Product goals, target audience, design principles | Background |
 | `README.md` | Quick project overview | Background |
+| `archive/NEXT_FEATURES.md` | 12-phase feature plan (archived — superseded by ROADMAP.md) | Archived |
+| `archive/SPEC_DEFS/*.md` | Feature specs (archived — all implemented) | Archived |
 
 ---
 

@@ -16,7 +16,7 @@
 │                      │                                        │
 │  ┌───────────────────▼──────────────────┐                    │
 │  │         Dagre Auto-Layout            │                    │
-│  │  (Left-to-right hierarchical layout) │                    │
+│  │  (Top-to-bottom hierarchical layout) │                    │
 │  └──────────────────────────────────────┘                    │
 ├──────────────────────────────────────────────────────────────┤
 │                    Next.js App Router                         │
@@ -64,10 +64,14 @@
 | Animation | Framer Motion | 11.x | Transitions, context menus |
 | Markdown | react-markdown | 9.0.1 | Rendering markdown in chat |
 
+### Installed but No Longer Used by Active Code
+- `@webcontainer/api` — Was used by Design tab (Phase 13), replaced by srcdoc iframes in Phase 16
+- `@monaco-editor/react` — Was used by Design tab code editor, no longer used
+- `jszip` — Was used by Design tab zip export, no longer used
+
 ### Not Installed (Referenced in older docs but NOT in package.json)
-- d3-force (spring physics) — using dagre for layout instead
+- d3-force (spring physics) — custom engine in `lib/canvas-physics.ts` instead
 - yjs / y-partykit (real-time collaboration) — client infrastructure ready, no WebSocket backend yet
-- chokidar (file watcher) — territory sync not implemented
 - partykit (WebSocket) — collaboration provider ready to connect
 
 ---
@@ -436,8 +440,9 @@ components/
 │   ├── board-view.tsx                 # Manage sub-view: Kanban by status with drag-and-drop
 │   ├── timeline-view.tsx              # Manage sub-view: interactive Gantt chart with drag-to-move/resize
 │   ├── backend-view.tsx               # Manage sub-view: backend module architect on zoomable canvas
-│   ├── design-view.tsx                # Design tab: WebContainer Vite+React app, chat sidebar, element inspector, Monaco code editor
-│   ├── pages-view.tsx                 # Legacy: AI-generated page previews on canvas (pre-WebContainer)
+│   ├── design-view.tsx                # Design tab: srcdoc iframe previews, AI page generation, PageChat sidebar, single/canvas modes, agent drop handler
+│   ├── design-canvas.tsx              # React Flow canvas for Design tab: PageFrameNode (srcdoc iframes), AgentsPanel (drag-and-drop), inline AI edit bar
+│   ├── pages-view.tsx                 # Legacy: AI-generated page previews on canvas (unused)
 │   └── agents-view.tsx                # Agents view: agent builder with config, knowledge, theme, preview, deploy tabs
 ├── sprints/
 │   └── sprint-board.tsx               # Sprint overview: create, drag backlog, progress bars
@@ -668,10 +673,15 @@ The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automaticall
 | 2026-02 | Interactive Gantt | Drag-to-move bars, edge-resize durations, snap-to-day |
 | 2026-02 | Pages View | AI-generated Tailwind page previews on zoomable canvas (legacy, superseded by Design tab) |
 | 2026-02 | Inline page chat | Click page, describe changes, AI regenerates HTML |
-| 2026-02 | WebContainer Design tab | Live Vite+React app in-browser; replaces static previews |
-| 2026-02 | Chat-based app iteration | AI diffs files based on user instruction, hot reload |
-| 2026-02 | Visual click-to-edit | Element inspector: edit text/color/layout via click-to-select |
-| 2026-02 | Monaco code editor | File-tree + tabs; writes directly to WebContainer for hot reload |
+| 2026-02 | WebContainer Design tab | Live Vite+React app in-browser; replaces static previews (later replaced by srcdoc iframes) |
+| 2026-02 | srcdoc iframe Design tab | Replaced WebContainer — standalone HTML + Tailwind CDN in srcdoc iframes, no SharedArrayBuffer needed |
+| 2026-02 | Agent drag-and-drop | Drag agents from panel onto Design canvas pages to inject chat widget HTML |
+| 2026-02 | Canvas page interactions | Inline AI editing, delete, focus, select-to-chat on Design canvas page nodes |
+| 2026-02 | Multi-select + bulk actions | Rubber-band, Shift+click, Ctrl+A; BulkActionsBar with align/distribute/status |
+| 2026-02 | Spring physics layout | Custom force-directed engine in canvas-physics.ts; Dagre/Spring toggle |
+| 2026-02 | Level-of-detail zoom | 3 LOD tiers (full/compact/dot) based on viewport zoom level |
+| 2026-02 | Territory file sync | Bidirectional canvas ↔ Markdown with diff review and selective merge |
+| 2026-02 | Canvas layout TB | Switched dagre from left-to-right to top-to-bottom, fixed node overlap |
 | 2026-02 | Deep question flow | Category-aware questions, multi-turn follow-ups, readiness badge |
 | 2026-02 | PRD status tracking | 6 statuses per node; stale detection when answers change |
 | 2026-02 | PRD Pipeline panel | Filter tabs, per-node status badges, Ralphy ZIP export |

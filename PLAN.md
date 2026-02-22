@@ -259,73 +259,36 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 
 ---
 
-## Phase 13: Lovable-Quality Design Tab (WebContainer)
+## Phase 13: Design Tab — srcdoc Iframes (Replaced WebContainer) ✅
 
-> Transform the Design tab from static HTML previews into a full Lovable-style experience:
-> Plan tab PRDs → AI generates a complete React+Tailwind app → WebContainer runs it live → User iterates via chat + visual click-to-edit.
+> **Rewritten Feb 22, 2026.** The Design tab was completely rewritten to eliminate WebContainer (required SharedArrayBuffer/COOP/COEP headers that fail on most hosts). Now uses `/api/ai/generate-pages` to generate standalone HTML with Tailwind CSS, rendered via `srcdoc` iframes. Works on all browsers.
 
-### Status: ✅ All 5 Phases Complete
+### Status: ✅ Complete
 
-**Implemented:**
-- WebContainer (StackBlitz API) runs a real Vite+React+Tailwind dev server in-browser
-- AI generates multi-file React apps (components, pages, routing, state) from Plan tab PRDs
-- Live preview with hot reload in iframe + viewport switcher (desktop/tablet/mobile)
-- Chat-based iteration: "add a pricing section" → AI diffs files → hot reload
-- Visual click-to-edit: click element in preview → inspect text/color/spacing → quick actions
-- Code editor (Monaco) for power users with file tabs + live editing
-- Export/download generated app as zip
-- Multi-page app support: page navigator dropdown, route change detection, "Add Page" button with AI generation
-- Chat history persisted per project
-- Load Preview button for revisiting saved apps
+- [x] AI reads project plan nodes → `/api/ai/generate-pages` → returns `ProjectPage[]` with HTML body
+- [x] `wrapHtmlPage()` wraps body HTML in full document with Tailwind CDN
+- [x] Two view modes: `designMode: 'single' | 'canvas'` (default: canvas)
+- [x] Single mode: full-size iframe with viewport switcher (Desktop/Tablet/Mobile) + page sidebar
+- [x] Canvas mode: React Flow with all pages as draggable `PageFrameNode` nodes (srcdoc iframes 1280×800 scaled to 420×320)
+- [x] `PageChat` sidebar: select page → open chat → type instructions → `/api/ai/edit-page` updates HTML
+- [x] Inline AI editing on canvas nodes: MessageSquare button → edit bar → AI edits page
+- [x] Delete page: Trash2 button on each canvas node
+- [x] Focus page: Maximize2 button switches to single-page view
+- [x] Select page on canvas → auto-opens PageChat sidebar
+- [x] Add Page dialog: name a page → AI generates matching HTML → added to canvas
+- [x] Add Page button in canvas mode toolbar
+- [x] **Agent drag-and-drop**: `AgentsPanel` (collapsible floating panel) with draggable agent cards
+- [x] Green ring highlight on page nodes during drag-over
+- [x] Drop agent → injects styled chat widget HTML (floating bubble + expandable chat panel)
+- [x] Widget uses agent's name, primaryColor, greeting, position (bottom-left/bottom-right)
+- [x] Pages, edges, and positions persisted in project store
 
-### Phase 1: WebContainer + Basic Generation ✅
-- [x] Install `@webcontainer/api` dependency
-- [x] Create WebContainer boot service (`services/webcontainer.ts`) — singleton, ensureDir for nested paths
-- [x] Create Vite+React+Tailwind template (`lib/webcontainer-template.ts`) — package.json, vite.config, index.html, main.tsx, App.tsx
-- [x] Build PRD-to-prompt pipeline (`lib/build-app-context.ts`) — gathers Plan tab context (nodes, PRDs, questions)
-- [x] New API route `/api/ai/generate-app` — AI generates multi-file React app from project context
-- [x] New prompt `prompts/app-generation.ts` — system prompt for React+Tailwind app generation
-- [x] New Gemini schema `appGenerationSchema` — structured output for file tree
-- [x] Replace `PagesView` with new `DesignView` component using WebContainer iframe
-- [x] Boot WebContainer → write template files → install deps → start Vite → show preview
-- [x] Write AI-generated files into WebContainer → hot reload updates preview
-- [x] Loading states, error handling, progress indicators
-- [x] COOP/COEP headers in `next.config.js` for SharedArrayBuffer support
-- [x] `authFetch` for authenticated API calls
-- [x] "Load Preview" button for revisiting saved apps
-
-### Phase 2: Chat Iteration
-- [x] Chat sidebar in Design tab (`AppChat` component with `MessageSquare` toggle)
-- [x] AI receives current file tree + user message → returns file diffs (`/api/ai/edit-app` + `appEditSchema`)
-- [x] Apply diffs to WebContainer files → hot reload (`handleChatFilesUpdated` merges + writes)
-- [x] Chat history persisted per project (`AppChatMessage` type + `addAppChatMessage` store method)
-
-### Phase 3: Visual Click-to-Edit
-- [x] Inject selection overlay script into WebContainer app (`lib/element-selector-script.ts` → injected into `index.html`)
-- [x] Click element → highlight + show editable properties (`ElementInspector` component with text, color, layout sections)
-- [x] Write changes back to source files → hot reload (`handleInspectorEditRequest` → `/api/ai/edit-app` → WebContainer)
-- [x] Element inspector panel (quick actions: make larger/smaller, bold, center, shadow, round corners)
-
-### Phase 4: Code Editor + Polish
-- [x] Monaco editor panel (`@monaco-editor/react` with dynamic import, file tabs, vs-dark theme)
-- [x] File explorer sidebar (integrated into left sidebar `FileTree` component)
-- [x] Export/download generated app as zip (`jszip` — includes package.json, vite.config, index.html + all src files)
-- [ ] Version history of iterations (deferred to future)
-
-### Phase 5: Multi-Page App Support ✅
-- [x] Route detection utility (`lib/parse-app-routes.ts`) — parses `<Route path="...">` from App.tsx
-- [x] Page navigator dropdown in toolbar — shows all detected routes with labels, navigates iframe on select
-- [x] Route change detection — injected script patches `pushState`/`replaceState` + `popstate`, sends `tb-route-change` to parent
-- [x] Programmatic navigation — parent sends `tb-navigate` message to iframe, triggers React Router navigation
-- [x] "Add Page" button + dialog — user names a page → AI generates page component + updates App.tsx routes + updates Layout/nav
-- [x] Enhanced app-generation prompt — mandatory Layout component, shared nav with `<Link>`, active route highlighting, ≥3 pages
-- [x] Enhanced app-edit prompt — multi-page edit rules for add/remove pages, Layout awareness, `<Link>` enforcement
-
-### Key Dependencies (all installed)
-- `@webcontainer/api` — WebContainer runtime
-- `@monaco-editor/react` — Code editor with dynamic import
-- `jszip` — Export app as downloadable zip
-- Gemini API — already integrated
+### Legacy WebContainer Files (still in codebase, unused)
+- `services/webcontainer.ts`, `hooks/use-webcontainer.ts`, `lib/webcontainer-template.ts`
+- `lib/build-app-context.ts`, `lib/element-selector-script.ts`, `lib/parse-app-routes.ts`
+- `prompts/app-generation.ts`, `prompts/app-edit.ts`
+- `/api/ai/generate-app`, `/api/ai/edit-app`
+- Dependencies: `@webcontainer/api`, `@monaco-editor/react`, `jszip`
 
 ---
 

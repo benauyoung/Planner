@@ -16,8 +16,9 @@ TinyBaguette is a **visual DAG-based project planning tool** where you:
 2. **Generate** a hierarchical plan via AI (Gemini 2.0 Flash)
 3. **Visualize** the plan as an interactive node graph on an infinite canvas
 4. **Refine** by chatting with AI, adding nodes, connecting edges, attaching PRDs & prompts
-5. **Generate** PRDs and implementation prompts from node context with one click
-6. **Execute** by tracking status, managing images/mood boards, and copying prompts into your IDE
+5. **Design** — AI generates full-fidelity Tailwind page previews, iterate with chat, drag agents onto pages
+6. **Generate** PRDs and implementation prompts from node context with one click
+7. **Execute** by tracking status, managing sprints, and exporting to your IDE
 
 ### Key Features
 
@@ -29,8 +30,14 @@ TinyBaguette is a **visual DAG-based project planning tool** where you:
 - **AI Generation** — One-click PRD and implementation prompt generation
 - **AI Iteration** — Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
 - **AI Smart Suggestions** — Ambient project analysis with severity-ranked insights
-- **AI Page Generation** — Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas
+- **AI Page Generation** — Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas (srcdoc iframes, no special browser requirements)
 - **Inline Page Chat** — Click any generated page, describe changes, AI regenerates the HTML
+- **Agent Drag-and-Drop** — Drag agents from panel onto Design canvas pages to inject a styled chat widget
+- **Canvas Page Interactions** — Inline AI editing, delete, focus, select-to-chat on Design canvas page nodes
+- **Multi-Select + Bulk Actions** — Rubber-band select, Shift+click, Ctrl+A; floating toolbar for status, align, distribute, duplicate, delete
+- **Spring Physics Layout** — Force-directed layout engine as alternative to Dagre tree layout
+- **Level-of-Detail Zoom** — 3 LOD tiers: full detail → compact pill → tiny dot based on zoom level
+- **Territory File Sync** — Bidirectional canvas ↔ Markdown files with diff review and selective merge
 - **Deep Question Flow** — Category-aware questions per node with multi-turn follow-ups, readiness badge, and eligibility tracking (goal/subgoal/feature/task)
 - **PRD Pipeline Panel** — Per-node status tracking (needs_questions → ready → generated → stale), filter tabs, actionable-count badge on toolbar
 - **Ralphy Export** — ZIP with `prd/*.md` (YAML frontmatter), `.ralphy/config.yaml`, `PRD.md` manifest for autonomous AI coding loops
@@ -53,7 +60,7 @@ TinyBaguette is a **visual DAG-based project planning tool** where you:
 - **Interactive Gantt** — Drag bars to move tasks, drag edges to resize durations
 - **Unified Toolbar** — Project name, save status, view tabs, and actions in one compact bar
 - **Auto-Layout** — Dagre-powered hierarchical arrangement with position preservation on updates
-- **Page Previews** — 1280x800 desktop-sized iframes with Tailwind CDN, flow-grouped by navigation
+- **Page Previews** — 1280x800 desktop-sized iframes with Tailwind CDN, two modes (single-page + canvas)
 
 ---
 
@@ -187,9 +194,9 @@ Every node can have:
 | Animation | Framer Motion | 11.x |
 | Icons | Lucide React | 0.462.0 |
 | Rich Text | @tiptap/react | 3.19.0 |
-| WebContainer | @webcontainer/api | latest |
-| Code Editor | @monaco-editor/react | latest |
-| Zip Export | jszip | latest |
+| WebContainer | @webcontainer/api | latest | *(legacy, unused — Design tab now uses srcdoc iframes)* |
+| Code Editor | @monaco-editor/react | latest | *(legacy, unused)* |
+| Zip Export | jszip | latest | *(legacy, unused)* |
 
 ---
 
@@ -226,7 +233,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=<id>
 | [INTRO.md](./INTRO.md) | AI agent onboarding — read this first |
 | [HANDOFF.md](./HANDOFF.md) | Detailed codebase walkthrough |
 | [ARCHITECTURE.md](./ARCHITECTURE.md) | Technical decisions and data models |
-| [NEXT_FEATURES.md](./NEXT_FEATURES.md) | 12-phase feature plan (all complete) |
+| [NEXT_FEATURES.md](./archive/NEXT_FEATURES.md) | 12-phase feature plan (archived — superseded by ROADMAP.md) |
 | [PLAN.md](./PLAN.md) | Implementation status checklist |
 | [ROADMAP.md](./ROADMAP.md) | Milestone tracking |
 | [VISION.md](./VISION.md) | North Star goals and target audience |
