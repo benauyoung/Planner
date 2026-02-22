@@ -1,6 +1,6 @@
 # TinyBaguette Implementation Plan
 
-> Living checklist reflecting actual implementation status as of February 20, 2026.
+> Living checklist reflecting actual implementation status as of February 22, 2026.
 
 ---
 
@@ -259,29 +259,81 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 
 ---
 
+## Phase 13: Lovable-Quality Design Tab (WebContainer)
+
+> Transform the Design tab from static HTML previews into a full Lovable-style experience:
+> Plan tab PRDs → AI generates a complete React+Tailwind app → WebContainer runs it live → User iterates via chat + visual click-to-edit.
+
+### Status: ✅ All 4 Phases Complete
+
+**Implemented:**
+- WebContainer (StackBlitz API) runs a real Vite+React+Tailwind dev server in-browser
+- AI generates multi-file React apps (components, pages, routing, state) from Plan tab PRDs
+- Live preview with hot reload in iframe + viewport switcher (desktop/tablet/mobile)
+- Chat-based iteration: "add a pricing section" → AI diffs files → hot reload
+- Visual click-to-edit: click element in preview → inspect text/color/spacing → quick actions
+- Code editor (Monaco) for power users with file tabs + live editing
+- Export/download generated app as zip
+- Chat history persisted per project
+- Load Preview button for revisiting saved apps
+
+### Phase 1: WebContainer + Basic Generation ✅
+- [x] Install `@webcontainer/api` dependency
+- [x] Create WebContainer boot service (`services/webcontainer.ts`) — singleton, ensureDir for nested paths
+- [x] Create Vite+React+Tailwind template (`lib/webcontainer-template.ts`) — package.json, vite.config, index.html, main.tsx, App.tsx
+- [x] Build PRD-to-prompt pipeline (`lib/build-app-context.ts`) — gathers Plan tab context (nodes, PRDs, questions)
+- [x] New API route `/api/ai/generate-app` — AI generates multi-file React app from project context
+- [x] New prompt `prompts/app-generation.ts` — system prompt for React+Tailwind app generation
+- [x] New Gemini schema `appGenerationSchema` — structured output for file tree
+- [x] Replace `PagesView` with new `DesignView` component using WebContainer iframe
+- [x] Boot WebContainer → write template files → install deps → start Vite → show preview
+- [x] Write AI-generated files into WebContainer → hot reload updates preview
+- [x] Loading states, error handling, progress indicators
+- [x] COOP/COEP headers in `next.config.js` for SharedArrayBuffer support
+- [x] `authFetch` for authenticated API calls
+- [x] "Load Preview" button for revisiting saved apps
+
+### Phase 2: Chat Iteration
+- [x] Chat sidebar in Design tab (`AppChat` component with `MessageSquare` toggle)
+- [x] AI receives current file tree + user message → returns file diffs (`/api/ai/edit-app` + `appEditSchema`)
+- [x] Apply diffs to WebContainer files → hot reload (`handleChatFilesUpdated` merges + writes)
+- [x] Chat history persisted per project (`AppChatMessage` type + `addAppChatMessage` store method)
+
+### Phase 3: Visual Click-to-Edit
+- [x] Inject selection overlay script into WebContainer app (`lib/element-selector-script.ts` → injected into `index.html`)
+- [x] Click element → highlight + show editable properties (`ElementInspector` component with text, color, layout sections)
+- [x] Write changes back to source files → hot reload (`handleInspectorEditRequest` → `/api/ai/edit-app` → WebContainer)
+- [x] Element inspector panel (quick actions: make larger/smaller, bold, center, shadow, round corners)
+
+### Phase 4: Code Editor + Polish
+- [x] Monaco editor panel (`@monaco-editor/react` with dynamic import, file tabs, vs-dark theme)
+- [x] File explorer sidebar (integrated into left sidebar `FileTree` component)
+- [x] Export/download generated app as zip (`jszip` — includes package.json, vite.config, index.html + all src files)
+- [ ] Version history of iterations (deferred to future)
+
+### Key Dependencies (all installed)
+- `@webcontainer/api` — WebContainer runtime
+- `@monaco-editor/react` — Code editor with dynamic import
+- `jszip` — Export app as downloadable zip
+- Gemini API — already integrated
+
+---
+
 ## Consolidated Task List
 
-### 🔴 CORE — PRD Pipeline (Highest Priority)
+### 🔴 CORE — PRD Pipeline ✅
 
-- [ ] **Deep question flow per node** — Guided AI questioning for each goal/subgoal/feature/task to extract requirements, acceptance criteria, constraints, and dependencies before PRD generation
-- [ ] **Context-aware PRD generation** — Rewrite PRD generation so each PRD knows:
-  - Its parent PRD (what it rolls up to)
-  - Sibling PRDs (what's being built alongside it)
-  - Child PRDs (what it breaks down into)
-  - Dependency PRDs (what blocks/informs it via typed edges)
-  - Overall project context (tech stack, conventions, constraints)
-- [ ] **PRD scoping for Ralphy** — Each PRD should be small enough for one AI context window. Features/tasks get their own PRDs; goals/subgoals get summary PRDs that reference children
-- [ ] **Ralphy export format** — Export PRD tree as Ralphy-compatible output:
-  - Markdown checklist (`PRD.md` with `- [ ]` tasks)
-  - Or folder structure (`prd/feature-auth.md`, `prd/feature-dashboard.md`, etc.)
-  - Include `.ralphy/config.yaml` generation (project name, framework, rules, boundaries)
-- [ ] **Ralphy instructions in PRDs** — Generated PRDs should advise the AI to use Ralphy (`ralphy --prd PRD.md`) and include the Ralphy workflow pattern
-- [ ] **PRD status tracking** — Track which PRDs are generated, which need more questions answered, and which are ready for export
+- [x] **Deep question flow per node** — Category-aware questions, multi-turn follow-ups, readiness badge, expanded to goal/subgoal/feature/task
+- [x] **Context-aware PRD generation** — `buildPrdEcosystem()` gives each PRD parent/sibling/child/dependency PRD context
+- [x] **PRD scoping for Ralphy** — feature/task PRDs get mandatory Implementation Checklist + Run with Ralphy block; goal/subgoal get summary PRDs
+- [x] **Ralphy export format** — ZIP with `prd/*.md`, `.ralphy/config.yaml`, flat `PRD.md`; also "PRD Manifest (.md)" quick export
+- [x] **Ralphy instructions in PRDs** — Every feature/task PRD includes `## Run with Ralphy` block with invoke command, agent rec, complexity, boundary
+- [x] **PRD status tracking** — Pipeline panel with per-node status dots (needs_questions → answering → ready → generated/stale → export_ready), stale detection on answer change
 
 ### 🟡 INFRASTRUCTURE — Pending Items
 
 - [ ] **Email infrastructure** — Set up email receiving at `hello@tinybaguette.com` (Cloudflare Email Routing or ImprovMX)
-- [ ] **Email storage** — Wire hero prompt email capture to Firestore collection, Resend, or Mailchimp
+- [x] **Email storage** — Hero prompt email capture → Firestore `waitlist` collection; optional Resend welcome email via `RESEND_API_KEY`
 - [x] **Privacy Policy / Terms of Service** — Pages at `/privacy` and `/terms`, footer links wired
 - [x] **Cleanup** — Deleted 10 dead code files: `hero-section.tsx`, `view-switcher.tsx`, `timeline-bar.tsx`, 2 collaboration components, `activity-feed.tsx`, `use-collaboration.ts`, 3 integration services (github, linear, slack)
 
