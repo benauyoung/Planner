@@ -134,6 +134,19 @@ export interface ProjectEdge {
   label?: string
 }
 
+export interface AppFile {
+  path: string
+  content: string
+}
+
+export interface AppChatMessage {
+  id: string
+  role: 'user' | 'ai'
+  content: string
+  filesChanged?: string[]
+  timestamp: number
+}
+
 export interface ProjectPage {
   id: string
   title: string
@@ -210,4 +223,7 @@ export interface Project {
   backendModules?: BackendModule[]
   backendEdges?: BackendEdge[]
   agents?: Agent[]
+  appFiles?: AppFile[]
+  appDesignSummary?: string
+  appChatMessages?: AppChatMessage[]
 }
