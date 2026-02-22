@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useMemo, useEffect, useCallback, useState } from 'react'
+import { memo, useMemo, useEffect, useCallback, useState, useRef } from 'react'
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -17,7 +17,7 @@ import {
   Position,
 } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
-import { Globe, Maximize2 } from 'lucide-react'
+import { Globe, Maximize2, Trash2, Send, Loader2, MessageSquare } from 'lucide-react'
 import type { ProjectPage, PageEdge } from '@/types/project'
 
 // ─── Types ───────────────────────────────────────────────────
@@ -25,6 +25,8 @@ import type { ProjectPage, PageEdge } from '@/types/project'
 interface PageNodeData {
   page: ProjectPage
   onFocusPage: (pageId: string) => void
+  onDeletePage: (pageId: string) => void
+  onEditPage: (pageId: string, instruction: string) => Promise<void>
   [key: string]: unknown
 }
 
@@ -49,12 +51,33 @@ const PAGE_FRAME_WIDTH = 420
 const PAGE_FRAME_HEIGHT = 320
 
 const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
-  const { page, onFocusPage } = data as unknown as PageNodeData
+  const { page, onFocusPage, onDeletePage, onEditPage } = data as unknown as PageNodeData
+  const [editInput, setEditInput] = useState('')
+  const [editing, setEditing] = useState(false)
+  const [showEdit, setShowEdit] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (showEdit) inputRef.current?.focus()
+  }, [showEdit])
+
+  const handleSubmitEdit = async () => {
+    const instruction = editInput.trim()
+    if (!instruction || editing) return
+    setEditing(true)
+    try {
+      await onEditPage(page.id, instruction)
+      setEditInput('')
+      setShowEdit(false)
+    } finally {
+      setEditing(false)
+    }
+  }
 
   return (
     <div
       className="group"
-      style={{ width: PAGE_FRAME_WIDTH, height: PAGE_FRAME_HEIGHT + 36 }}
+      style={{ width: PAGE_FRAME_WIDTH }}
     >
       <Handle type="source" position={Position.Right} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
       <Handle type="target" position={Position.Left} className="!w-2 !h-2 !bg-primary/50 !border-primary/30" />
@@ -67,6 +90,16 @@ const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
         <button
           onClick={(e) => {
             e.stopPropagation()
+            setShowEdit(!showEdit)
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
+          title="Edit with AI"
+        >
+          <MessageSquare className="h-3 w-3 text-muted-foreground" />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
             onFocusPage(page.id)
           }}
           className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-muted"
@@ -74,7 +107,47 @@ const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
         >
           <Maximize2 className="h-3 w-3 text-muted-foreground" />
         </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            onDeletePage(page.id)
+          }}
+          className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-destructive/10 hover:text-destructive"
+          title="Delete page"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
       </div>
+
+      {/* Inline edit bar */}
+      {showEdit && (
+        <div className="flex items-center gap-1 px-2 py-1.5 bg-background border border-t-0 border-b-0">
+          <input
+            ref={inputRef}
+            value={editInput}
+            onChange={(e) => setEditInput(e.target.value)}
+            onKeyDown={(e) => {
+              e.stopPropagation()
+              if (e.key === 'Enter') handleSubmitEdit()
+              if (e.key === 'Escape') { setShowEdit(false); setEditInput('') }
+            }}
+            placeholder="e.g. Make header blue, add pricing..."
+            className="flex-1 h-7 px-2 text-[11px] bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary nodrag"
+            disabled={editing}
+          />
+          <button
+            onClick={(e) => {
+              e.stopPropagation()
+              handleSubmitEdit()
+            }}
+            disabled={!editInput.trim() || editing}
+            className="h-7 w-7 flex items-center justify-center rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 shrink-0 nodrag"
+            title="Apply edit"
+          >
+            {editing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+          </button>
+        </div>
+      )}
 
       {/* Iframe preview via srcdoc */}
       <div
@@ -110,7 +183,9 @@ const designNodeTypes: NodeTypes = {
 
 function buildNodes(
   pages: ProjectPage[],
-  onFocusPage: (pageId: string) => void
+  onFocusPage: (pageId: string) => void,
+  onDeletePage: (pageId: string) => void,
+  onEditPage: (pageId: string, instruction: string) => Promise<void>
 ): Node[] {
   return pages.map((page, i) => ({
     id: page.id,
@@ -119,7 +194,7 @@ function buildNodes(
       x: (i % 3) * (PAGE_FRAME_WIDTH + 80),
       y: Math.floor(i / 3) * (PAGE_FRAME_HEIGHT + 36 + 80),
     },
-    data: { page, onFocusPage } as PageNodeData,
+    data: { page, onFocusPage, onDeletePage, onEditPage } as PageNodeData,
     draggable: true,
     selectable: true,
   }))
@@ -143,21 +218,28 @@ function DesignCanvasInner({
   pages,
   pageEdges,
   onFocusPage,
+  onDeletePage,
+  onEditPage,
   onPagePositionChange,
 }: {
   pages: ProjectPage[]
   pageEdges: PageEdge[]
   onFocusPage: (pageId: string) => void
+  onDeletePage: (pageId: string) => void
+  onEditPage: (pageId: string, instruction: string) => Promise<void>
   onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
-  const initialNodes = useMemo(() => buildNodes(pages, onFocusPage), [pages, onFocusPage])
+  const initialNodes = useMemo(
+    () => buildNodes(pages, onFocusPage, onDeletePage, onEditPage),
+    [pages, onFocusPage, onDeletePage, onEditPage]
+  )
   const edges = useMemo(() => buildEdges(pageEdges), [pageEdges])
 
   const [flowNodes, setFlowNodes] = useState<Node[]>(initialNodes)
 
   useEffect(() => {
-    setFlowNodes(buildNodes(pages, onFocusPage))
-  }, [pages, onFocusPage])
+    setFlowNodes(buildNodes(pages, onFocusPage, onDeletePage, onEditPage))
+  }, [pages, onFocusPage, onDeletePage, onEditPage])
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -212,11 +294,15 @@ export function DesignCanvas({
   pages,
   pageEdges,
   onFocusPage,
+  onDeletePage,
+  onEditPage,
   onPagePositionChange,
 }: {
   pages: ProjectPage[]
   pageEdges: PageEdge[]
   onFocusPage: (pageId: string) => void
+  onDeletePage: (pageId: string) => void
+  onEditPage: (pageId: string, instruction: string) => Promise<void>
   onPagePositionChange: (pageId: string, position: { x: number; y: number }) => void
 }) {
   if (pages.length === 0) {
@@ -233,6 +319,8 @@ export function DesignCanvas({
         pages={pages}
         pageEdges={pageEdges}
         onFocusPage={onFocusPage}
+        onDeletePage={onDeletePage}
+        onEditPage={onEditPage}
         onPagePositionChange={onPagePositionChange}
       />
     </ReactFlowProvider>

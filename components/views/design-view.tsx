@@ -193,6 +193,7 @@ export function DesignView() {
   const currentProject = useProjectStore((s) => s.currentProject)
   const setPages = useProjectStore((s) => s.setPages)
   const updatePageHtml = useProjectStore((s) => s.updatePageHtml)
+  const removePage = useProjectStore((s) => s.removePage)
 
   const [phase, setPhase] = useState<DesignPhase>('idle')
   const [genError, setGenError] = useState<string | null>(null)
@@ -302,6 +303,42 @@ export function DesignView() {
       updatePageHtml(pageId, newHtml)
     },
     [updatePageHtml]
+  )
+
+  const handleDeletePage = useCallback(
+    (pageId: string) => {
+      removePage(pageId)
+      if (selectedPageId === pageId) {
+        const remaining = pages.filter((p) => p.id !== pageId)
+        setSelectedPageId(remaining[0]?.id || null)
+      }
+    },
+    [removePage, selectedPageId, pages]
+  )
+
+  const handleEditPageOnCanvas = useCallback(
+    async (pageId: string, instruction: string) => {
+      const page = pages.find((p) => p.id === pageId)
+      if (!page) return
+
+      const res = await authFetch('/api/ai/edit-page', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentHtml: page.html,
+          instruction,
+          pageTitle: page.title,
+        }),
+      })
+
+      if (!res.ok) throw new Error('Failed to edit page')
+
+      const data = await res.json()
+      if (data.html) {
+        updatePageHtml(pageId, data.html)
+      }
+    },
+    [pages, updatePageHtml]
   )
 
   const handleAddPage = useCallback(async () => {
@@ -627,6 +664,8 @@ export function DesignView() {
                 setDesignMode('single')
                 setSelectedPageId(pageId)
               }}
+              onDeletePage={handleDeletePage}
+              onEditPage={handleEditPageOnCanvas}
               onPagePositionChange={(pageId: string, position: { x: number; y: number }) => {
                 const updatePagePosition = useProjectStore.getState().updatePagePosition
                 updatePagePosition(pageId, position)
