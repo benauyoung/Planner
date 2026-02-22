@@ -12,15 +12,21 @@ export const ConnectorNode = memo(function ConnectorNode({ id, data }: NodeProps
   const nodeData = data as unknown as PlanNodeData
   const config = NODE_CONFIG.connector
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const selectNode = useUIStore((s) => s.selectNode)
   const isSelected = selectedNodeId === id
+  const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
 
   return (
     <div
       className={cn(
         'rounded-full border shadow-sm transition-all cursor-pointer flex items-center gap-2 px-3 py-1.5',
         config.bgClass,
-        isSelected ? 'ring-2 ring-primary shadow-glow' : 'hover:shadow-md',
+        isSelected
+          ? 'ring-2 ring-primary shadow-glow'
+          : isInMultiSelect
+            ? 'ring-2 ring-blue-400/60 ring-dashed'
+            : 'hover:shadow-md',
       )}
       style={{
         borderColor: config.color,

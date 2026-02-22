@@ -28,8 +28,10 @@ interface ProjectState {
   updateNodeContent: (nodeId: string, title: string, description: string) => void
   toggleNodeCollapse: (nodeId: string) => void
   deleteNode: (nodeId: string) => void
+  deleteNodes: (nodeIds: string[]) => void
   addChildNode: (parentId: string, title: string) => string | null
   duplicateNode: (nodeId: string, includeChildren: boolean) => string | null
+  duplicateNodes: (nodeIds: string[]) => string[]
   changeNodeType: (nodeId: string, newType: NodeType) => void
   answerNodeQuestion: (nodeId: string, questionId: string, answer: string) => void
   addNodeQuestions: (nodeId: string, questions: { question: string; options: string[]; category?: string; isFollowUp?: boolean; followUpForId?: string }[]) => void
@@ -102,6 +104,7 @@ interface ProjectState {
   removeAgentRule: (agentId: string, ruleId: string) => void
   updateAgentTheme: (agentId: string, theme: Partial<AgentTheme>) => void
   toggleAgentPublished: (agentId: string) => void
+  mergeFromTerritory: (nodes: PlanNode[], edges: ProjectEdge[]) => void
   undo: () => void
   redo: () => void
 }
@@ -458,6 +461,21 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
     },
 
+    deleteNodes: (nodeIds) => {
+      const project = get().currentProject
+      if (!project || nodeIds.length === 0) return
+
+      const allToRemove = new Set<string>()
+      function collectDescendants(id: string) {
+        allToRemove.add(id)
+        project!.nodes.filter((n) => n.parentId === id).forEach((n) => collectDescendants(n.id))
+      }
+      for (const id of nodeIds) collectDescendants(id)
+
+      const updatedNodes = project.nodes.filter((n) => !allToRemove.has(n.id))
+      commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
+    },
+
     addChildNode: (parentId, title) => {
       const project = get().currentProject
       if (!project) return null
@@ -522,6 +540,27 @@ export const useProjectStore = create<ProjectState>((set, get) => {
       const updatedNodes = [...project.nodes, ...clonedNodes]
       commitProjectUpdate({ ...project, nodes: updatedNodes, updatedAt: Date.now() })
       return rootCloneId
+    },
+
+    duplicateNodes: (nodeIds) => {
+      const project = get().currentProject
+      if (!project || nodeIds.length === 0) return []
+
+      const allCloned: PlanNode[] = []
+      const newIds: string[] = []
+
+      for (const nodeId of nodeIds) {
+        const node = project.nodes.find((n) => n.id === nodeId)
+        if (!node) continue
+        const newId = generateId()
+        newIds.push(newId)
+        allCloned.push({ ...node, id: newId, title: `${node.title} (Copy)` })
+      }
+
+      if (allCloned.length > 0) {
+        commitProjectUpdate({ ...project, nodes: [...project.nodes, ...allCloned], updatedAt: Date.now() })
+      }
+      return newIds
     },
 
     changeNodeType: (nodeId, newType) => {
@@ -1319,6 +1358,18 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         a.id === agentId ? { ...a, isPublished: !a.isPublished, updatedAt: Date.now() } : a
       )
       commitProjectUpdate({ ...p, updatedAt: Date.now(), agents })
+    },
+
+    mergeFromTerritory: (nodes: PlanNode[], edges: ProjectEdge[]) => {
+      const p = get().currentProject
+      if (!p) return
+      const updatedProject: Project = {
+        ...p,
+        nodes,
+        edges,
+        updatedAt: Date.now(),
+      }
+      commitProjectUpdate(updatedProject)
     },
 
     undo: () => {

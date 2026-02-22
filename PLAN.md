@@ -329,6 +329,57 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 
 ---
 
+## Phase 14: Advanced Canvas ✅
+
+> Upgrade the Plan tab canvas with multi-select + bulk actions, level-of-detail zoom rendering, and spring physics layout.
+
+### Phase A: Multi-Select + Bulk Actions ✅
+- [x] `selectedNodeIds: Set<string>` + `toggleNodeSelection`, `setSelectedNodes`, `clearSelection` in UI store
+- [x] `selectionOnDrag` rubber-band box select + `Shift` multi-select key in ReactFlow
+- [x] Multi-select ring highlighting (blue dashed ring) across all 12 node types
+- [x] Keyboard shortcuts: `Ctrl+A` select all, `Escape` clears multi-selection, `Delete` bulk delete, `Ctrl+D` bulk duplicate
+- [x] `deleteNodes(ids[])` and `duplicateNodes(ids[])` bulk methods in project store
+- [x] Bulk actions floating toolbar: Set Status, Align (8 options), Distribute H/V, Duplicate, Delete, Clear
+- [x] Alignment helpers (`lib/canvas-align.ts`): alignTop/Middle/Bottom/Left/Center/Right, distributeH/V
+
+### Phase B: Spring Physics Layout ✅
+- [x] Force-directed layout engine (`lib/canvas-physics.ts`) — repulsion, edge attraction, hierarchy gravity, damping
+- [x] Layout mode toggle in toolbar: Dagre (tree) vs Spring (force-directed) with `Atom` icon
+- [x] `layoutMode: 'dagre' | 'spring'` in UI store
+- [x] Spring layout wired into `graph-canvas.tsx` via `handleSpringLayout` callback
+
+### Phase C: Level-of-Detail Zoom ✅
+- [x] Zoom level hook (`hooks/use-zoom-level.ts`) — reads ReactFlow viewport zoom, returns LOD tier
+- [x] 3 LOD tiers: `full` (≥0.6), `compact` (0.3–0.6), `dot` (<0.3)
+- [x] `base-plan-node.tsx` renders progressively: full detail → title+status pill → tiny colored dot
+- [x] Compact: 180×40px, status dot + truncated title only
+- [x] Dot: 48×28px, colored pill with status dot, no text
+
+---
+
+## Phase 15: Territory File Sync ✅
+
+> Bidirectional canvas ↔ Markdown file sync. Each node becomes a standalone Markdown file with YAML frontmatter. Export/import via File System Access API or downloadable bundle.
+
+### File Format
+- `.territory/project.yaml` — project metadata (title, description, phase) + dependency edges + team
+- `.territory/goals/<id>.md` — one file per goal node
+- `.territory/subgoals/<id>.md`, `features/<id>.md`, `tasks/<id>.md`, `docs/<id>.md`
+- Each node file: YAML frontmatter (id, type, status, parent, priority, tags, decisions) + `# Title` + description + PRD/prompt sections
+
+### Implementation
+- [x] `lib/territory-serialize.ts` — `nodeToMarkdown()` / `markdownToNode()` round-trip, `projectToTerritory()` / `territoryToProject()` full project serialization, minimal YAML serializer/parser (zero dependencies), bundle format for download
+- [x] `lib/territory-sync.ts` — `diffTerritoryToCanvas()` / `diffCanvasToTerritory()` diff engine, `applyMerge()` with selective accept, `NodeDiff` / `EdgeDiff` / `SyncDiff` types, field-level change detection
+- [x] `hooks/use-territory-sync.ts` — React hook: export bundle download, export to folder (File System Access API), import from bundle file, import from folder, diff computation, selective merge apply
+- [x] `components/canvas/territory-sync-panel.tsx` — UI panel: export/import buttons (bundle + folder), diff review with per-node accept/reject, summary badges (added/modified/removed/conflicts), file format info
+- [x] `stores/project-store.ts` — `mergeFromTerritory(nodes, edges)` bulk merge method
+- [x] `stores/ui-store.ts` — `territorySyncOpen` state + `setTerritorySyncOpen` action
+- [x] `canvas-toolbar.tsx` — FolderSync icon button toggles territory sync panel
+- [x] `project-workspace.tsx` — `Ctrl+T` keyboard shortcut for territory sync panel
+- [x] TypeScript compiles clean
+
+---
+
 ## Consolidated Task List
 
 ### 🔴 CORE — PRD Pipeline ✅
@@ -361,8 +412,8 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 - [x] Presence avatars + live cursors (local mock)
 - [ ] **Real-time collaboration** — WebSocket backend (PartyKit/Liveblocks)
 - [ ] **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth
-- [ ] **Territory file sync** — Bidirectional canvas ↔ Markdown
-- [ ] **Advanced canvas** — Spring physics, multi-select, level-of-detail zoom
+- [x] **Territory file sync** — Bidirectional canvas ↔ Markdown
+- [x] **Advanced canvas** — Spring physics, multi-select, level-of-detail zoom
 - [x] **Image compression** — Resize/compress base64 before storing (canvas-based, > 1MB threshold)
 
 ---

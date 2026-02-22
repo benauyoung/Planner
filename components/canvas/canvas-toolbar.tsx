@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks } from 'lucide-react'
+import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks, Atom, FolderSync } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -11,12 +11,17 @@ import { exportFullPlanAsMarkdown } from '@/lib/export-markdown'
 import { generateCursorRules, generateClaudeMD, generatePlanMD, generateTasksMD } from '@/lib/export-project-files'
 import { downloadRalphyZip, downloadFlatPrdMd } from '@/lib/export-ralphy'
 import { getProjectPrdSummary } from '@/lib/prd-status'
+import { springLayout } from '@/lib/canvas-physics'
+import type { LayoutMode } from '@/stores/ui-store'
 
 interface CanvasToolbarProps {
   onReLayout: () => void
+  onSpringLayout?: () => void
+  onToggleTerritorySync?: () => void
+  territorySyncOpen?: boolean
 }
 
-export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
+export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySync, territorySyncOpen }: CanvasToolbarProps) {
   const { fitView } = useReactFlow()
   const currentProject = useProjectStore((s) => s.currentProject)
   const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
@@ -28,6 +33,8 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
   const setBlastRadiusMode = useUIStore((s) => s.setBlastRadiusMode)
   const prdPipelineOpen = useUIStore((s) => s.prdPipelineOpen)
   const setPrdPipelineOpen = useUIStore((s) => s.setPrdPipelineOpen)
+  const layoutMode = useUIStore((s) => s.layoutMode)
+  const setLayoutMode = useUIStore((s) => s.setLayoutMode)
 
   const prdSummary = currentProject ? getProjectPrdSummary(currentProject) : null
 
@@ -168,12 +175,23 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
         <Maximize2 className="h-4 w-4" />
       </Button>
       <Button
-        variant="outline"
+        variant={layoutMode === 'dagre' ? 'default' : 'outline'}
         size="icon"
-        onClick={onReLayout}
-        title="Re-layout"
+        onClick={() => { setLayoutMode('dagre'); onReLayout() }}
+        title="Dagre layout (tree)"
       >
         <LayoutGrid className="h-4 w-4" />
+      </Button>
+      <Button
+        variant={layoutMode === 'spring' ? 'default' : 'outline'}
+        size="icon"
+        onClick={() => {
+          setLayoutMode('spring')
+          if (onSpringLayout) onSpringLayout()
+        }}
+        title="Spring layout (force-directed)"
+      >
+        <Atom className="h-4 w-4" />
       </Button>
       <Button
         variant="outline"
@@ -215,6 +233,15 @@ export function CanvasToolbar({ onReLayout }: CanvasToolbarProps) {
           </span>
         )}
       </div>
+      <Button
+        variant={territorySyncOpen ? 'default' : 'outline'}
+        size="icon"
+        onClick={onToggleTerritorySync}
+        disabled={!currentProject}
+        title="Territory Sync (Markdown files)"
+      >
+        <FolderSync className="h-4 w-4" />
+      </Button>
       <div className="h-px bg-border my-1" />
       <div className="relative" ref={exportRef}>
         <Button

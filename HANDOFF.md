@@ -35,6 +35,8 @@ TinyBaguette is an **AI-powered visual project planning tool**. Users describe a
 - **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing
 - **AI agent builder**: Create embeddable AI chatbots — configure persona, knowledge base, behavior rules, theme, preview live, deploy with embed snippet
 - **Lovable-quality Design tab**: WebContainer runs a live Vite+React+Tailwind app in-browser. AI generates multi-file apps from Plan tab PRDs. Iterate via chat sidebar, visual click-to-edit inspector, or Monaco code editor. Export as zip.
+- **Advanced canvas**: Multi-select (rubber-band + Shift+click + Ctrl+A) with bulk actions toolbar (status, align, distribute, duplicate, delete). Spring physics force-directed layout. Level-of-detail zoom (full → compact → dot).
+- **Territory file sync**: Bidirectional canvas ↔ Markdown. Export project as `.territory/` folder (one `.md` per node with YAML frontmatter). Import back with diff review — per-node accept/reject. File System Access API for direct folder read/write, or bundle download/upload.
 
 **In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview live app → Iterate with AI chat + visual editing → Export code.
 
@@ -74,9 +76,7 @@ TinyBaguette is an **AI-powered visual project planning tool**. Users describe a
 | Utilities | clsx, tailwind-merge | latest |
 
 ### NOT Installed (Planned but not in package.json)
-- d3-force (spring physics) — using dagre for layout instead
 - yjs / y-partykit (real-time collaboration) — not yet needed
-- chokidar (file watcher) — territory sync not implemented
 
 ---
 
@@ -222,10 +222,12 @@ Planner/
 │   │   ├── cta-banner.tsx              # Full-width gradient CTA section
 │   │   └── footer.tsx                  # 4-column footer with links + social icons
 │   ├── canvas/
-│   │   ├── graph-canvas.tsx            # React Flow canvas (blast radius, typed edges, onConnect)
-│   │   ├── canvas-toolbar.tsx          # Export dropdown, blast radius toggle, undo/redo
+│   │   ├── graph-canvas.tsx            # React Flow canvas (blast radius, typed edges, multi-select, spring layout)
+│   │   ├── canvas-toolbar.tsx          # Export dropdown, blast radius toggle, undo/redo, dagre/spring layout toggle, territory sync toggle
+│   │   ├── bulk-actions-bar.tsx        # Floating toolbar for multi-select: status, align, distribute, duplicate, delete
+│   │   ├── territory-sync-panel.tsx   # Territory sync UI: export/import, diff review, per-node accept/reject
 │   │   ├── nodes/
-│   │   │   ├── base-plan-node.tsx      # Shared node (goal/subgoal/feature/task)
+│   │   │   ├── base-plan-node.tsx      # Shared node with LOD rendering (full/compact/dot)
 │   │   │   ├── goal-node.tsx           # Goal wrapper
 │   │   │   ├── subgoal-node.tsx        # Subgoal wrapper
 │   │   │   ├── feature-node.tsx        # Feature wrapper
@@ -309,11 +311,13 @@ Planner/
 │   ├── use-agent-chat.ts              # Agent chat preview hook (send messages, manage state)
 │   ├── use-webcontainer.ts            # WebContainer lifecycle hook (boot, writeAppFiles, restart)
 │   ├── use-auto-layout.ts             # Dagre layout algorithm
+│   ├── use-zoom-level.ts              # LOD tier hook (full/compact/dot) from ReactFlow viewport zoom
+│   ├── use-territory-sync.ts          # Territory sync hook (export/import/diff/merge lifecycle)
 │   └── use-project.ts                 # Persistence load/save with 2s debounce (saves all project fields)
 ├── stores/
-│   ├── project-store.ts               # Central state: project, nodes, edges, sprints, versions, 55+ mutations
+│   ├── project-store.ts               # Central state: project, nodes, edges, sprints, versions, 57+ mutations (incl. deleteNodes, duplicateNodes)
 │   ├── chat-store.ts                  # Chat messages, phase, onboarding answers
-│   └── ui-store.ts                    # Theme, selected node, view, filters, pending edge
+│   └── ui-store.ts                    # Theme, selected node, multi-select, view, filters, pending edge, layout mode, territory sync
 ├── services/
 │   ├── firebase.ts                    # Firebase init (null-guarded)
 │   ├── firestore.ts                   # CRUD (null-guarded)
@@ -345,6 +349,10 @@ Planner/
 │   ├── export-project-files.ts        # .cursorrules, CLAUDE.md, plan.md, tasks.md generators
 │   ├── import-markdown.ts             # Markdown spec parser (headings, checklists, frontmatter)
 │   ├── blast-radius.ts                # Downstream impact analysis (getBlastRadius)
+│   ├── canvas-align.ts                # Multi-select alignment helpers (alignTop/Middle/Bottom/Left/Center/Right, distributeH/V)
+│   ├── canvas-physics.ts              # Force-directed spring layout engine (repulsion, attraction, hierarchy gravity, damping)
+│   ├── territory-serialize.ts         # Project ↔ .territory file tree serializer (YAML frontmatter + markdown, zero deps)
+│   ├── territory-sync.ts             # Territory diff engine, merge logic, conflict detection
 │   ├── webcontainer-template.ts       # Vite + React 18 + Tailwind v4 + React Router scaffold (FileSystemTree)
 │   ├── build-app-context.ts           # Gathers project nodes, PRDs, Q&A into AI prompt context
 │   ├── element-selector-script.ts     # Injected into WebContainer iframe for visual click-to-edit
@@ -549,7 +557,7 @@ interface AppChatMessage { id, role: 'user'|'ai', content, filesChanged?: string
 
 **Project Lifecycle**: `setCurrentProject`, `setProjects`, `initDraftProject`, `ingestPlan`, `mergeNodes`, `addProject`, `removeProject`
 
-**Node CRUD**: `addChildNode`, `addFreeNode`, `deleteNode`, `duplicateNode`, `changeNodeType`, `toggleNodeCollapse`, `updateNodeContent`, `updateNodeStatus`
+**Node CRUD**: `addChildNode`, `addFreeNode`, `deleteNode`, `deleteNodes`, `duplicateNode`, `duplicateNodes`, `changeNodeType`, `toggleNodeCollapse`, `updateNodeContent`, `updateNodeStatus`
 
 **Questions**: `answerNodeQuestion`, `addNodeQuestions`, `addCustomNodeQuestion`
 
@@ -578,6 +586,8 @@ interface AppChatMessage { id, role: 'user'|'ai', content, filesChanged?: string
 **Sharing**: `toggleShareProject`
 
 **Flow State**: `setFlowNodes`, `setFlowEdges`
+
+**Territory Sync**: `mergeFromTerritory`
 
 **Undo/Redo**: `undo`, `redo` (with `canUndo`, `canRedo` state)
 
@@ -623,7 +633,10 @@ interface AppChatMessage { id, role: 'user'|'ai', content, filesChanged?: string
 - **Right-click node** → Context menu (edit, type, status, add child/sibling, duplicate, delete, add dependency edge)
 - **Right-click empty canvas** → Pane context menu (add any node type, smart parent suggestion)
 - **Drag source→target handle** → Creates edge (sets parentId, or typed dependency if pendingEdge)
-- **Re-layout button** → Dagre auto-layout
+- **Rubber-band select** → Drag on empty canvas to multi-select nodes; Shift+click to toggle
+- **Bulk actions bar** → Appears when 2+ nodes selected: set status, align, distribute, duplicate, delete
+- **Re-layout button** → Dagre (tree) or Spring (force-directed) auto-layout
+- **Territory sync button** → Export/import project as `.territory/` Markdown files with diff review
 - **Blast radius toggle** → Dims unaffected nodes when a node is selected
 - **Export dropdown** → JSON, Markdown, .cursorrules, CLAUDE.md, plan.md, tasks.md
 - **Share button** → Public/private toggle with shareable URL
@@ -727,8 +740,8 @@ This replaces the old skeleton card placeholders for a more branded experience.
 
 1. **Firestore "Database not found"** — On Vercel, if the Firestore database isn't provisioned in the Firebase console, the persistence layer catches this and silently falls back to localStorage. One warning is logged.
 2. **SWC warning on build** — pre-existing Windows environment issue, not code-related
-3. **`changeNodeType` has no hierarchy validation** — user can change a goal to a task
-4. **`refinement-system.ts` is unused** — only `planning-system.ts` is active
+3. ~~**`changeNodeType` has no hierarchy validation**~~ — Fixed: validates parent + children compatibility before allowing type change
+4. ~~**`refinement-system.ts` is unused**~~ — Actually used by `planning-chat.tsx` and `refinement-question-card.tsx`
 5. ~~**Base64 images can bloat state**~~ — Fixed: images > 5MB rejected, > 1MB auto-compressed
 6. **WebContainer requires COOP/COEP headers** — `next.config.js` sets `Cross-Origin-Embedder-Policy: credentialless` and `Cross-Origin-Opener-Policy: same-origin`. This may affect third-party embeds.
 
@@ -791,10 +804,22 @@ npm run type-check  # Alias for tsc --noEmit
 ### Next Big Features (Post v1.0)
 - **Production WebSocket backend** — Deploy PartyKit/Liveblocks for real-time multi-user collaboration
 - **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth for production integration use
-- **Territory file sync** — bidirectional canvas ↔ Markdown file sync
-- **Advanced canvas** — spring physics (d3-force), multi-select, level-of-detail zoom
-- **Image compression** — resize/compress base64 images to reduce state size
-- **Hierarchy validation** — enforce valid type changes based on position in hierarchy
+- **Email infrastructure** — Set up email receiving at `hello@tinybaguette.com`
+
+### Recent Changes (Feb 22, 2026 — Session 5)
+- **Advanced Canvas (Phase 14)** — Three sub-phases:
+  - **Phase A: Multi-Select + Bulk Actions** — `selectedNodeIds: Set<string>` in UI store with `toggleNodeSelection`, `setSelectedNodes`, `clearSelection`. `selectionOnDrag` rubber-band + `Shift` multi-select in ReactFlow. Blue dashed ring highlighting across all 12 node types. `Ctrl+A` select all, `Escape` clears, `Delete` bulk delete, `Ctrl+D` bulk duplicate. `deleteNodes(ids[])` and `duplicateNodes(ids[])` in project store. `BulkActionsBar` floating toolbar (Set Status, Align 8 options, Distribute H/V, Duplicate, Delete). `lib/canvas-align.ts` alignment helpers.
+  - **Phase B: Spring Physics Layout** — `lib/canvas-physics.ts` force-directed engine (repulsion, edge attraction, hierarchy gravity, damping, 80 iterations). Dagre/Spring toggle in toolbar with `Atom` icon. `layoutMode: 'dagre' | 'spring'` in UI store.
+  - **Phase C: Level-of-Detail Zoom** — `hooks/use-zoom-level.ts` reads ReactFlow viewport zoom → LOD tier. 3 tiers: `full` (≥0.6), `compact` (0.3–0.6, 180×40px title+status), `dot` (<0.3, 48×28px colored pill). `base-plan-node.tsx` renders progressively.
+- **Multi-Page App Support (Design Tab Phase 5)** — `lib/parse-app-routes.ts` parses `<Route>` from App.tsx. Page navigator dropdown in toolbar (Globe + select + Plus). Route change detection in injected script (patches pushState/replaceState). "Add Page" dialog → AI generates page + updates routes + nav. Enhanced prompts for mandatory Layout component, shared nav, ≥3 pages.
+- **Territory File Sync (Phase 15)** — Bidirectional canvas ↔ Markdown file sync:
+  - `lib/territory-serialize.ts` — `nodeToMarkdown()` / `markdownToNode()` round-trip, `projectToTerritory()` / `territoryToProject()`, minimal YAML serializer/parser (zero deps), bundle format
+  - `lib/territory-sync.ts` — `diffTerritoryToCanvas()` diff engine, `applyMerge()` with selective accept, field-level change detection
+  - `hooks/use-territory-sync.ts` — Export bundle download, export to folder (File System Access API), import from bundle/folder, diff computation, selective merge
+  - `components/canvas/territory-sync-panel.tsx` — UI panel with export/import buttons, diff review with per-node accept/reject, summary badges
+  - `stores/project-store.ts` — `mergeFromTerritory(nodes, edges)` bulk merge
+  - `stores/ui-store.ts` — `territorySyncOpen` + `setTerritorySyncOpen`
+  - `canvas-toolbar.tsx` — FolderSync icon button, `Ctrl+T` keyboard shortcut
 
 ### Recent Changes (Feb 20-22, 2026 — Session 4)
 - **Lovable-Quality Design Tab (Phase 13)** — Complete rewrite of Design tab from static HTML previews to live WebContainer-powered app:

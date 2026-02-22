@@ -3,6 +3,7 @@ import type { EdgeType, NodeType, NodeStatus } from '@/types/project'
 
 export type ViewType = 'plan' | 'manage' | 'design' | 'agents'
 export type ManageSubView = 'list' | 'table' | 'board' | 'timeline' | 'sprints' | 'backend'
+export type LayoutMode = 'dagre' | 'spring'
 
 interface PendingEdge {
   sourceId: string
@@ -12,6 +13,7 @@ interface PendingEdge {
 interface UIState {
   theme: 'light' | 'dark'
   selectedNodeId: string | null
+  selectedNodeIds: Set<string>
   detailPanelOpen: boolean
   blastRadiusMode: boolean
   blastRadiusNodeIds: Set<string>
@@ -24,8 +26,13 @@ interface UIState {
   filterType: NodeType | null
   filterStatus: NodeStatus | null
   prdPipelineOpen: boolean
+  territorySyncOpen: boolean
+  layoutMode: LayoutMode
   setTheme: (theme: 'light' | 'dark') => void
   selectNode: (nodeId: string | null) => void
+  toggleNodeSelection: (nodeId: string) => void
+  setSelectedNodes: (nodeIds: string[]) => void
+  clearSelection: () => void
   openDetailPanel: () => void
   closeDetailPanel: () => void
   toggleDetailPanel: () => void
@@ -44,11 +51,14 @@ interface UIState {
   setFilterStatus: (status: NodeStatus | null) => void
   clearFilters: () => void
   setPrdPipelineOpen: (open: boolean) => void
+  setTerritorySyncOpen: (open: boolean) => void
+  setLayoutMode: (mode: LayoutMode) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
   theme: 'light',
   selectedNodeId: null,
+  selectedNodeIds: new Set<string>(),
   detailPanelOpen: false,
   blastRadiusMode: false,
   blastRadiusNodeIds: new Set(),
@@ -61,11 +71,31 @@ export const useUIStore = create<UIState>((set) => ({
   filterType: null,
   filterStatus: null,
   prdPipelineOpen: false,
+  territorySyncOpen: false,
+  layoutMode: 'dagre' as LayoutMode,
   setTheme: (theme) => set({ theme }),
   selectNode: (nodeId) =>
-    set({ selectedNodeId: nodeId, detailPanelOpen: nodeId !== null }),
+    set({ selectedNodeId: nodeId, selectedNodeIds: nodeId ? new Set([nodeId]) : new Set(), detailPanelOpen: nodeId !== null }),
+  toggleNodeSelection: (nodeId) =>
+    set((state) => {
+      const next = new Set(state.selectedNodeIds)
+      if (next.has(nodeId)) {
+        next.delete(nodeId)
+      } else {
+        next.add(nodeId)
+      }
+      return { selectedNodeIds: next, selectedNodeId: nodeId, detailPanelOpen: true }
+    }),
+  setSelectedNodes: (nodeIds) =>
+    set({
+      selectedNodeIds: new Set(nodeIds),
+      selectedNodeId: nodeIds.length > 0 ? nodeIds[nodeIds.length - 1] : null,
+      detailPanelOpen: nodeIds.length > 0,
+    }),
+  clearSelection: () =>
+    set({ selectedNodeIds: new Set(), selectedNodeId: null, detailPanelOpen: false }),
   openDetailPanel: () => set({ detailPanelOpen: true }),
-  closeDetailPanel: () => set({ detailPanelOpen: false, selectedNodeId: null }),
+  closeDetailPanel: () => set({ detailPanelOpen: false, selectedNodeId: null, selectedNodeIds: new Set() }),
   toggleDetailPanel: () =>
     set((state) => ({ detailPanelOpen: !state.detailPanelOpen })),
   setBlastRadiusMode: (on) =>
@@ -85,4 +115,6 @@ export const useUIStore = create<UIState>((set) => ({
   setFilterStatus: (status) => set({ filterStatus: status }),
   clearFilters: () => set({ searchQuery: '', filterType: null, filterStatus: null }),
   setPrdPipelineOpen: (open) => set({ prdPipelineOpen: open }),
+  setTerritorySyncOpen: (open) => set({ territorySyncOpen: open }),
+  setLayoutMode: (mode) => set({ layoutMode: mode }),
 }))

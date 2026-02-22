@@ -30,8 +30,10 @@ export const PromptNode = memo(function PromptNode({ id, data }: NodeProps) {
   const nodeData = data as unknown as PlanNodeData
   const config = NODE_CONFIG.prompt
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const selectNode = useUIStore((s) => s.selectNode)
   const isSelected = selectedNodeId === id
+  const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
   const hasChildren = useProjectStore((s) =>
     s.currentProject?.nodes.some((n) => n.parentId === id) ?? false
   )
@@ -45,7 +47,11 @@ export const PromptNode = memo(function PromptNode({ id, data }: NodeProps) {
       className={cn(
         'group relative rounded-lg border-2 shadow-sm transition-all cursor-pointer',
         config.bgClass,
-        isSelected ? 'ring-2 ring-primary shadow-glow' : 'hover:shadow-md',
+        isSelected
+          ? 'ring-2 ring-primary shadow-glow'
+          : isInMultiSelect
+            ? 'ring-2 ring-blue-400/60 ring-dashed'
+            : 'hover:shadow-md',
       )}
       style={{
         width: config.width,

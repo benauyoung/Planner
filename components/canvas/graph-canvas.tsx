@@ -10,6 +10,7 @@ import {
   type OnNodesChange,
   type OnEdgesChange,
   type OnConnect,
+  type OnSelectionChangeFunc,
   applyNodeChanges,
   applyEdgeChanges,
   BackgroundVariant,
@@ -23,6 +24,9 @@ import { NodeContextMenu } from './context-menu/node-context-menu'
 import { PaneContextMenu } from './context-menu/pane-context-menu'
 import { NODE_CONFIG } from '@/lib/constants'
 import { getBlastRadius } from '@/lib/blast-radius'
+import { springLayout } from '@/lib/canvas-physics'
+import { BulkActionsBar } from './bulk-actions-bar'
+import { TerritorySyncPanel } from './territory-sync-panel'
 import type { NodeType } from '@/types/project'
 import type { Node } from '@xyflow/react'
 
@@ -33,6 +37,7 @@ export function GraphCanvas() {
   const { getLayoutedElements } = useAutoLayout()
   const { fitView } = useReactFlow()
   const prevNodeCountRef = useRef(0)
+  const [territorySyncOpen, setTerritorySyncOpen] = useState(false)
   const [contextMenu, setContextMenu] = useState<{
     nodeId: string
     position: { x: number; y: number }
@@ -47,6 +52,8 @@ export function GraphCanvas() {
   const reactFlowInstance = useReactFlow()
   const blastRadiusMode = useUIStore((s) => s.blastRadiusMode)
   const pendingEdge = useUIStore((s) => s.pendingEdge)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
+  const setSelectedNodes = useUIStore((s) => s.setSelectedNodes)
 
   // Compute blast radius affected node IDs
   const blastRadiusIds = useCallback(() => {
@@ -131,6 +138,12 @@ export function GraphCanvas() {
     setTimeout(() => fitView({ padding: 0.2 }), 50)
   }, [flowNodes, flowEdges, getLayoutedElements, setFlowNodes, setFlowEdges, fitView])
 
+  const handleSpringLayout = useCallback(() => {
+    const updated = springLayout(flowNodes, flowEdges)
+    setFlowNodes(updated)
+    setTimeout(() => fitView({ padding: 0.2 }), 50)
+  }, [flowNodes, flowEdges, setFlowNodes, fitView])
+
   const onConnect: OnConnect = useCallback(
     (connection) => {
       if (connection.source && connection.target) {
@@ -143,6 +156,16 @@ export function GraphCanvas() {
       }
     },
     [connectNodes, addDependencyEdge, pendingEdge]
+  )
+
+  const onSelectionChange: OnSelectionChangeFunc = useCallback(
+    ({ nodes: selectedNodes }) => {
+      const ids = selectedNodes.map((n) => n.id)
+      if (ids.length > 1) {
+        setSelectedNodes(ids)
+      }
+    },
+    [setSelectedNodes]
   )
 
   const handlePaneClick = useCallback(() => {
@@ -195,6 +218,9 @@ export function GraphCanvas() {
         onNodeContextMenu={handleNodeContextMenu}
         nodeTypes={nodeTypes}
         connectOnClick={false}
+        selectionOnDrag
+        multiSelectionKeyCode="Shift"
+        onSelectionChange={onSelectionChange}
         defaultEdgeOptions={{
           type: 'bezier',
           animated: false,
@@ -218,7 +244,18 @@ export function GraphCanvas() {
           zoomable
         />
       </ReactFlow>
-      <CanvasToolbar onReLayout={handleReLayout} />
+      <CanvasToolbar
+        onReLayout={handleReLayout}
+        onSpringLayout={handleSpringLayout}
+        onToggleTerritorySync={() => setTerritorySyncOpen((p) => !p)}
+        territorySyncOpen={territorySyncOpen}
+      />
+      {selectedNodeIds.size > 1 && (
+        <BulkActionsBar />
+      )}
+      {territorySyncOpen && (
+        <TerritorySyncPanel onClose={() => setTerritorySyncOpen(false)} />
+      )}
       {contextMenu && (
         <NodeContextMenu
           nodeId={contextMenu.nodeId}

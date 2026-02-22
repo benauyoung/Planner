@@ -9,6 +9,7 @@ import type { NodeType, NodeStatus } from '@/types/project'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
 import { getNodePrdStatus, PRD_STATUS_CONFIG } from '@/lib/prd-status'
+import { useZoomLevel } from '@/hooks/use-zoom-level'
 import { NodeToolbar } from './node-toolbar'
 
 interface BasePlanNodeProps {
@@ -40,9 +41,12 @@ export const BasePlanNode = memo(function BasePlanNode({
 }: BasePlanNodeProps) {
   const config = NODE_CONFIG[data.nodeType]
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
+  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const selectNode = useUIStore((s) => s.selectNode)
   const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
   const isSelected = selectedNodeId === id
+  const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
+  const lod = useZoomLevel()
 
   const nodes = useProjectStore((s) => s.currentProject?.nodes)
   const children = useMemo(
@@ -66,12 +70,66 @@ export const BasePlanNode = memo(function BasePlanNode({
     return counts
   }, [children, hasChildren])
 
+  // ── Dot LOD: tiny colored pill ──
+  if (lod === 'dot') {
+    return (
+      <div
+        className={cn(
+          'rounded-md border shadow-sm cursor-pointer flex items-center justify-center',
+          config.bgClass,
+          isSelected ? 'ring-2 ring-primary' : isInMultiSelect ? 'ring-2 ring-blue-400/60' : '',
+        )}
+        style={{ width: 48, height: 28, borderColor: config.color }}
+        onClick={() => selectNode(id)}
+      >
+        {data.parentId && (
+          <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+        )}
+        <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[data.status])} />
+        <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+      </div>
+    )
+  }
+
+  // ── Compact LOD: title + status only ──
+  if (lod === 'compact') {
+    return (
+      <div
+        className={cn(
+          'group relative rounded-lg border-2 shadow-sm cursor-pointer',
+          config.bgClass,
+          isSelected
+            ? 'ring-2 ring-primary shadow-glow'
+            : isInMultiSelect
+              ? 'ring-2 ring-blue-400/60 ring-dashed'
+              : 'hover:shadow-md',
+        )}
+        style={{ width: 180, minHeight: 40, borderColor: config.color }}
+        onClick={() => selectNode(id)}
+      >
+        {data.parentId && (
+          <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-2 !h-2" />
+        )}
+        <div className="p-2 flex items-center gap-2">
+          <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_COLORS[data.status])} />
+          <span className="text-xs font-medium leading-tight truncate">{data.label}</span>
+        </div>
+        <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-2 !h-2" />
+      </div>
+    )
+  }
+
+  // ── Full LOD ──
   return (
     <div
       className={cn(
         'group relative rounded-lg border-2 shadow-sm transition-all cursor-pointer',
         config.bgClass,
-        isSelected ? 'ring-2 ring-primary shadow-glow' : 'hover:shadow-md',
+        isSelected
+          ? 'ring-2 ring-primary shadow-glow'
+          : isInMultiSelect
+            ? 'ring-2 ring-blue-400/60 ring-dashed'
+            : 'hover:shadow-md',
       )}
       style={{
         width: config.width,

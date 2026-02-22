@@ -136,11 +136,12 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         return
       }
 
-      // Escape — close palette/help/detail panel
+      // Escape — close palette/help/detail panel/multi-selection
       if (e.key === 'Escape') {
         const ui = useUIStore.getState()
         if (ui.commandPaletteOpen) { ui.closeCommandPalette(); return }
         if (ui.shortcutsHelpOpen) { ui.closeShortcutsHelp(); return }
+        if (ui.selectedNodeIds.size > 1) { ui.clearSelection(); return }
         ui.closeDetailPanel()
         return
       }
@@ -193,20 +194,43 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         return
       }
 
-      // Ctrl+D — duplicate node
-      if (mod && e.key === 'd') {
+      // Ctrl+T — territory sync
+      if (mod && e.key === 't') {
         e.preventDefault()
-        const selectedId = useUIStore.getState().selectedNodeId
-        if (selectedId) useProjectStore.getState().duplicateNode(selectedId, false)
+        const ui = useUIStore.getState()
+        ui.setTerritorySyncOpen(!ui.territorySyncOpen)
         return
       }
 
-      // Delete / Backspace — delete selected node
+      // Ctrl+A — select all visible nodes
+      if (mod && e.key === 'a') {
+        e.preventDefault()
+        const allIds = useProjectStore.getState().flowNodes.map((n) => n.id)
+        if (allIds.length > 0) useUIStore.getState().setSelectedNodes(allIds)
+        return
+      }
+
+      // Ctrl+D — duplicate node(s)
+      if (mod && e.key === 'd') {
+        e.preventDefault()
+        const ui = useUIStore.getState()
+        if (ui.selectedNodeIds.size > 1) {
+          useProjectStore.getState().duplicateNodes(Array.from(ui.selectedNodeIds))
+        } else if (ui.selectedNodeId) {
+          useProjectStore.getState().duplicateNode(ui.selectedNodeId, false)
+        }
+        return
+      }
+
+      // Delete / Backspace — delete selected node(s)
       if (e.key === 'Delete' || e.key === 'Backspace') {
-        const selectedId = useUIStore.getState().selectedNodeId
-        if (selectedId) {
-          useProjectStore.getState().deleteNode(selectedId)
-          useUIStore.getState().closeDetailPanel()
+        const ui = useUIStore.getState()
+        if (ui.selectedNodeIds.size > 1) {
+          useProjectStore.getState().deleteNodes(Array.from(ui.selectedNodeIds))
+          ui.clearSelection()
+        } else if (ui.selectedNodeId) {
+          useProjectStore.getState().deleteNode(ui.selectedNodeId)
+          ui.closeDetailPanel()
         }
         return
       }
