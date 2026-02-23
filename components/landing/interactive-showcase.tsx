@@ -584,14 +584,12 @@ export function HeroSectionNew() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold leading-tight tracking-tight mb-6">
-            Your Entire Project.{' '}
-            <span className="text-primary">Planned in One Shot.</span>
+            Big Ideas.{' '}
+            <span className="text-primary">TinyBaguette.</span>
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto">
-            Describe what you want to build. AI generates a complete project plan: goals, features,
-            tasks, timelines, dependencies, PRDs, and implementation prompts. All connected,
-            all ready to execute. Then hand the wheel to AI and ship.
+            Create your website or mobile application in minutes, then add your own AI agent.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">

@@ -1440,7 +1440,7 @@ export function FeaturesTabs() {
             <span className="text-primary">TinyBaguette.</span>
           </h2>
           <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto">
-            Plan, design, and code your entire website, then deploy your own AI that actually knows how it works, because why not?
+            Create your website or mobile application in minutes, then add your own AI agent.
           </p>
         </motion.div>
 
