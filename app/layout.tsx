@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
 import './globals.css'
 
 const inter = Inter({
@@ -8,10 +9,32 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'TinyBaguette - AI Project Planner',
-  description: 'Transform your project ideas into visual, actionable plans with AI',
+  title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
+  description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
+  metadataBase: new URL('https://planner-ruby-seven.vercel.app'),
   icons: {
-    icon: '/logo.png',
+    icon: '/Logo.png',
+  },
+  openGraph: {
+    title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
+    description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
+    url: 'https://planner-ruby-seven.vercel.app',
+    siteName: 'TinyBaguette',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'TinyBaguette — Vibe Code Your Personal Website with AI',
+      },
+    ],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
+    description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
+    images: ['/og-image.png'],
   },
 }
 
@@ -24,6 +47,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={`${inter.variable} font-sans antialiased`}>
         {children}
+        <Analytics />
       </body>
     </html>
   )

@@ -29,6 +29,7 @@ import {
   MessageCircle,
 } from 'lucide-react'
 import type { AIPlanNode } from '@/types/chat'
+import { track } from '@vercel/analytics'
 
 const PLACEHOLDER_IDEAS = [
   'A music festival app with live lineups and friend meetups...',
@@ -540,8 +541,9 @@ export function HeroPrompt() {
         body: JSON.stringify({ email: emailValue, prompt, appTitle: suggestedTitle || '' }),
       })
     } catch {
-      // Silently succeed — don't block UX on network errors
+      // Silently succeed - don't block UX on network errors
     } finally {
+      track('waitlist_signup', { source: 'hero_prompt' })
       setEmailSubmitting(false)
       setEmailSubmitted(true)
     }

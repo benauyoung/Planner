@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Mail, Check, Loader2 } from 'lucide-react'
 import { addEmailToWaitlist } from '@/services/firestore'
 import { cn } from '@/lib/utils'
+import { track } from '@vercel/analytics'
 
 interface WaitlistCaptureProps {
   source: 'landing' | 'login'
@@ -27,6 +28,7 @@ export function WaitlistCapture({ source, className }: WaitlistCaptureProps) {
     setStatus('loading')
     try {
       await addEmailToWaitlist(email.trim(), source)
+      track('waitlist_signup', { source })
       setStatus('success')
       setEmail('')
     } catch {
