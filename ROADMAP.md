@@ -1,6 +1,6 @@
 # TinyBaguette Roadmap
 
-> Milestone tracking. Updated February 22, 2026 to reflect actual progress.
+> Milestone tracking. Updated February 23, 2026 to reflect actual progress.
 
 ---
 
@@ -314,7 +314,33 @@
 
 ---
 
-### M20: Monetization & Scale 🔴
+### M20: Design Tab Deepening 🔴
+**Status**: Planned
+
+**Planned**:
+- Interactive element editing: click elements in Design preview to edit text, colors, spacing inline
+- Component-level iteration: select a section/component within a page and iterate on it independently
+- Design-to-Plan feedback: page edits propagate changes back to corresponding PRDs and node details
+- Page version history: track iterations per page with undo/restore
+- Responsive preview improvements: better mobile/tablet rendering fidelity
+- CSS/style inspector panel for power users
+
+---
+
+### M21: Agent System Expansion 🔴
+**Status**: Planned
+
+**Planned**:
+- Multi-agent orchestration: define agent teams that coordinate on tasks
+- Agent-to-agent communication: agents can delegate, query, and hand off to other agents
+- Agent triggers and workflows: event-driven agent activation (e.g., form submit → agent responds)
+- Agent memory: persistent conversation context across sessions
+- Agent analytics dashboard: usage metrics, conversation logs, satisfaction tracking
+- BYOK (Bring Your Own Key): users provide their own API keys for agent backends
+
+---
+
+### M22: Monetization & Scale 🔴
 **Status**: Planned
 
 **Planned**:
@@ -322,7 +348,6 @@
 - Team workspaces with role-based access
 - Usage-based billing for AI features (Gemini API)
 - Custom domain for deployed agents
-- Agent analytics dashboard
 - Email infrastructure at `hello@tinybaguette.com`
 
 ---
@@ -414,11 +439,23 @@
 - Server-side OAuth for GitHub/Slack/Linear
 - Two-way issue sync, webhook receivers
 
+### v1.3.0 - Design Deepening (Planned)
+- Interactive element editing in Design preview
+- Component-level iteration (select + iterate on page sections)
+- Design-to-Plan feedback loop
+- Page version history
+
+### v1.4.0 - Agent Expansion (Planned)
+- Multi-agent orchestration (agent teams)
+- Agent-to-agent communication
+- Agent triggers and workflows
+- Agent memory and analytics
+- BYOK (Bring Your Own Key)
+
 ### v2.0.0 - Scale (Planned)
 - Multi-user workspaces with roles
 - Usage-based billing
 - Custom agent domains
-- Agent analytics
 
 ---
 
@@ -446,3 +483,5 @@
 | 2026-02-20 | v0.9.8: Advanced Canvas + Sync milestone |
 | 2026-02-22 | M16: Design Tab rewrite (srcdoc iframes), canvas page interactions, agent drag-and-drop |
 | 2026-02-22 | v0.9.9: Current version — Design tab + agent integration milestone |
+| 2026-02-23 | Added M20 (Design Tab Deepening) and M21 (Agent System Expansion) to roadmap |
+| 2026-02-23 | Three Pillars framing added to all documentation |

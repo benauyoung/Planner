@@ -6,39 +6,74 @@
 
 ## What Is TinyBaguette?
 
-TinyBaguette is an **AI-powered visual project planning tool**. Users describe a project idea through a guided onboarding flow, then AI (Gemini 2.0 Flash) builds a hierarchical plan as a **directed acyclic graph (DAG)** on an interactive canvas. Users can:
+TinyBaguette is an **AI-powered plan-to-product platform** built around three co-equal pillars. It is NOT just a PRD generator or a planning tool with extras — Plan, Design, and Agents are interconnected pillars that form a feedback loop.
 
-- Chat with AI to refine the plan
-- Click nodes to inspect/edit them
-- Attach PRDs and IDE prompts to nodes (copy-to-clipboard), or AI-generate them
-- Upload images for mood boards
-- Right-click to create nodes anywhere on canvas with smart parent suggestion
-- Drag edges between nodes to set relationships
-- Add typed dependency edges (`blocks`, `depends_on`, `informs`, `defines`, `implements`, `references`, `supersedes`) between any nodes
-- Preview blast radius: see all downstream-affected nodes when one changes
-- Export plans as JSON, Markdown, `.cursorrules`, `CLAUDE.md`, `plan.md`, `tasks.md`
-- Import projects from JSON or Markdown specs
-- Share plans via public read-only URL
-- Start from pre-built templates (Auth System, CRUD API, Landing Page)
+### The Three Pillars
+
+#### 1. PLAN (The DAG Canvas)
+Users describe a project idea. AI builds a hierarchical directed acyclic graph (goals → subgoals → features → tasks) on an interactive canvas. Users refine through chat, answer AI-generated questions per node, and generate context-aware PRDs that know about each other. The plan is the backbone — but it is NOT the whole product.
+
+- 12 node types: Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
+- 8 typed edge types: hierarchy, blocks, depends_on, informs, defines, implements, references, supersedes
+- AI chat planning, AI iteration (break down, audit, estimate, suggest deps), AI smart suggestions
+- Deep question flow per node with category-aware follow-ups and readiness badges
+- Context-aware PRD generation — each PRD knows about parent/sibling/child/dependency PRDs
+- PRD Pipeline panel with status tracking, stale detection, Ralphy export
+- Multi-select + bulk actions (rubber-band, Shift+click, Ctrl+A, BulkActionsBar)
+- Spring physics force-directed layout + Dagre tree layout toggle
+- Level-of-detail zoom (full → compact → dot)
+- Territory file sync: bidirectional canvas ↔ Markdown with diff review
+- Blast radius analysis, smart mapping, command palette (Cmd+K)
+- Team management, comments, activity feed, sprint planning, version history
+- Embedded docs (Notion-style block editor), export/import (JSON, Markdown, .cursorrules, CLAUDE.md)
+- Shareable plans via public read-only URL, template library (3 seed templates)
+
+#### 2. DESIGN (Live Visual Builder)
+AI generates actual working web pages (HTML + Tailwind CSS) from the project plan. These render as live `srcdoc` iframes — no WebContainer, no SharedArrayBuffer, works on all browsers. Two modes:
+
+- **Canvas mode**: All pages visible on a zoomable React Flow canvas, connected by navigation edges — like a sitemap you can see and interact with all at once. Inline AI editing, delete, focus, select-to-chat on each page node.
+- **Single-page mode**: Zoom into one page with viewport switcher (Desktop/Tablet/Mobile) and edit it inline via PageChat sidebar — type instructions, AI modifies the page live.
+
+This is not a mockup tool. It generates real code. The design canvas is where users visualize their entire app as a set of connected pages before any code is written externally.
+
+#### 3. AGENTS (Embeddable AI Chatbots)
+Users build AI chatbot agents with custom persona, knowledge base, behavior rules, and theme. The key differentiator: **agents are dragged directly onto Design canvas pages** to embed them as floating chat widgets. So you plan your app, design your pages, then drop intelligent chatbots onto them — all without leaving TinyBaguette.
+
+- Full agent builder: Config, Knowledge, Theme, Preview, Deploy tabs
+- AI-assisted agent generation from description
+- Live chat preview with Gemini backend
+- One-click deploy with embed snippet
+- Drag-and-drop onto Design canvas pages — injects styled chat widget HTML using agent's name, color, greeting, and position
+
+### How They Connect
+
+These three pillars are not separate features — they form a loop:
+
+- **Plan → Design**: The DAG structure tells the design generator what pages to create and what they should contain.
+- **Design → Plan**: Editing a page's content or structure can update the corresponding PRD and node details.
+- **Agents → Design**: Agents are created in the Agents tab but deployed by dragging onto Design canvas pages, where their widget HTML is injected into the page code.
+- **Plan → Export**: The interconnected PRDs, execution order, and project context export as packages for Claude Code, Cursor, Ralphy, or generic IDEs — so autonomous AI agents can build what was planned and designed.
+
+### The Full User Journey
+
+> Describe your idea → AI builds a visual plan → Refine with chat and questions → AI generates live page previews → Edit pages visually → Create AI chatbot agents → Drag agents onto pages → Generate interconnected PRDs → Export to your coding tool → Autonomous AI builds it.
+
+Every part of this flow matters equally. When discussing features, priorities, or architecture, never treat Design or Agents as secondary to Plan.
+
+### Common Mistakes to Avoid
+
+- ❌ Calling TinyBaguette "a PRD generator" — it's a full plan-to-product platform
+- ❌ Treating the Design tab as a nice-to-have — it's a core pillar where users see their app take shape
+- ❌ Ignoring the Agent → Design integration — drag-and-drop agent embedding is a key differentiator
+- ❌ Describing export as the only output — users can iterate visually in Design before they ever export
+- ❌ Forgetting the feedback loop — Plan, Design, and Agents are interconnected, not siloed tabs
+
+### Additional Capabilities
+
 - **4 view tabs** (Plan, Design, Agents, Manage) with **6 Manage sub-views** (List, Table, Board, Timeline, Sprints, Backend)
 - **Command palette** (Cmd+K) with fuzzy search + keyboard shortcuts
-- **Team management**: Assign members, set priority, due dates, estimates, tags
-- **AI iteration**: Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion
-- **Comments & activity feed**: Threaded comments on nodes, project-level activity timeline
-- **Sprint planning**: Create sprints, drag tasks from backlog, progress tracking
-- **AI smart suggestions**: Ambient project analysis with severity-ranked insights
-- **Embedded docs**: Notion-style block editor (headings, code, checklists, callouts, dividers)
-- **Version history**: Save/restore named snapshots with branch support
-- **Integrations**: GitHub, Slack, Linear service clients + settings UI
 - **Collaboration infrastructure**: Presence avatars, live cursors, pluggable provider
-
-- **AI page generation**: Auto-scan project plan, generate full-fidelity Tailwind page previews on a zoomable canvas with inline chat editing, drag-and-drop agent widget insertion
-- **AI agent builder**: Create embeddable AI chatbots — configure persona, knowledge base, behavior rules, theme, preview live, deploy with embed snippet, drag onto Design canvas pages to insert widget
-- **Design tab (srcdoc iframes)**: AI generates standalone HTML pages with Tailwind CSS, rendered via `srcdoc` iframes — no WebContainer, no SharedArrayBuffer, works on all browsers. Two modes: single-page preview with viewport switcher, or zoomable React Flow canvas with all pages. Inline AI editing per node, AI chat sidebar, page selection, add/delete pages, drag-and-drop agent insertion.
-- **Advanced canvas**: Multi-select (rubber-band + Shift+click + Ctrl+A) with bulk actions toolbar (status, align, distribute, duplicate, delete). Spring physics force-directed layout. Level-of-detail zoom (full → compact → dot).
-- **Territory file sync**: Bidirectional canvas ↔ Markdown. Export project as `.territory/` folder (one `.md` per node with YAML frontmatter). Import back with diff review — per-node accept/reject. File System Access API for direct folder read/write, or bundle download/upload.
-
-**In short:** Describe your idea → AI builds a visual plan → Refine with rich content → Plan sprints → Track with multiple views → Generate PRDs & prompts → Preview live app → Iterate with AI chat + visual editing → Drag agents onto pages → Export.
+- **Integrations**: GitHub, Slack, Linear settings UI (OAuth flows pending)
 
 ---
 

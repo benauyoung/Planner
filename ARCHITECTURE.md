@@ -4,6 +4,22 @@
 
 ---
 
+## The Three Pillars
+
+TinyBaguette is a **plan-to-product platform**, not just a planning tool. Three co-equal pillars form a feedback loop:
+
+1. **PLAN (The DAG Canvas)** — AI builds a hierarchical DAG (goals → subgoals → features → tasks) on an interactive canvas. Users refine through chat, answer AI-generated questions per node, and generate context-aware PRDs. 12 node types, 8 edge types, multi-select, spring physics, LOD zoom, territory file sync.
+
+2. **DESIGN (Live Visual Builder)** — AI generates real HTML+Tailwind pages from the plan, rendered as live `srcdoc` iframes. Canvas mode shows all pages on a zoomable React Flow canvas (like an interactive sitemap). Single-page mode lets you zoom in and iterate with AI chat. Not mockups — real code.
+
+3. **AGENTS (Embeddable AI Chatbots)** — Users build AI chatbot agents with persona, knowledge base, behavior rules, and theme. Key differentiator: agents are **dragged directly onto Design canvas pages** to embed as floating chat widgets.
+
+**The Loop**: Plan informs Design (DAG → pages). Design informs Plan (page edits → PRDs). Agents live on Design (drag-drop embedding). Plan exports to coding tools (Claude Code, Cursor, Ralphy).
+
+> ❌ Never call TinyBaguette "a PRD generator" — it's a full plan-to-product platform. Never treat Design or Agents as secondary to Plan.
+
+---
+
 ## System Overview
 
 ```

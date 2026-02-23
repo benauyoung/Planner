@@ -31,21 +31,24 @@ Kanban boards force column thinking. Todo lists force linear thinking. Neither m
 
 ---
 
-## Our Solution
+## Our Solution: The Three Pillars
 
-### Visual Thinking
+TinyBaguette is a **plan-to-product platform** built around three co-equal pillars that form a feedback loop:
 
-Projects are **graphs, not lists**. TinyBaguette renders your project as an infinite canvas where:
-- **Nodes** represent thoughts (goals, features, tasks)
-- **Cables** represent dependencies (A must complete before B)
-- **Clusters** form organically as related work groups together
+### 1. PLAN (The DAG Canvas)
+Projects are **graphs, not lists**. Users describe an idea, AI builds a hierarchical DAG (goals → subgoals → features → tasks) on an interactive canvas. Users refine through chat, answer AI-generated questions per node, and generate context-aware PRDs that know about each other. The plan is the backbone — but it is NOT the whole product.
 
-### AI as Co-Pilot
+### 2. DESIGN (Live Visual Builder)
+AI generates actual working web pages (HTML + Tailwind CSS) from the project plan, rendered as live `srcdoc` iframes. Canvas mode shows all pages on a zoomable React Flow canvas like an interactive sitemap. Single-page mode lets you zoom in and iterate with AI chat. This is not a mockup tool — it generates real code.
 
-Every node has an embedded AI agent that:
-- Knows exactly where it sits in the project hierarchy
-- Only sees relevant upstream context (not the whole codebase)
-- Helps decompose, plan, review, and implement
+### 3. AGENTS (Embeddable AI Chatbots)
+Users build AI chatbot agents with persona, knowledge base, behavior rules, and theme. The key differentiator: **agents are dragged directly onto Design canvas pages** to embed them as floating chat widgets. Plan your app, design your pages, drop intelligent chatbots onto them — all without leaving TinyBaguette.
+
+### How They Connect
+- **Plan → Design**: The DAG tells the design generator what pages to create and what they should contain.
+- **Design → Plan**: Editing a page's content or structure can update the corresponding PRD and node details.
+- **Agents → Design**: Agents deploy by dragging onto Design canvas pages, injecting widget HTML into the page code.
+- **Plan → Export**: Interconnected PRDs export as packages for Claude Code, Cursor, Ralphy, or generic IDEs.
 
 ### Territory = Map
 
@@ -89,9 +92,9 @@ Humans remember "that cluster of nodes in the top-right" better than "Row 42, Co
 
 AI agents only receive upstream context (parent nodes), not the entire project. This keeps token usage efficient and responses relevant.
 
-### 4. Horizontal Flow
+### 4. Vertical Flow
 
-Time flows left to right. Goals on the left, completed tasks on the right. This matches natural reading direction and mental models of progress.
+Goals at the top, tasks at the bottom. The hierarchy flows top-to-bottom, matching how people think about decomposition — big picture above, details below.
 
 ### 5. Organic Over Rigid
 
@@ -110,41 +113,62 @@ Nodes float freely with organic layout. No forced grids. Projects grow like orga
 
 ---
 
-## Current State (v0.9.6, February 2026)
+## Current State (v0.9.9, February 2026)
 
-### Delivered ✅
+### PLAN Pillar ✅
 - Infinite canvas with 12 node types and 8 typed edge types
-- AI-powered plan generation, iteration, smart suggestions, and page preview generation
-- 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views (List, Table, Board, Timeline, Sprints, Backend)
+- AI-powered plan generation, iteration, smart suggestions
+- Deep question flow per node with category-aware follow-ups and readiness badges
+- Context-aware PRD generation — each PRD knows about parent/sibling/child/dependency PRDs
+- PRD Pipeline panel with status tracking, stale detection, Ralphy export
+- Multi-select + bulk actions (rubber-band, Shift+click, Ctrl+A, BulkActionsBar)
+- Spring physics force-directed layout + Dagre tree layout toggle
+- Level-of-detail zoom (full → compact → dot)
+- Territory file sync: bidirectional canvas ↔ Markdown with diff review
+- Blast radius analysis, smart mapping, command palette (Cmd+K)
 - Rich content: images, PRDs, IDE prompts, Notion-style embedded docs
-- Team management: assignees, priority, due dates, estimates, tags
-- Comments, activity feed, sprint planning, version history
-- Typed dependency edges with blast radius analysis
-- Smart mapping: auto-suggest parent nodes by hierarchy + proximity
-- Command palette (Cmd+K) with keyboard shortcuts
+- Team management, comments, activity feed, sprint planning, version history
 - Export (JSON, Markdown, .cursorrules, CLAUDE.md) and import (JSON, Markdown)
-- Shareable plans via public read-only URL
-- Template library (3 seed templates)
+- Shareable plans via public read-only URL, template library (3 seed templates)
+
+### DESIGN Pillar ✅
+- AI generates HTML+Tailwind pages from plan via srcdoc iframes (no WebContainer)
+- Canvas mode: all pages on zoomable React Flow canvas with navigation edges
+- Single-page mode: viewport switcher (Desktop/Tablet/Mobile) + PageChat sidebar
+- Inline AI editing, delete, focus, select-to-chat on canvas page nodes
+- Add Page dialog: AI generates new pages matching design system
+- Agent drag-and-drop: inject chat widget HTML onto pages
+
+### AGENTS Pillar ✅
+- Full agent builder: Config, Knowledge, Theme, Preview, Deploy tabs
+- AI-assisted agent generation from description
+- Live chat preview with Gemini backend
+- One-click deploy with embed snippet
+- Drag-and-drop onto Design canvas pages
+
+### Infrastructure ✅
+- 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views
 - Firebase persistence with runtime failover to localStorage
 - Collaboration infrastructure (presence avatars, live cursors, pluggable provider)
-- Integration clients (GitHub, Slack, Linear) + settings UI
+- Integration settings UI (GitHub, Slack, Linear — OAuth flows pending)
 - Public landing page with interactive showcase
 
 ### Next Up (v1.0)
-- Production WebSocket backend for real-time collaboration
-- OAuth flows for GitHub/Slack/Linear
-- Territory file sync (canvas to Markdown bidirectional)
-- Image compression and performance polish
+- Legacy WebContainer code cleanup
+- Performance + accessibility audit
+- E2E test coverage
 
 ---
 
 ## What TinyBaguette Is NOT
 
+- ❌ A PRD generator — it's a full plan-to-product platform
 - ❌ A Kanban board (no columns)
 - ❌ A todo app (no flat lists)
 - ❌ A mind map (we have typed nodes and validated dependencies)
-- ❌ A documentation generator (we sync, not generate)
+- ❌ A mockup tool — the Design tab generates real code
 - ❌ A full IDE (we complement, not replace)
+- ❌ Three siloed tabs — Plan, Design, and Agents are interconnected pillars
 
 ---
 

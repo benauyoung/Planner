@@ -1,6 +1,6 @@
 # TinyBaguette
 
-> **Visual, AI-powered project planning on an infinite canvas.** Describe your idea, get a DAG of goals, features, and tasks — then refine, connect, and execute.
+> **AI-powered plan-to-product platform.** Describe your idea → AI builds a visual plan → Design live pages → Embed AI agents → Export to your coding tool.
 
 [![Next.js](https://img.shields.io/badge/Next.js-15.5-black)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://typescriptlang.org/)
@@ -10,15 +10,19 @@
 
 ## What is TinyBaguette?
 
-TinyBaguette is a **visual DAG-based project planning tool** where you:
+TinyBaguette is a **plan-to-product platform** built around three co-equal pillars:
 
-1. **Describe** your project idea through a guided onboarding questionnaire
-2. **Generate** a hierarchical plan via AI (Gemini 2.0 Flash)
-3. **Visualize** the plan as an interactive node graph on an infinite canvas
-4. **Refine** by chatting with AI, adding nodes, connecting edges, attaching PRDs & prompts
-5. **Design** — AI generates full-fidelity Tailwind page previews, iterate with chat, drag agents onto pages
-6. **Generate** PRDs and implementation prompts from node context with one click
-7. **Execute** by tracking status, managing sprints, and exporting to your IDE
+### 1. PLAN (The DAG Canvas)
+Describe your project idea. AI builds a hierarchical DAG (goals → subgoals → features → tasks) on an interactive canvas. Refine through chat, answer AI-generated questions per node, and generate context-aware PRDs that know about each other.
+
+### 2. DESIGN (Live Visual Builder)
+AI generates real HTML+Tailwind pages from your plan, rendered as live `srcdoc` iframes. **Canvas mode** shows all pages on a zoomable React Flow canvas like an interactive sitemap. **Single-page mode** lets you zoom in and iterate with AI chat. Not mockups — real code.
+
+### 3. AGENTS (Embeddable AI Chatbots)
+Build AI chatbot agents with persona, knowledge base, behavior rules, and theme. The key differentiator: **drag agents directly onto Design canvas pages** to embed them as floating chat widgets.
+
+### The Loop
+Plan → Design → Agents form a feedback loop. The DAG informs page generation. Page edits update PRDs. Agents deploy onto pages. PRDs export to Claude Code, Cursor, or Ralphy for autonomous coding.
 
 ### Key Features
 
