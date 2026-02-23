@@ -49,6 +49,15 @@ function wrapHtml(bodyHtml: string): string {
 </html>`
 }
 
+// ─── Canvas Quick Actions ────────────────────────────────────
+
+const CANVAS_QUICK_ACTIONS = [
+  'Make it dark mode',
+  'Add a CTA section',
+  'Improve the header',
+  'Add social proof',
+]
+
 // ─── Page Frame Node ─────────────────────────────────────────
 
 const PAGE_FRAME_WIDTH = 420
@@ -141,31 +150,50 @@ const PageFrameNode = memo(function PageFrameNode({ data }: NodeProps) {
 
       {/* Inline edit bar */}
       {showEdit && (
-        <div className="flex items-center gap-1 px-2 py-1.5 bg-background border border-t-0 border-b-0">
-          <input
-            ref={inputRef}
-            value={editInput}
-            onChange={(e) => setEditInput(e.target.value)}
-            onKeyDown={(e) => {
-              e.stopPropagation()
-              if (e.key === 'Enter') handleSubmitEdit()
-              if (e.key === 'Escape') { setShowEdit(false); setEditInput('') }
-            }}
-            placeholder="e.g. Make header blue, add pricing..."
-            className="flex-1 h-7 px-2 text-[11px] bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary nodrag"
-            disabled={editing}
-          />
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              handleSubmitEdit()
-            }}
-            disabled={!editInput.trim() || editing}
-            className="h-7 w-7 flex items-center justify-center rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 shrink-0 nodrag"
-            title="Apply edit"
-          >
-            {editing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-          </button>
+        <div className="bg-background border border-t-0 border-b-0 px-2 py-2 space-y-1.5">
+          <div className="flex items-center gap-1">
+            <input
+              ref={inputRef}
+              value={editInput}
+              onChange={(e) => setEditInput(e.target.value)}
+              onKeyDown={(e) => {
+                e.stopPropagation()
+                if (e.key === 'Enter') handleSubmitEdit()
+                if (e.key === 'Escape') { setShowEdit(false); setEditInput('') }
+              }}
+              placeholder="Tell Baguette what to change..."
+              className="flex-1 h-7 px-2 text-[11px] bg-muted rounded border-0 outline-none focus:ring-1 focus:ring-primary nodrag"
+              disabled={editing}
+            />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSubmitEdit()
+              }}
+              disabled={!editInput.trim() || editing}
+              className="h-7 w-7 flex items-center justify-center rounded bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 shrink-0 nodrag"
+              title="Apply edit"
+            >
+              {editing ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+            </button>
+          </div>
+          {!editing && (
+            <div className="flex flex-wrap gap-1 nodrag">
+              {CANVAS_QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setEditInput(action)
+                    setTimeout(() => inputRef.current?.focus(), 0)
+                  }}
+                  className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors border border-border/50 nodrag"
+                >
+                  {action}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

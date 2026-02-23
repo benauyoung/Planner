@@ -81,6 +81,7 @@ interface ProjectState {
   updateNodeAcceptanceCriteria: (nodeId: string, criteria: string[]) => void
   setPages: (pages: ProjectPage[], pageEdges?: PageEdge[]) => void
   updatePageHtml: (pageId: string, html: string) => void
+  undoPageHtml: (pageId: string) => void
   updatePagePosition: (pageId: string, position: { x: number; y: number }) => void
   addPageEdge: (source: string, target: string, label?: string) => void
   removePageEdge: (edgeId: string) => void
@@ -1184,7 +1185,24 @@ export const useProjectStore = create<ProjectState>((set, get) => {
     updatePageHtml: (pageId, html) => {
       const p = get().currentProject
       if (!p) return
-      const pages = (p.pages || []).map((pg) => pg.id === pageId ? { ...pg, html } : pg)
+      const pages = (p.pages || []).map((pg) => {
+        if (pg.id !== pageId) return pg
+        const htmlHistory = [...(pg.htmlHistory || []), pg.html].slice(-20)
+        return { ...pg, html, htmlHistory }
+      })
+      applyWithoutUndo({ ...p, updatedAt: Date.now(), pages })
+    },
+
+    undoPageHtml: (pageId) => {
+      const p = get().currentProject
+      if (!p) return
+      const pages = (p.pages || []).map((pg) => {
+        if (pg.id !== pageId) return pg
+        const history = [...(pg.htmlHistory || [])]
+        if (history.length === 0) return pg
+        const previousHtml = history.pop()!
+        return { ...pg, html: previousHtml, htmlHistory: history }
+      })
       applyWithoutUndo({ ...p, updatedAt: Date.now(), pages })
     },
 

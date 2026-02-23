@@ -19,6 +19,8 @@ import {
   Globe,
   LayoutGrid,
   AppWindow,
+  Wand2,
+  Check,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { authFetch } from '@/lib/auth-fetch'
@@ -56,36 +58,54 @@ function wrapHtmlPage(bodyHtml: string): string {
 
 // ─── Page Chat Sidebar ──────────────────────────────────────
 
+type ChatMsg = AppChatMessage & { followUps?: string[] }
+
+const QUICK_ACTIONS = [
+  'Make it dark mode',
+  'Add a pricing section',
+  'Add a contact form',
+  'Make the header sticky',
+  'Add social proof',
+  'Improve the hero',
+]
+
 function PageChat({
   page,
   onPageUpdated,
   onClose,
+  designSystem,
+  allPageTitles,
+  projectDescription,
 }: {
   page: ProjectPage
   onPageUpdated: (pageId: string, newHtml: string) => void
   onClose: () => void
+  designSystem?: string | null
+  allPageTitles?: string[]
+  projectDescription?: string
 }) {
   const addAppChatMessage = useProjectStore((s) => s.addAppChatMessage)
+  const undoPageHtml = useProjectStore((s) => s.undoPageHtml)
 
-  const [messages, setMessages] = useState<AppChatMessage[]>([])
+  const [messages, setMessages] = useState<ChatMsg[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
+  const canUndo = (page.htmlHistory?.length ?? 0) > 0
+
   useEffect(() => { inputRef.current?.focus() }, [])
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages])
+  }, [messages, loading])
 
-  const handleSend = async () => {
-    const instruction = input.trim()
-    if (!instruction || loading) return
+  const handleSend = async (instruction?: string) => {
+    const text = (instruction ?? input).trim()
+    if (!text || loading) return
     setInput('')
 
-    const userMsg: AppChatMessage = {
-      id: generateId(), role: 'user', content: instruction, timestamp: Date.now(),
-    }
+    const userMsg: ChatMsg = { id: generateId(), role: 'user', content: text, timestamp: Date.now() }
     setMessages((prev) => [...prev, userMsg])
     addAppChatMessage(userMsg)
     setLoading(true)
@@ -96,28 +116,32 @@ function PageChat({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentHtml: page.html,
-          instruction,
+          instruction: text,
           pageTitle: page.title,
+          designSystem: designSystem ?? undefined,
+          allPageTitles: allPageTitles ?? [],
+          projectDescription: projectDescription ?? undefined,
         }),
       })
 
       if (!res.ok) throw new Error('Failed to edit page')
 
       const data = await res.json()
-      const aiMsg: AppChatMessage = {
-        id: generateId(), role: 'ai', content: data.summary || 'Updated!', timestamp: Date.now(),
+      const aiMsg: ChatMsg = {
+        id: generateId(),
+        role: 'ai',
+        content: data.summary || 'Page updated.',
+        timestamp: Date.now(),
+        followUps: data.followUpSuggestions ?? [],
       }
       setMessages((prev) => [...prev, aiMsg])
       addAppChatMessage(aiMsg)
 
-      if (data.html) {
-        onPageUpdated(page.id, data.html)
-      }
+      if (data.html) onPageUpdated(page.id, data.html)
     } catch {
-      const errMsg: AppChatMessage = {
-        id: generateId(), role: 'ai', content: 'Failed to update. Try again.', timestamp: Date.now(),
-      }
-      setMessages((prev) => [...prev, errMsg])
+      setMessages((prev) => [...prev, {
+        id: generateId(), role: 'ai', content: 'Something went wrong. Try again.', timestamp: Date.now(),
+      }])
     } finally {
       setLoading(false)
     }
@@ -125,61 +149,128 @@ function PageChat({
 
   return (
     <div className="w-80 border-l bg-background flex flex-col h-full">
-      <div className="flex items-center gap-2 px-3 py-2 border-b shrink-0">
-        <MessageSquare className="h-3.5 w-3.5 text-primary" />
-        <span className="text-xs font-semibold flex-1 truncate">Edit: {page.title}</span>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+      {/* Header */}
+      <div className="flex items-center gap-2 px-3 py-2.5 border-b shrink-0">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+            <Wand2 className="h-3.5 w-3.5 text-primary" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-xs font-semibold leading-none">Baguette</div>
+            <div className="text-[10px] text-muted-foreground truncate mt-0.5">{page.title}</div>
+          </div>
+        </div>
+        {canUndo && (
+          <button
+            onClick={() => undoPageHtml(page.id)}
+            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
+            title="Undo last change"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <button
+          onClick={onClose}
+          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
+        >
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-2">
+      {/* Messages */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-3 space-y-3">
         {messages.length === 0 && (
-          <div className="text-xs text-muted-foreground text-center pt-8">
-            <MessageSquare className="h-8 w-8 mx-auto mb-3 text-muted-foreground/30" />
-            <p className="font-medium mb-1">Edit this page with AI</p>
-            <p>Describe what you want to change.</p>
-            <div className="mt-4 space-y-1.5 text-left">
-              <p className="italic text-muted-foreground/60">&quot;Make the header blue&quot;</p>
-              <p className="italic text-muted-foreground/60">&quot;Add a pricing section&quot;</p>
-              <p className="italic text-muted-foreground/60">&quot;Change the layout to 3 columns&quot;</p>
+          <div className="pt-4">
+            <div className="flex items-start gap-2 mb-4">
+              <div className="w-6 h-6 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                <Wand2 className="h-3 w-3 text-primary" />
+              </div>
+              <div className="bg-muted rounded-xl rounded-tl-none px-3 py-2 text-xs text-foreground">
+                Hi! I&apos;m Baguette. Tell me what to change on this page and I&apos;ll update it instantly.
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {QUICK_ACTIONS.map((action) => (
+                <button
+                  key={action}
+                  onClick={() => handleSend(action)}
+                  className="px-2.5 py-1 rounded-full text-[11px] font-medium bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors border border-border/50"
+                >
+                  {action}
+                </button>
+              ))}
             </div>
           </div>
         )}
+
         {messages.map((msg) => (
-          <div key={msg.id}>
-            <div
-              className={cn(
-                'text-xs rounded-lg px-3 py-2 max-w-[90%]',
+          <div key={msg.id} className={cn('flex items-end gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
+            {msg.role === 'ai' && (
+              <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mb-0.5">
+                <Wand2 className="h-3 w-3 text-primary" />
+              </div>
+            )}
+            <div className="flex flex-col gap-1.5 max-w-[85%]">
+              <div className={cn(
+                'text-xs rounded-xl px-3 py-2',
                 msg.role === 'user'
-                  ? 'bg-primary text-primary-foreground ml-auto'
-                  : 'bg-muted text-foreground'
+                  ? 'bg-primary text-primary-foreground rounded-br-sm'
+                  : 'bg-muted text-foreground rounded-bl-sm'
+              )}>
+                {msg.content}
+              </div>
+              {msg.role === 'ai' && (
+                <div className="flex items-center gap-1">
+                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+                    <Check className="h-2.5 w-2.5 text-green-500" />
+                    <span className="text-[10px] font-medium text-green-600 dark:text-green-400">Page updated</span>
+                  </div>
+                </div>
               )}
-            >
-              {msg.content}
+              {msg.role === 'ai' && msg.followUps && msg.followUps.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-0.5">
+                  {msg.followUps.map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => handleSend(f)}
+                      className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors border border-border/50"
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         ))}
+
         {loading && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
-            Updating page...
+          <div className="flex items-end gap-2">
+            <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mb-0.5">
+              <Wand2 className="h-3 w-3 text-primary" />
+            </div>
+            <div className="bg-muted rounded-xl rounded-bl-sm px-3 py-2.5 flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
+            </div>
           </div>
         )}
       </div>
 
-      <div className="border-t p-2 shrink-0">
-        <div className="flex items-center gap-1">
+      {/* Input */}
+      <div className="border-t p-2.5 shrink-0">
+        <div className="flex items-center gap-1.5">
           <input
             ref={inputRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Describe changes..."
-            className="flex-1 h-8 px-3 text-xs bg-muted rounded-md border-0 outline-none focus:ring-1 focus:ring-primary"
+            placeholder="Tell Baguette what to change..."
+            className="flex-1 h-8 px-3 text-xs bg-muted rounded-lg border-0 outline-none focus:ring-1 focus:ring-primary"
             disabled={loading}
           />
-          <Button size="icon" className="h-8 w-8 shrink-0" onClick={handleSend} disabled={!input.trim() || loading}>
+          <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => handleSend()} disabled={!input.trim() || loading}>
             <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -866,6 +957,9 @@ export function DesignView() {
             page={selectedPage}
             onPageUpdated={handlePageUpdated}
             onClose={() => setChatOpen(false)}
+            designSystem={designSystem}
+            allPageTitles={pages.map((p) => p.title)}
+            projectDescription={currentProject?.description}
           />
         )}
       </div>

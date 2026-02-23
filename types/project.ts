@@ -154,6 +154,7 @@ export interface ProjectPage {
   html: string
   linkedNodeIds: string[]
   position: { x: number; y: number }
+  htmlHistory?: string[]
 }
 
 export interface PageEdge {

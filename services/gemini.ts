@@ -265,9 +265,14 @@ export const pageEditSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {
     html: { type: SchemaType.STRING, description: 'Updated complete HTML body content with Tailwind CSS classes' },
-    summary: { type: SchemaType.STRING, description: 'Brief summary of what was changed' },
+    summary: { type: SchemaType.STRING, description: 'One sentence describing what was changed, written as a confident past-tense statement' },
+    followUpSuggestions: {
+      type: SchemaType.ARRAY,
+      description: '2-3 short follow-up action suggestions relevant to the change just made',
+      items: { type: SchemaType.STRING },
+    },
   },
-  required: ['html', 'summary'],
+  required: ['html', 'summary', 'followUpSuggestions'],
 }
 
 export const backendGenerationSchema: Schema = {
