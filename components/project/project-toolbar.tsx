@@ -22,12 +22,13 @@ import {
   AppWindow,
   Server,
   Bot,
+  ListOrdered,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ShareButton } from '@/components/share/share-button'
 import { useProjectStore } from '@/stores/project-store'
-import { useUIStore, type ViewType, type ManageSubView } from '@/stores/ui-store'
+import { useUIStore, type ViewType, type ManageSubView, type PlanSubView } from '@/stores/ui-store'
 import { cn } from '@/lib/utils'
 import type { NodeType, NodeStatus } from '@/types/project'
 
@@ -36,6 +37,11 @@ const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] 
   { value: 'design', label: 'Design', icon: <AppWindow className="h-3.5 w-3.5" /> },
   { value: 'agents', label: 'Agents', icon: <Bot className="h-3.5 w-3.5" /> },
   { value: 'manage', label: 'Manage', icon: <List className="h-3.5 w-3.5" /> },
+]
+
+const PLAN_SUB_OPTIONS: { value: PlanSubView; label: string; icon: React.ReactNode }[] = [
+  { value: 'canvas', label: 'Canvas', icon: <LayoutGrid className="h-3.5 w-3.5" /> },
+  { value: 'steps', label: 'Steps', icon: <ListOrdered className="h-3.5 w-3.5" /> },
 ]
 
 const MANAGE_SUB_OPTIONS: { value: ManageSubView; label: string; icon: React.ReactNode }[] = [
@@ -89,6 +95,8 @@ export function ProjectToolbar({
   const setCurrentView = useUIStore((s) => s.setCurrentView)
   const manageSubView = useUIStore((s) => s.manageSubView)
   const setManageSubView = useUIStore((s) => s.setManageSubView)
+  const planSubView = useUIStore((s) => s.planSubView)
+  const setPlanSubView = useUIStore((s) => s.setPlanSubView)
   const searchQuery = useUIStore((s) => s.searchQuery)
   const setSearchQuery = useUIStore((s) => s.setSearchQuery)
   const filterType = useUIStore((s) => s.filterType)
@@ -211,6 +219,31 @@ export function ProjectToolbar({
             </button>
           ))}
         </div>
+
+        {/* Plan sub-view toggle */}
+        {currentView === 'plan' && (
+          <>
+            <div className="w-px h-5 bg-border shrink-0" />
+            <div className="flex items-center bg-muted rounded-md p-0.5">
+              {PLAN_SUB_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  onClick={() => setPlanSubView(opt.value)}
+                  className={cn(
+                    'flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-medium transition-colors',
+                    planSubView === opt.value
+                      ? 'bg-background text-foreground shadow-sm'
+                      : 'text-muted-foreground hover:text-foreground'
+                  )}
+                  title={opt.label}
+                >
+                  {opt.icon}
+                  <span className="hidden lg:inline">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Manage sub-view dropdown */}
         {currentView === 'manage' && (

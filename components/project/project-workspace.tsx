@@ -70,6 +70,10 @@ const SprintBoard = dynamic(
   () => import('@/components/sprints/sprint-board').then(m => ({ default: m.SprintBoard })),
   { ssr: false, loading: () => <ViewSkeleton /> }
 )
+const StepsView = dynamic(
+  () => import('@/components/views/steps-view').then(m => ({ default: m.StepsView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
 
 interface ProjectWorkspaceProps {
   projectId: string
@@ -84,6 +88,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
   const shortcutsHelpOpen = useUIStore((s) => s.shortcutsHelpOpen)
   const currentView = useUIStore((s) => s.currentView)
   const manageSubView = useUIStore((s) => s.manageSubView)
+  const planSubView = useUIStore((s) => s.planSubView)
   const reLayoutRef = useRef<(() => void) | null>(null)
   const fitViewRef = useRef<(() => void) | null>(null)
   const { iterate, applySuggestion, applyAll, clearResult, loading: aiLoading, result: aiResult, error: aiError } = useAIIterate()
@@ -469,6 +474,8 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                       </p>
                     </div>
                   </div>
+                ) : planSubView === 'steps' ? (
+                  <ErrorBoundary compact><StepsView /></ErrorBoundary>
                 ) : (
                   <ErrorBoundary compact><GraphCanvas /></ErrorBoundary>
                 )

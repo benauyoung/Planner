@@ -3,6 +3,7 @@ import type { EdgeType, NodeType, NodeStatus } from '@/types/project'
 
 export type ViewType = 'plan' | 'manage' | 'design' | 'agents'
 export type ManageSubView = 'list' | 'table' | 'board' | 'timeline' | 'sprints' | 'backend'
+export type PlanSubView = 'canvas' | 'steps'
 export type LayoutMode = 'dagre' | 'spring'
 
 interface PendingEdge {
@@ -22,6 +23,7 @@ interface UIState {
   shortcutsHelpOpen: boolean
   currentView: ViewType
   manageSubView: ManageSubView
+  planSubView: PlanSubView
   searchQuery: string
   filterType: NodeType | null
   filterStatus: NodeStatus | null
@@ -46,6 +48,7 @@ interface UIState {
   closeShortcutsHelp: () => void
   setCurrentView: (view: ViewType) => void
   setManageSubView: (sub: ManageSubView) => void
+  setPlanSubView: (sub: PlanSubView) => void
   setSearchQuery: (query: string) => void
   setFilterType: (type: NodeType | null) => void
   setFilterStatus: (status: NodeStatus | null) => void
@@ -67,6 +70,7 @@ export const useUIStore = create<UIState>((set) => ({
   shortcutsHelpOpen: false,
   currentView: 'plan' as ViewType,
   manageSubView: 'list' as ManageSubView,
+  planSubView: 'canvas' as PlanSubView,
   searchQuery: '',
   filterType: null,
   filterStatus: null,
@@ -110,6 +114,7 @@ export const useUIStore = create<UIState>((set) => ({
   closeShortcutsHelp: () => set({ shortcutsHelpOpen: false }),
   setCurrentView: (view) => set({ currentView: view }),
   setManageSubView: (sub) => set({ manageSubView: sub }),
+  setPlanSubView: (sub) => set({ planSubView: sub }),
   setSearchQuery: (query) => set({ searchQuery: query }),
   setFilterType: (type) => set({ filterType: type }),
   setFilterStatus: (status) => set({ filterStatus: status }),
