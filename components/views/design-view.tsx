@@ -227,6 +227,42 @@ export function DesignView() {
     }
   }, [pages.length, phase])
 
+  // Listen for agent chat messages from srcdoc iframes and proxy to API
+  useEffect(() => {
+    function handleAgentChat(e: MessageEvent) {
+      if (!e.data || e.data.type !== 'tb-agent-chat') return
+      const { agentId, payload } = e.data as {
+        agentId: string
+        payload: { messages: { role: string; content: string }[]; systemPrompt: string; knowledge: { title: string; content: string }[]; rules: string[] }
+      }
+      const source = e.source as Window | null
+
+      authFetch(`/api/agent/${agentId}/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error('Agent API error')
+          return res.json()
+        })
+        .then((data) => {
+          source?.postMessage(
+            { type: 'tb-agent-chat-response', agentId, response: data.response || data.message || '' },
+            '*'
+          )
+        })
+        .catch((err) => {
+          source?.postMessage(
+            { type: 'tb-agent-chat-response', agentId, error: err instanceof Error ? err.message : 'Unknown error' },
+            '*'
+          )
+        })
+    }
+    window.addEventListener('message', handleAgentChat)
+    return () => window.removeEventListener('message', handleAgentChat)
+  }, [])
+
   const handleGenerate = useCallback(async () => {
     if (!currentProject) return
 
@@ -351,27 +387,40 @@ export function DesignView() {
 
       const color = agent.theme.primaryColor
       const pos = agent.theme.position === 'bottom-left' ? 'left: 24px;' : 'right: 24px;'
-      const greeting = agent.greeting.replace(/'/g, '\\&#39;')
+      const greeting = agent.greeting.replace(/'/g, '&#39;').replace(/"/g, '&quot;')
+      const agentName = agent.name.replace(/"/g, '&quot;')
+
+      // Encode agent config as base64 JSON so the iframe script can read it
+      const agentConfig = {
+        id: agent.id,
+        name: agent.name,
+        greeting: agent.greeting,
+        systemPrompt: agent.systemPrompt,
+        knowledge: agent.knowledge,
+        rules: agent.rules.map((r) => r.rule),
+        model: agent.model,
+      }
+      const configB64 = btoa(unescape(encodeURIComponent(JSON.stringify(agentConfig))))
 
       const widgetHtml = `
-<!-- Agent Widget: ${agent.name} -->
-<div id="agent-widget-${agent.id}" style="position: fixed; bottom: 24px; ${pos} z-index: 9999; font-family: system-ui, sans-serif;">
+<!-- Agent Widget: ${agent.name} (Live) -->
+<div id="agent-widget-${agent.id}" data-agent-config="${configB64}" style="position: fixed; bottom: 24px; ${pos} z-index: 9999; font-family: system-ui, sans-serif;">
   <div id="agent-chat-${agent.id}" style="display: none; width: 360px; height: 480px; background: white; border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.15); overflow: hidden; flex-direction: column; margin-bottom: 12px;">
     <div style="background: ${color}; padding: 16px; display: flex; align-items: center; gap: 10px;">
       <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;">
         <svg width="18" height="18" fill="white" viewBox="0 0 24 24"><path d="M12 2a2 2 0 0 1 2 2c0 .74-.4 1.39-1 1.73V7h1a7 7 0 0 1 7 7h1a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1.07A7 7 0 0 1 14 23h-4a7 7 0 0 1-6.93-4H2a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h1a7 7 0 0 1 7-7h1V5.73A2 2 0 0 1 12 2zm-1 7a5 5 0 0 0-5 5v1h12v-1a5 5 0 0 0-5-5h-2zm-1 8a1 1 0 1 0 0 2h4a1 1 0 1 0 0-2h-4z"/></svg>
       </div>
       <div>
-        <div style="color: white; font-weight: 600; font-size: 14px;">${agent.name}</div>
+        <div style="color: white; font-weight: 600; font-size: 14px;">${agentName}</div>
         <div style="color: rgba(255,255,255,0.7); font-size: 11px;">Online</div>
       </div>
     </div>
-    <div style="flex: 1; padding: 16px; overflow-y: auto;">
+    <div id="agent-messages-${agent.id}" style="flex: 1; padding: 16px; overflow-y: auto;">
       <div style="background: #f3f4f6; border-radius: 12px; border-top-left-radius: 4px; padding: 10px 14px; font-size: 13px; max-width: 80%;">${greeting}</div>
     </div>
     <div style="border-top: 1px solid #e5e7eb; padding: 12px; display: flex; gap: 8px;">
-      <input type="text" placeholder="Type a message..." style="flex: 1; border: 1px solid #e5e7eb; border-radius: 20px; padding: 8px 14px; font-size: 13px; outline: none;" />
-      <button style="width: 36px; height: 36px; border-radius: 50%; background: ${color}; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
+      <input id="agent-input-${agent.id}" type="text" placeholder="Type a message..." style="flex: 1; border: 1px solid #e5e7eb; border-radius: 20px; padding: 8px 14px; font-size: 13px; outline: none;" />
+      <button id="agent-send-${agent.id}" style="width: 36px; height: 36px; border-radius: 50%; background: ${color}; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;">
         <svg width="16" height="16" fill="white" viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
       </button>
     </div>
@@ -379,7 +428,75 @@ export function DesignView() {
   <button onclick="var c=document.getElementById('agent-chat-${agent.id}');c.style.display=c.style.display==='none'?'flex':'none'" style="width: 56px; height: 56px; border-radius: 50%; background: ${color}; border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; align-items: center; justify-content: center; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
     <svg width="24" height="24" fill="white" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
   </button>
-</div>`
+</div>
+<script>
+(function(){
+  var AID = "${agent.id}";
+  var widget = document.getElementById("agent-widget-" + AID);
+  var cfg = JSON.parse(decodeURIComponent(escape(atob(widget.getAttribute("data-agent-config")))));
+  var messagesEl = document.getElementById("agent-messages-" + AID);
+  var inputEl = document.getElementById("agent-input-" + AID);
+  var sendBtn = document.getElementById("agent-send-" + AID);
+  var history = [];
+  var sending = false;
+
+  function addBubble(text, isUser) {
+    var d = document.createElement("div");
+    d.style.cssText = isUser
+      ? "background: ${color}; color: white; border-radius: 12px; border-top-right-radius: 4px; padding: 10px 14px; font-size: 13px; max-width: 80%; margin-left: auto; margin-top: 8px;"
+      : "background: #f3f4f6; border-radius: 12px; border-top-left-radius: 4px; padding: 10px 14px; font-size: 13px; max-width: 80%; margin-top: 8px;";
+    d.textContent = text;
+    messagesEl.appendChild(d);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return d;
+  }
+
+  function showTyping() {
+    var d = document.createElement("div");
+    d.id = "agent-typing-" + AID;
+    d.style.cssText = "background: #f3f4f6; border-radius: 12px; border-top-left-radius: 4px; padding: 10px 14px; font-size: 13px; max-width: 80%; margin-top: 8px; color: #9ca3af;";
+    d.textContent = "Thinking...";
+    messagesEl.appendChild(d);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    return d;
+  }
+
+  function sendMessage() {
+    var text = inputEl.value.trim();
+    if (!text || sending) return;
+    sending = true;
+    inputEl.value = "";
+    addBubble(text, true);
+    history.push({ role: "user", content: text });
+    var typing = showTyping();
+
+    window.parent.postMessage({
+      type: "tb-agent-chat",
+      agentId: cfg.id,
+      payload: {
+        messages: history.slice(),
+        systemPrompt: cfg.systemPrompt,
+        knowledge: cfg.knowledge,
+        rules: cfg.rules
+      }
+    }, "*");
+
+    function onResponse(e) {
+      if (!e.data || e.data.type !== "tb-agent-chat-response" || e.data.agentId !== cfg.id) return;
+      window.removeEventListener("message", onResponse);
+      typing.remove();
+      var reply = e.data.error ? ("Error: " + e.data.error) : (e.data.response || "No response");
+      addBubble(reply, false);
+      if (!e.data.error) history.push({ role: "assistant", content: reply });
+      sending = false;
+    }
+    window.addEventListener("message", onResponse);
+  }
+
+  sendBtn.addEventListener("click", sendMessage);
+  inputEl.addEventListener("keydown", function(e) { if (e.key === "Enter") sendMessage(); });
+})();
+<\/script>`
 
       const updatedHtml = page.html + widgetHtml
       updatePageHtml(pageId, updatedHtml)

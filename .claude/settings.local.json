@@ -71,7 +71,8 @@
       "Bash(cat:*)",
       "Bash(git checkout:*)",
       "Bash(echo EXIT:$?:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(tail:*)"
     ]
   }
 }
