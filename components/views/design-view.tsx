@@ -73,16 +73,20 @@ function PageChat({
   page,
   onPageUpdated,
   onClose,
+  onLoadingChange,
   designSystem,
   allPageTitles,
   projectDescription,
+  projectNodes,
 }: {
   page: ProjectPage
   onPageUpdated: (pageId: string, newHtml: string) => void
   onClose: () => void
+  onLoadingChange?: (loading: boolean) => void
   designSystem?: string | null
   allPageTitles?: string[]
   projectDescription?: string
+  projectNodes?: { type: string; title: string; description?: string }[]
 }) {
   const addAppChatMessage = useProjectStore((s) => s.addAppChatMessage)
   const undoPageHtml = useProjectStore((s) => s.undoPageHtml)
@@ -98,7 +102,7 @@ function PageChat({
   useEffect(() => { inputRef.current?.focus() }, [])
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
-  }, [messages, loading])
+  }, [messages])
 
   const handleSend = async (instruction?: string) => {
     const text = (instruction ?? input).trim()
@@ -109,6 +113,11 @@ function PageChat({
     setMessages((prev) => [...prev, userMsg])
     addAppChatMessage(userMsg)
     setLoading(true)
+    onLoadingChange?.(true)
+
+    // Placeholder message updated in real-time as stream arrives
+    const aiMsgId = generateId()
+    setMessages((prev) => [...prev, { id: aiMsgId, role: 'ai', content: '', timestamp: Date.now() }])
 
     try {
       const res = await authFetch('/api/ai/edit-page', {
@@ -118,32 +127,54 @@ function PageChat({
           currentHtml: page.html,
           instruction: text,
           pageTitle: page.title,
+          pageRoute: page.route,
           designSystem: designSystem ?? undefined,
           allPageTitles: allPageTitles ?? [],
           projectDescription: projectDescription ?? undefined,
+          projectNodes: projectNodes ?? [],
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to edit page')
+      if (!res.ok || !res.body) throw new Error('Failed to edit page')
 
-      const data = await res.json()
-      const aiMsg: ChatMsg = {
-        id: generateId(),
-        role: 'ai',
-        content: data.summary || 'Page updated.',
-        timestamp: Date.now(),
-        followUps: data.followUpSuggestions ?? [],
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        fullText += decoder.decode(value, { stream: true })
+
+        // Stream the summary into the chat message in real time
+        const htmlIdx = fullText.indexOf('\nHTML:\n')
+        const preHtml = htmlIdx !== -1 ? fullText.slice(0, htmlIdx) : fullText
+        const streamingSummary = preHtml.match(/^SUMMARY:\s*(.+)/m)?.[1]?.trim() ?? ''
+        if (streamingSummary) {
+          setMessages((prev) => prev.map((m) => m.id === aiMsgId ? { ...m, content: streamingSummary } : m))
+        }
       }
-      setMessages((prev) => [...prev, aiMsg])
-      addAppChatMessage(aiMsg)
 
-      if (data.html) onPageUpdated(page.id, data.html)
+      // Parse complete response
+      const summary = fullText.match(/^SUMMARY:\s*(.+)/m)?.[1]?.trim() ?? 'Page updated.'
+      const suggestionsRaw = fullText.match(/^SUGGESTIONS:\s*(.+)/m)?.[1] ?? ''
+      const suggestions = suggestionsRaw.split('|').map((s) => s.trim()).filter(Boolean)
+      const htmlMatch = fullText.match(/\nHTML:\n([\s\S]+)$/)
+      const html = htmlMatch?.[1]?.trim() ?? ''
+
+      setMessages((prev) =>
+        prev.map((m) => m.id === aiMsgId ? { ...m, content: summary, followUps: suggestions } : m)
+      )
+      addAppChatMessage({ id: aiMsgId, role: 'ai', content: summary, timestamp: Date.now() })
+
+      if (html) onPageUpdated(page.id, html)
     } catch {
-      setMessages((prev) => [...prev, {
-        id: generateId(), role: 'ai', content: 'Something went wrong. Try again.', timestamp: Date.now(),
-      }])
+      setMessages((prev) =>
+        prev.map((m) => m.id === aiMsgId ? { ...m, content: 'Something went wrong. Try again.' } : m)
+      )
     } finally {
       setLoading(false)
+      onLoadingChange?.(false)
     }
   }
 
@@ -203,59 +234,62 @@ function PageChat({
           </div>
         )}
 
-        {messages.map((msg) => (
-          <div key={msg.id} className={cn('flex items-end gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
-            {msg.role === 'ai' && (
-              <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mb-0.5">
-                <Wand2 className="h-3 w-3 text-primary" />
-              </div>
-            )}
-            <div className="flex flex-col gap-1.5 max-w-[85%]">
-              <div className={cn(
-                'text-xs rounded-xl px-3 py-2',
-                msg.role === 'user'
-                  ? 'bg-primary text-primary-foreground rounded-br-sm'
-                  : 'bg-muted text-foreground rounded-bl-sm'
-              )}>
-                {msg.content}
-              </div>
+        {messages.map((msg, idx) => {
+          const isStreamingThis = loading && idx === messages.length - 1 && msg.role === 'ai'
+          const isFinished = msg.role === 'ai' && !isStreamingThis && msg.content !== ''
+          return (
+            <div key={msg.id} className={cn('flex items-end gap-2', msg.role === 'user' ? 'flex-row-reverse' : 'flex-row')}>
               {msg.role === 'ai' && (
-                <div className="flex items-center gap-1">
-                  <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
-                    <Check className="h-2.5 w-2.5 text-green-500" />
-                    <span className="text-[10px] font-medium text-green-600 dark:text-green-400">Page updated</span>
+                <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mb-0.5">
+                  <Wand2 className="h-3 w-3 text-primary" />
+                </div>
+              )}
+              <div className="flex flex-col gap-1.5 max-w-[85%]">
+                <div className={cn(
+                  'text-xs rounded-xl px-3 py-2',
+                  msg.role === 'user'
+                    ? 'bg-primary text-primary-foreground rounded-br-sm'
+                    : 'bg-muted text-foreground rounded-bl-sm'
+                )}>
+                  {/* Dots while waiting for first content; streaming text once it arrives */}
+                  {isStreamingThis && msg.content === '' ? (
+                    <span className="flex items-center gap-1 py-0.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
+                      <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
+                    </span>
+                  ) : (
+                    <span>
+                      {msg.content}
+                      {isStreamingThis && <span className="inline-block w-0.5 h-3 bg-foreground/60 ml-0.5 animate-pulse align-middle" />}
+                    </span>
+                  )}
+                </div>
+                {isFinished && (
+                  <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-green-500/10 border border-green-500/20">
+                      <Check className="h-2.5 w-2.5 text-green-500" />
+                      <span className="text-[10px] font-medium text-green-600 dark:text-green-400">Page updated</span>
+                    </div>
                   </div>
-                </div>
-              )}
-              {msg.role === 'ai' && msg.followUps && msg.followUps.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-0.5">
-                  {msg.followUps.map((f) => (
-                    <button
-                      key={f}
-                      onClick={() => handleSend(f)}
-                      className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors border border-border/50"
-                    >
-                      {f}
-                    </button>
-                  ))}
-                </div>
-              )}
+                )}
+                {isFinished && msg.followUps && msg.followUps.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-0.5">
+                    {msg.followUps.map((f) => (
+                      <button
+                        key={f}
+                        onClick={() => handleSend(f)}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 text-muted-foreground hover:bg-primary/10 hover:text-primary transition-colors border border-border/50"
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
-
-        {loading && (
-          <div className="flex items-end gap-2">
-            <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0 mb-0.5">
-              <Wand2 className="h-3 w-3 text-primary" />
-            </div>
-            <div className="bg-muted rounded-xl rounded-bl-sm px-3 py-2.5 flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:0ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:150ms]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-bounce [animation-delay:300ms]" />
-            </div>
-          </div>
-        )}
+          )
+        })}
       </div>
 
       {/* Input */}
@@ -289,6 +323,7 @@ export function DesignView() {
 
   const [phase, setPhase] = useState<DesignPhase>('idle')
   const [genError, setGenError] = useState<string | null>(null)
+  const [isPageUpdating, setIsPageUpdating] = useState(false)
   const [viewport, setViewport] = useState<ViewportSize>('desktop')
   const [designSystem, setDesignSystem] = useState<string | null>(null)
   const [selectedPageId, setSelectedPageId] = useState<string | null>(null)
@@ -448,7 +483,7 @@ export function DesignView() {
   const handleEditPageOnCanvas = useCallback(
     async (pageId: string, instruction: string) => {
       const page = pages.find((p) => p.id === pageId)
-      if (!page) return
+      if (!page || !currentProject) return
 
       const res = await authFetch('/api/ai/edit-page', {
         method: 'POST',
@@ -457,17 +492,32 @@ export function DesignView() {
           currentHtml: page.html,
           instruction,
           pageTitle: page.title,
+          pageRoute: page.route,
+          designSystem,
+          allPageTitles: pages.map((p) => p.title),
+          projectDescription: currentProject.description,
+          projectNodes: (currentProject.nodes || []).map((n) => ({
+            type: n.type, title: n.title, description: n.description,
+          })),
         }),
       })
 
-      if (!res.ok) throw new Error('Failed to edit page')
+      if (!res.ok || !res.body) throw new Error('Failed to edit page')
 
-      const data = await res.json()
-      if (data.html) {
-        updatePageHtml(pageId, data.html)
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let fullText = ''
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        fullText += decoder.decode(value, { stream: true })
       }
+
+      const htmlMatch = fullText.match(/\nHTML:\n([\s\S]+)$/)
+      const html = htmlMatch?.[1]?.trim() ?? ''
+      if (html) updatePageHtml(pageId, html)
     },
-    [pages, updatePageHtml]
+    [pages, currentProject, designSystem, updatePageHtml]
   )
 
   const handleDropAgent = useCallback(
@@ -898,7 +948,7 @@ export function DesignView() {
             <div className="flex-1 bg-muted/20 flex items-start justify-center p-4 overflow-auto">
               <div
                 className={cn(
-                  'bg-background border rounded-lg shadow-lg overflow-hidden transition-all duration-300',
+                  'relative bg-background border rounded-lg shadow-lg overflow-hidden transition-all duration-300',
                   viewport === 'desktop' && 'w-full h-full',
                   viewport !== 'desktop' && 'h-[90%]'
                 )}
@@ -914,6 +964,18 @@ export function DesignView() {
                   className="w-full h-full border-0"
                   sandbox="allow-scripts"
                 />
+                {isPageUpdating && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:0ms]" />
+                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:150ms]" />
+                        <span className="w-2 h-2 rounded-full bg-primary animate-bounce [animation-delay:300ms]" />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">Baguette is designing...</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </>
@@ -957,9 +1019,13 @@ export function DesignView() {
             page={selectedPage}
             onPageUpdated={handlePageUpdated}
             onClose={() => setChatOpen(false)}
+            onLoadingChange={setIsPageUpdating}
             designSystem={designSystem}
             allPageTitles={pages.map((p) => p.title)}
             projectDescription={currentProject?.description}
+            projectNodes={(currentProject?.nodes || []).map((n) => ({
+              type: n.type, title: n.title, description: n.description,
+            }))}
           />
         )}
       </div>
