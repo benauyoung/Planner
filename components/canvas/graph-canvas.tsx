@@ -90,7 +90,7 @@ export function GraphCanvas() {
       setFlowNodes(nodes)
       setFlowEdges(edges)
       prevNodeCountRef.current = flowNodes.length
-      setTimeout(() => fitView({ padding: 0.2, duration: 500 }), 50)
+      setTimeout(() => fitView({ padding: 0.2, duration: 500, maxZoom: 0.9 }), 50)
     }
   }, [flowNodes.length, flowEdges, getLayoutedElements, setFlowNodes, setFlowEdges, fitView, flowNodes])
 
@@ -100,7 +100,7 @@ export function GraphCanvas() {
     const ids = flowNodes.map((n) => n.id)
     const raf = requestAnimationFrame(() => updateNodeInternals(ids))
     return () => cancelAnimationFrame(raf)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lod])
 
   // Zoom to selected node and its direct connections
@@ -240,8 +240,8 @@ export function GraphCanvas() {
           style: { strokeDasharray: '6 4', strokeWidth: 1.5 },
         }}
         fitView
-        fitViewOptions={{ padding: 0.2 }}
-        minZoom={0.1}
+        fitViewOptions={{ padding: 0.2, maxZoom: 0.9 }}
+        minZoom={0.15}
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
