@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { ReactFlowProvider } from '@xyflow/react'
 import { ArrowRight, Save, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
+import { motion } from 'framer-motion'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
 import { useEffectiveUserId } from '@/contexts/auth-context'
@@ -27,6 +28,7 @@ function NewProjectContent() {
   const currentProject = useProjectStore((s) => s.currentProject)
   const flowNodes = useProjectStore((s) => s.flowNodes)
   const phase = useChatStore((s) => s.phase)
+  const isLoading = useChatStore((s) => s.isLoading)
   const setOnboardingAnswers = useChatStore((s) => s.setOnboardingAnswers)
   const setPhase = useChatStore((s) => s.setPhase)
   const userId = useEffectiveUserId()
@@ -145,12 +147,29 @@ function NewProjectContent() {
           <div className="flex-1 relative">
             {flowNodes.length === 0 ? (
               <div className="h-full flex items-center justify-center">
-                <div className="text-center text-muted-foreground">
-                  <p className="text-lg font-medium">Your plan will appear here</p>
-                  <p className="text-sm mt-1">
-                    Describe your project idea in the chat to get started
-                  </p>
-                </div>
+                {isLoading ? (
+                  <div className="text-center text-muted-foreground">
+                    <div className="flex items-center justify-center gap-1.5 mb-4">
+                      {[0, 1, 2].map((i) => (
+                        <motion.div
+                          key={i}
+                          className="w-2.5 h-2.5 rounded-full bg-primary/60"
+                          animate={{ y: [0, -10, 0], opacity: [0.4, 1, 0.4] }}
+                          transition={{ duration: 0.9, repeat: Infinity, delay: i * 0.18, ease: 'easeInOut' }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-base font-medium">Generating your plan…</p>
+                    <p className="text-sm mt-1 text-muted-foreground/70">This usually takes 10–20 seconds</p>
+                  </div>
+                ) : (
+                  <div className="text-center text-muted-foreground">
+                    <p className="text-lg font-medium">Your plan will appear here</p>
+                    <p className="text-sm mt-1">
+                      Describe your project idea in the chat to get started
+                    </p>
+                  </div>
+                )}
               </div>
             ) : (
               <GraphCanvas />

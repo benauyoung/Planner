@@ -7,6 +7,7 @@ import {
   Controls,
   MiniMap,
   useReactFlow,
+  useUpdateNodeInternals,
   type OnNodesChange,
   type OnEdgesChange,
   type OnConnect,
@@ -15,6 +16,7 @@ import {
   applyEdgeChanges,
   BackgroundVariant,
 } from '@xyflow/react'
+import { useZoomLevel } from '@/hooks/use-zoom-level'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
 import { useAutoLayout } from '@/hooks/use-auto-layout'
@@ -50,6 +52,8 @@ export function GraphCanvas() {
   const addDependencyEdge = useProjectStore((s) => s.addDependencyEdge)
   const currentProject = useProjectStore((s) => s.currentProject)
   const reactFlowInstance = useReactFlow()
+  const updateNodeInternals = useUpdateNodeInternals()
+  const lod = useZoomLevel()
   const blastRadiusMode = useUIStore((s) => s.blastRadiusMode)
   const pendingEdge = useUIStore((s) => s.pendingEdge)
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
@@ -89,6 +93,15 @@ export function GraphCanvas() {
       setTimeout(() => fitView({ padding: 0.2, duration: 500 }), 50)
     }
   }, [flowNodes.length, flowEdges, getLayoutedElements, setFlowNodes, setFlowEdges, fitView, flowNodes])
+
+  // When LOD tier changes, bulk-update all node internals so edges re-route to new handle positions
+  useEffect(() => {
+    if (flowNodes.length === 0) return
+    const ids = flowNodes.map((n) => n.id)
+    const raf = requestAnimationFrame(() => updateNodeInternals(ids))
+    return () => cancelAnimationFrame(raf)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lod])
 
   // Zoom to selected node and its direct connections
   useEffect(() => {

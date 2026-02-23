@@ -10,12 +10,13 @@ interface Vec2 {
   y: number
 }
 
-const REPULSION_STRENGTH = 8000
-const ATTRACTION_STRENGTH = 0.005
-const HIERARCHY_GRAVITY = 0.02
-const DAMPING = 0.85
+const REPULSION_STRENGTH = 20000
+const ATTRACTION_STRENGTH = 0.008
+const REST_LENGTH = 220        // spring only attracts when nodes are farther than this
+const HIERARCHY_GRAVITY = 0.025
+const DAMPING = 0.80
 const MIN_DISTANCE = 50
-const ITERATIONS = 80
+const ITERATIONS = 250
 
 function distance(a: Vec2, b: Vec2): number {
   const dx = a.x - b.x
@@ -35,7 +36,11 @@ export function springLayout(
 
   for (const node of nodes) {
     velocities.set(node.id, { x: 0, y: 0 })
-    positions.set(node.id, { ...node.position })
+    // Jitter initial positions slightly to avoid degenerate zero-direction repulsion
+    positions.set(node.id, {
+      x: node.position.x + (Math.random() - 0.5) * 20,
+      y: node.position.y + (Math.random() - 0.5) * 20,
+    })
   }
 
   // Build edge lookup
@@ -74,14 +79,17 @@ export function springLayout(
       }
     }
 
-    // Attraction along edges (spring/Hooke-like)
+    // Attraction along edges (spring with rest length — only attracts when dist > REST_LENGTH)
     for (const edge of edgeList) {
       const posA = positions.get(edge.source)
       const posB = positions.get(edge.target)
       if (!posA || !posB) continue
 
       const dist = distance(posA, posB)
-      const force = dist * ATTRACTION_STRENGTH
+      const stretch = dist - REST_LENGTH
+      if (stretch <= 0) continue   // within rest length, no spring force
+
+      const force = stretch * ATTRACTION_STRENGTH
 
       const dx = (posB.x - posA.x) / dist
       const dy = (posB.y - posA.y) / dist
