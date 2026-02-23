@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     siteName: 'TinyBaguette',
     images: [
       {
-        url: '/og-image.png',
+        url: '/api/og',
         width: 1200,
         height: 630,
         alt: 'TinyBaguette — Vibe Code Your Personal Website with AI',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
     description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
-    images: ['/og-image.png'],
+    images: ['/api/og'],
   },
 }
 
