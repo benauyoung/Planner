@@ -7,6 +7,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  addDoc,
   query,
   where,
   orderBy,
@@ -63,4 +64,18 @@ export async function deleteProject(id: string): Promise<void> {
   if (!db) return
   const docRef = doc(db, PROJECTS_COLLECTION, id)
   await deleteDoc(docRef)
+}
+
+const WAITLIST_COLLECTION = 'waitlist'
+
+export async function addEmailToWaitlist(
+  email: string,
+  source: 'landing' | 'login'
+): Promise<void> {
+  if (!db) return
+  await addDoc(collection(db, WAITLIST_COLLECTION), {
+    email,
+    source,
+    createdAt: Date.now(),
+  })
 }

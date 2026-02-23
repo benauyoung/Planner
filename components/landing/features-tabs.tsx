@@ -20,6 +20,7 @@ import {
   RefreshCw,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { WaitlistCapture } from '@/components/landing/waitlist-capture'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -1509,6 +1510,8 @@ export function FeaturesTabs() {
             Try It Free
             <ArrowRight className="h-4 w-4" />
           </a>
+
+          <WaitlistCapture source="landing" />
         </motion.div>
       </div>
     </section>

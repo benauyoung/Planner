@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Compass } from 'lucide-react'
 import { signInWithEmail, signUpWithEmail, signInWithGoogle, signInAsDemo } from '@/services/auth'
+import { WaitlistCapture } from '@/components/landing/waitlist-capture'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -93,6 +94,10 @@ export default function LoginPage() {
           </button>
 
         </form>
+
+        <div className="border-t pt-5">
+          <WaitlistCapture source="login" />
+        </div>
       </div>
     </div>
   )
