@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 
 interface Props {
   children: ReactNode
+  compact?: boolean
 }
 
 interface State {
@@ -28,6 +29,26 @@ export class ErrorBoundary extends Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      if (this.props.compact) {
+        return (
+          <div className="flex h-full items-center justify-center p-8">
+            <div className="text-center max-w-sm">
+              <p className="font-medium mb-1">Something went wrong</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                {this.state.error?.message || 'An unexpected error occurred.'}
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => this.setState({ hasError: false, error: null })}
+              >
+                Try again
+              </Button>
+            </div>
+          </div>
+        )
+      }
+
       return (
         <div className="h-full flex items-center justify-center">
           <div className="text-center space-y-4 max-w-md px-6">

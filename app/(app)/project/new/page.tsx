@@ -13,6 +13,7 @@ import { useProject } from '@/hooks/use-project'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { GraphCanvas } from '@/components/canvas/graph-canvas'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
+import { ErrorBoundary } from '@/components/error-boundary'
 import { ProjectOnboarding } from '@/components/onboarding/project-onboarding'
 import { NewProjectChooser } from '@/components/onboarding/new-project-chooser'
 import { TemplateGallery } from '@/components/onboarding/template-gallery'
@@ -172,7 +173,7 @@ function NewProjectContent() {
                 )}
               </div>
             ) : (
-              <GraphCanvas />
+              <ErrorBoundary compact><GraphCanvas /></ErrorBoundary>
             )}
           </div>
         </div>

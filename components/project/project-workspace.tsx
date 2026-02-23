@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useCallback, useRef, useState } from 'react'
+import dynamic from 'next/dynamic'
 import { ReactFlowProvider } from '@xyflow/react'
 import { motion, AnimatePresence } from 'framer-motion'
 // Icons moved to ProjectToolbar
@@ -8,7 +9,7 @@ import { useProject } from '@/hooks/use-project'
 import { useProjectStore } from '@/stores/project-store'
 import { useChatStore } from '@/stores/chat-store'
 import { useUIStore } from '@/stores/ui-store'
-import { GraphCanvas } from '@/components/canvas/graph-canvas'
+import { ErrorBoundary } from '@/components/error-boundary'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 import { PrdPipelinePanel } from '@/components/panels/prd-pipeline-panel'
 import { PlanningChat } from '@/components/chat/planning-chat'
@@ -19,19 +20,56 @@ import { ShortcutsHelp } from '@/components/ui/shortcuts-help'
 import { AISuggestionsPanel } from '@/components/ai/ai-suggestions-panel'
 import { useAIIterate, type AISuggestion } from '@/hooks/use-ai-iterate'
 import { TeamManager } from '@/components/project/team-manager'
-import { ListView } from '@/components/views/list-view'
-import { TableView } from '@/components/views/table-view'
-import { BoardView } from '@/components/views/board-view'
-import { TimelineView } from '@/components/views/timeline-view'
-import { SprintBoard } from '@/components/sprints/sprint-board'
-import { DesignView } from '@/components/views/design-view'
-import { BackendView } from '@/components/views/backend-view'
-import { AgentsView } from '@/components/views/agents-view'
 import { SmartSuggestionsPanel } from '@/components/ai/smart-suggestions-panel'
 import { VersionHistory } from '@/components/versions/version-history'
 import { IntegrationSettings } from '@/components/integrations/integration-settings'
 import { useAISuggestions } from '@/hooks/use-ai-suggestions'
 import type { IterationAction } from '@/prompts/iteration-system'
+
+function ViewSkeleton() {
+  return (
+    <div className="flex h-full items-center justify-center">
+      <div className="w-8 h-8 rounded-full border-2 border-primary/30 border-t-primary animate-spin" />
+    </div>
+  )
+}
+
+const GraphCanvas = dynamic(
+  () => import('@/components/canvas/graph-canvas').then(m => ({ default: m.GraphCanvas })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const DesignView = dynamic(
+  () => import('@/components/views/design-view').then(m => ({ default: m.DesignView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const AgentsView = dynamic(
+  () => import('@/components/views/agents-view').then(m => ({ default: m.AgentsView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const BackendView = dynamic(
+  () => import('@/components/views/backend-view').then(m => ({ default: m.BackendView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const ListView = dynamic(
+  () => import('@/components/views/list-view').then(m => ({ default: m.ListView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const TableView = dynamic(
+  () => import('@/components/views/table-view').then(m => ({ default: m.TableView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const BoardView = dynamic(
+  () => import('@/components/views/board-view').then(m => ({ default: m.BoardView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const TimelineView = dynamic(
+  () => import('@/components/views/timeline-view').then(m => ({ default: m.TimelineView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
+const SprintBoard = dynamic(
+  () => import('@/components/sprints/sprint-board').then(m => ({ default: m.SprintBoard })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
 
 interface ProjectWorkspaceProps {
   projectId: string
@@ -432,21 +470,21 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                     </div>
                   </div>
                 ) : (
-                  <GraphCanvas />
+                  <ErrorBoundary compact><GraphCanvas /></ErrorBoundary>
                 )
               )}
               {currentView === 'manage' && (
                 <>
-                  {manageSubView === 'list' && <ListView />}
-                  {manageSubView === 'table' && <TableView />}
-                  {manageSubView === 'board' && <BoardView />}
-                  {manageSubView === 'timeline' && <TimelineView />}
-                  {manageSubView === 'sprints' && <SprintBoard />}
-                  {manageSubView === 'backend' && <BackendView />}
+                  {manageSubView === 'list' && <ErrorBoundary compact><ListView /></ErrorBoundary>}
+                  {manageSubView === 'table' && <ErrorBoundary compact><TableView /></ErrorBoundary>}
+                  {manageSubView === 'board' && <ErrorBoundary compact><BoardView /></ErrorBoundary>}
+                  {manageSubView === 'timeline' && <ErrorBoundary compact><TimelineView /></ErrorBoundary>}
+                  {manageSubView === 'sprints' && <ErrorBoundary compact><SprintBoard /></ErrorBoundary>}
+                  {manageSubView === 'backend' && <ErrorBoundary compact><BackendView /></ErrorBoundary>}
                 </>
               )}
-              {currentView === 'design' && <DesignView />}
-              {currentView === 'agents' && <AgentsView />}
+              {currentView === 'design' && <ErrorBoundary compact><DesignView /></ErrorBoundary>}
+              {currentView === 'agents' && <ErrorBoundary compact><AgentsView /></ErrorBoundary>}
             </div>
           </div>
 
