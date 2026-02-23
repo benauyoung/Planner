@@ -11,14 +11,14 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
   description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
-  metadataBase: new URL('https://planner-ruby-seven.vercel.app'),
+  metadataBase: new URL('https://tinybaguette.com'),
   icons: {
     icon: '/Logo.png',
   },
   openGraph: {
     title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
     description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
-    url: 'https://planner-ruby-seven.vercel.app',
+    url: 'https://tinybaguette.com',
     siteName: 'TinyBaguette',
     images: [
       {
