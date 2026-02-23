@@ -126,3 +126,30 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.5);
 }
+
+/* ─── /lp dark features section ─────────────────────────── */
+/* Override CSS vars so FeaturesTabs renders dark when wrapped
+   in .features-dark-override, without changing the global theme */
+.features-dark-override {
+  --background: 222 47% 6%;
+  --foreground: 210 40% 98%;
+  --primary: 217 91% 60%;
+  --primary-foreground: 222 47% 6%;
+  --secondary: 217 33% 17%;
+  --secondary-foreground: 210 40% 98%;
+  --accent: 217 33% 17%;
+  --accent-foreground: 210 40% 98%;
+  --muted: 217 33% 17%;
+  --muted-foreground: 215 20% 65%;
+  --border: 217 33% 22%;
+  --canvas: 222 47% 8%;
+  background-color: #050812;
+  color: hsl(210 40% 98%);
+}
+
+/* Ensure the FeaturesTabs section background is transparent so 
+   the parent dark bg shows through */
+.features-dark-override section {
+  background: transparent !important;
+}
+
