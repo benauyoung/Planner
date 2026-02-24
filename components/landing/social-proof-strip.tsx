@@ -11,7 +11,7 @@ const SIGNALS = [
 
 export function SocialProofStrip() {
     return (
-        <div className="relative border-y border-white/6 bg-white/[0.02]">
+        <div style={{ borderTop: '1px solid rgba(139,175,138,0.20)', borderBottom: '1px solid rgba(139,175,138,0.20)', background: 'rgba(184,212,192,0.12)' }}>
             <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-center gap-6 sm:gap-10 flex-wrap">
                 {SIGNALS.map((s, i) => (
                     <motion.div
@@ -20,12 +20,13 @@ export function SocialProofStrip() {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: i * 0.08 }}
-                        className="flex items-center gap-2 text-white/40"
+                        className="flex items-center gap-2"
+                        style={{ color: '#5C6B57' }}
                     >
-                        <s.icon className="h-3.5 w-3.5" />
+                        <s.icon className="h-3.5 w-3.5" style={{ color: '#8BAF8A' }} />
                         <span className="text-xs tracking-widest uppercase font-medium">{s.text}</span>
                         {i < SIGNALS.length - 1 && (
-                            <span className="hidden sm:block ml-4 sm:ml-6 h-3 w-px bg-white/15" />
+                            <span className="hidden sm:block ml-4 sm:ml-6 h-3 w-px" style={{ background: 'rgba(139,175,138,0.35)' }} />
                         )}
                     </motion.div>
                 ))}
