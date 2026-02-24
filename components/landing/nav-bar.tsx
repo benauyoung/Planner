@@ -19,8 +19,8 @@ export function LandingNavBar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-          ? 'bg-background/80 backdrop-blur-md border-b shadow-sm'
-          : 'bg-transparent'
+        ? 'bg-background/80 backdrop-blur-md border-b shadow-sm'
+        : 'bg-transparent'
         }`}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,12 +33,12 @@ export function LandingNavBar() {
 
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm text-white/60 hover:text-white transition-colors">
+            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
               Features
             </a>
             <Link
               href="/login"
-              className="text-sm text-white/60 hover:text-white transition-colors"
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               Login
             </Link>
