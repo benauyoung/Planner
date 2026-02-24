@@ -154,13 +154,20 @@
 }
 
 /* ─── French editorial parchment theme ───────────────────────────── */
-/* Only overrides what's needed: background + --primary (sage green).   */
-/* Keeps muted/card/border at defaults so FeaturesTabs content renders. */
 .french-editorial {
+  --background: 42 28% 91%;
+  --foreground: 103 18% 12%;
   --primary: 149 23% 37%;
-  /* #4A7459 deep sage — buttons, active tabs */
   --primary-foreground: 42 30% 97%;
-  /* near-white text on primary */
-  background-color: #F4F0E6;
+  --card: 42 35% 97%;
+  --card-foreground: 103 18% 12%;
+  --muted: 40 18% 85%;
+  --muted-foreground: 100 10% 38%;
+  --border: 40 20% 80%;
+  --accent: 120 15% 88%;
+  --accent-foreground: 103 18% 18%;
+  --secondary: 40 18% 88%;
+  --secondary-foreground: 103 18% 18%;
+  background-color: #EBE7DC;
   color: #1C2418;
 }
