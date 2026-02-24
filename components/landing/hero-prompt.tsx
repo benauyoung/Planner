@@ -31,19 +31,19 @@ import type { AIPlanNode } from '@/types/chat'
 import { track } from '@vercel/analytics'
 
 const PLACEHOLDER_IDEAS = [
-  'A music festival app with live lineups and friend meetups...',
-  'A fitness challenge app where friends compete on goals...',
-  'A recipe app that generates meal plans from your fridge...',
-  'A travel planner that builds custom itineraries with AI...',
-  'A pet adoption platform with local shelter matching...',
+  'An online boutique for handmade jewelry and artisan accessories...',
+  'A wellness app to track self-care routines and daily rituals...',
+  'A portfolio site for a freelance illustrator or designer...',
+  'A beauty brand landing page with skincare tips and a shop...',
+  'A community platform for female entrepreneurs to connect...',
 ]
 
 const EXAMPLE_CHIPS = [
-  'Festival App',
-  'Fitness Tracker',
-  'Travel Planner',
-  'Recipe App',
-  'Social Platform',
+  'Boutique en ligne',
+  'App bien-être',
+  'Portfolio créatif',
+  'Beauty Brand',
+  'Lifestyle Blog',
 ]
 
 type Phase = 'input' | 'loading' | 'preview' | 'email'
@@ -69,10 +69,10 @@ const PAGE_CONFIGS: {
   gradient: string
   layout: 'hero' | 'dashboard' | 'feed'
 }[] = [
-  { icon: Globe, accent: '#f97316', accentRgb: '249,115,22', gradient: 'from-orange-500/20 via-amber-500/10 to-transparent', layout: 'hero' },
-  { icon: Layout, accent: '#3b82f6', accentRgb: '59,130,246', gradient: 'from-blue-500/20 via-indigo-500/10 to-transparent', layout: 'dashboard' },
-  { icon: Layers, accent: '#8b5cf6', accentRgb: '139,92,246', gradient: 'from-violet-500/20 via-purple-500/10 to-transparent', layout: 'feed' },
-]
+    { icon: Globe, accent: '#f97316', accentRgb: '249,115,22', gradient: 'from-orange-500/20 via-amber-500/10 to-transparent', layout: 'hero' },
+    { icon: Layout, accent: '#3b82f6', accentRgb: '59,130,246', gradient: 'from-blue-500/20 via-indigo-500/10 to-transparent', layout: 'dashboard' },
+    { icon: Layers, accent: '#8b5cf6', accentRgb: '139,92,246', gradient: 'from-violet-500/20 via-purple-500/10 to-transparent', layout: 'feed' },
+  ]
 
 function derivePages(nodes: AIPlanNode[], title: string): GeneratedPage[] {
   const subgoals = nodes.filter((n) => n.type === 'subgoal')

@@ -90,7 +90,7 @@ function HeroEmailCapture() {
                 <p className="text-xs mt-2 text-center" style={{ color: 'rgb(180,60,60)' }}>Email invalide — réessayez.</p>
             )}
             <p className="text-[11px] mt-2.5 text-center tracking-wide" style={{ color: C.muted }}>
-                Gratuit · Aucune carte requise · Rejoignez 500+ créateurs
+                Gratuit · Sans carte · Rejoignez 500+ créatrices
             </p>
         </form>
     )
@@ -108,11 +108,23 @@ function LightBg() {
                 className="absolute rounded-full"
                 style={{
                     top: -120, left: -120, width: 600, height: 600,
-                    background: `radial-gradient(circle, rgba(184,212,192,0.45) 0%, transparent 70%)`,
+                    background: `radial-gradient(circle, rgba(184,212,192,0.40) 0%, transparent 70%)`,
                     filter: 'blur(80px)',
                 }}
                 animate={{ x: [0, 40, 0], y: [0, 30, 0] }}
                 transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
+            />
+
+            {/* Blush/rose blob — top right (feminine warmth) */}
+            <motion.div
+                className="absolute rounded-full"
+                style={{
+                    top: -60, right: -60, width: 480, height: 480,
+                    background: `radial-gradient(circle, rgba(226,168,162,0.28) 0%, transparent 70%)`,
+                    filter: 'blur(90px)',
+                }}
+                animate={{ x: [0, -25, 0], y: [0, 35, 0] }}
+                transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
             />
 
             {/* Sage blob — bottom right */}
@@ -120,23 +132,23 @@ function LightBg() {
                 className="absolute rounded-full"
                 style={{
                     bottom: -80, right: -80, width: 500, height: 500,
-                    background: `radial-gradient(circle, rgba(139,175,138,0.30) 0%, transparent 70%)`,
+                    background: `radial-gradient(circle, rgba(139,175,138,0.25) 0%, transparent 70%)`,
                     filter: 'blur(100px)',
                 }}
                 animate={{ x: [0, -30, 0], y: [0, -25, 0] }}
                 transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut', delay: 5 }}
             />
 
-            {/* Warm cream blob — center */}
+            {/* Blush blob — bottom left */}
             <motion.div
                 className="absolute rounded-full"
                 style={{
-                    top: '30%', left: '40%', width: 400, height: 300,
-                    background: `radial-gradient(circle, rgba(237,233,222,0.8) 0%, transparent 70%)`,
-                    filter: 'blur(60px)',
+                    bottom: -20, left: '10%', width: 350, height: 350,
+                    background: `radial-gradient(circle, rgba(220,165,158,0.18) 0%, transparent 70%)`,
+                    filter: 'blur(70px)',
                 }}
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut', delay: 7 }}
             />
 
             {/* Fine linen-texture dots */}
@@ -183,7 +195,7 @@ export function HeroConversion() {
                         className="font-light uppercase"
                         style={{ fontSize: 10, color: C.sage, letterSpacing: '0.3em' }}
                     >
-                        Paris · IA · 2026
+                        Paris · Fait pour vous · 2026
                     </span>
                     <div className="h-px w-8" style={{ background: C.sage + '60' }} />
                 </div>
@@ -212,8 +224,8 @@ export function HeroConversion() {
                     className="text-lg sm:text-xl max-w-xl leading-relaxed mb-8 font-light"
                     style={{ color: C.subtext }}
                 >
-                    Créez votre site ou app mobile en quelques minutes,
-                    puis ajoutez votre propre agent IA.
+                    Votre idée mérite d’exister. Créez votre boutique,
+                    portfolio ou app en quelques minutes — sans coder.
                 </p>
 
                 {/* Email capture */}

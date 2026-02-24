@@ -1,17 +1,17 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { Sparkles, Clock, Lock } from 'lucide-react'
+import { Sparkles, Clock, Heart } from 'lucide-react'
 
 const SIGNALS = [
     { icon: Sparkles, text: 'IA native' },
+    { icon: Heart, text: 'Pensé pour vous' },
     { icon: Clock, text: 'En quelques minutes' },
-    { icon: Lock, text: 'Toujours gratuit' },
 ]
 
 export function SocialProofStrip() {
     return (
-        <div style={{ borderTop: '1px solid rgba(139,175,138,0.20)', borderBottom: '1px solid rgba(139,175,138,0.20)', background: 'rgba(184,212,192,0.12)' }}>
+        <div style={{ borderTop: '1px solid rgba(139,175,138,0.20)', borderBottom: '1px solid rgba(139,175,138,0.20)', background: 'rgba(230,180,175,0.08)' }}>
             <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-center gap-6 sm:gap-10 flex-wrap">
                 {SIGNALS.map((s, i) => (
                     <motion.div
