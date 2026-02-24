@@ -1,15 +1,13 @@
-import { HeroPrompt } from '@/components/landing/hero-prompt'
+import { HeroConversion } from '@/components/landing/hero-conversion'
+import { SocialProofStrip } from '@/components/landing/social-proof-strip'
 import { FeaturesTabs } from '@/components/landing/features-tabs'
-import { TrustBar } from '@/components/landing/trust-bar'
-import { FaqAccordion } from '@/components/landing/faq-accordion'
 
 export default function LandingPage() {
   return (
-    <>
+    <div className="features-dark-override" style={{ background: '#050812' }}>
+      <HeroConversion />
+      <SocialProofStrip />
       <FeaturesTabs />
-      <HeroPrompt />
-      <FaqAccordion />
-      <TrustBar />
-    </>
+    </div>
   )
 }

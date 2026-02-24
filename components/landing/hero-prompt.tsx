@@ -21,7 +21,6 @@ import {
   Settings,
   ChevronRight,
   Play,
-  Image as ImageIcon,
   Zap,
   TrendingUp,
   Users,
@@ -81,7 +80,6 @@ function derivePages(nodes: AIPlanNode[], title: string): GeneratedPage[] {
   const sources = subgoals.length >= 2 ? subgoals : features
   const pages: GeneratedPage[] = []
 
-  const goalNode = nodes.find((n) => n.type === 'goal')
   const homeFeatures = features.slice(0, 3).map((f) => f.title)
   if (homeFeatures.length < 3) homeFeatures.push('Smart notifications', 'Quick actions')
 
@@ -91,7 +89,7 @@ function derivePages(nodes: AIPlanNode[], title: string): GeneratedPage[] {
     ...PAGE_CONFIGS[0],
     features: homeFeatures.slice(0, 3),
     stats: [
-      { label: 'Active', value: '2.4k' },
+      { label: 'Active Users', value: '2.4k' },
       { label: 'Today', value: '128' },
       { label: 'Growth', value: '+24%' },
     ],
@@ -103,15 +101,16 @@ function derivePages(nodes: AIPlanNode[], title: string): GeneratedPage[] {
     const featureNames = children.slice(0, 3).map((c) => c.title)
     if (featureNames.length < 2) featureNames.push('Real-time sync', 'Smart filters')
 
+    const pageStats = i === 0
+      ? [{ label: 'Users', value: '1.2k' }, { label: 'Uptime', value: '99.9%' }, { label: 'Revenue', value: '$8.4k' }]
+      : [{ label: 'Posts', value: '284' }, { label: 'Members', value: '1.8k' }, { label: 'Today', value: '+42' }]
+
     pages.push({
       name: source.title.length > 18 ? source.title.slice(0, 16) + '...' : source.title,
       route: `/${source.title.toLowerCase().replace(/\s+/g, '-').slice(0, 12)}`,
       ...PAGE_CONFIGS[(i + 1) % PAGE_CONFIGS.length],
       features: featureNames.slice(0, 3),
-      stats: [
-        { label: 'Items', value: `${Math.floor(Math.random() * 50) + 12}` },
-        { label: 'Updated', value: 'Now' },
-      ],
+      stats: pageStats,
     })
   })
 
@@ -178,283 +177,390 @@ function LoadingState() {
   )
 }
 
-// ─── Premium Page Preview Card ───────────────────────────────
+// ─── Page Preview Cards ───────────────────────────────────────
 
 const MOCK_ICONS_ROW_1 = [Heart, Star, BarChart3, Settings]
 const MOCK_ICONS_ROW_2 = [Zap, TrendingUp, Users, Calendar]
 
-function PagePreviewCard({ page, delay, appTitle }: { page: GeneratedPage; delay: number; appTitle: string }) {
+// Hero layout — landing page style
+function HeroContent({ page, appTitle, delay }: { page: GeneratedPage; appTitle: string; delay: number }) {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.92, rotateX: 8 }}
-      animate={{ opacity: 1, y: 0, scale: 1, rotateX: 0 }}
-      transition={{ duration: 0.6, delay, type: 'spring', damping: 20 }}
-      className="group relative rounded-2xl overflow-hidden"
-      style={{ perspective: '1000px' }}
-    >
-      {/* Outer glow */}
+    <div className="relative flex flex-col" style={{ minHeight: 290 }}>
+      {/* Background radial glow */}
       <div
-        className="absolute -inset-[1px] rounded-2xl opacity-60 group-hover:opacity-100 transition-opacity duration-500"
-        style={{ background: `linear-gradient(135deg, ${page.accent}40, transparent 50%, ${page.accent}20)` }}
+        className="absolute top-0 inset-x-0 h-44 pointer-events-none"
+        style={{ background: `radial-gradient(ellipse 110% 80% at 50% -5%, ${page.accent}35, transparent 72%)`, opacity: 0.8 }}
       />
 
-      {/* Card body */}
-      <div className="relative rounded-2xl border border-white/[0.08] bg-[#0c0c0f] overflow-hidden">
-        {/* Browser chrome — ultra minimal */}
-        <div className="flex items-center gap-2 px-4 py-2.5 border-b border-white/[0.06] bg-white/[0.02]">
-          <div className="flex gap-1.5">
-            <div className="w-[7px] h-[7px] rounded-full bg-[#ff5f57]" />
-            <div className="w-[7px] h-[7px] rounded-full bg-[#febc2e]" />
-            <div className="w-[7px] h-[7px] rounded-full bg-[#28c840]" />
+      {/* Nav bar */}
+      <div className="relative flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center gap-1.5">
+          <div className="w-5 h-5 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${page.accent}25` }}>
+            <page.icon className="h-3 w-3" style={{ color: page.accent }} />
           </div>
-          <div className="flex-1 flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] ml-2">
-            <Globe className="h-2.5 w-2.5 shrink-0 text-white/30" />
-            <span className="text-[10px] font-mono text-white/40 tracking-wide">{appTitle.toLowerCase().replace(/\s+/g, '')}.app{page.route}</span>
+          <span className="text-[11px] font-bold tracking-tight" style={{ color: 'rgba(255,255,255,0.92)' }}>{appTitle}</span>
+        </div>
+        <div className="flex items-center gap-3">
+          {['Features', 'Pricing', 'Docs'].map((l) => (
+            <span key={l} className="text-[9px]" style={{ color: 'rgba(255,255,255,0.32)' }}>{l}</span>
+          ))}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: delay + 0.45 }}
+            className="px-2.5 py-1 rounded-lg text-[9px] font-semibold text-white"
+            style={{ backgroundColor: page.accent, boxShadow: `0 2px 10px ${page.accent}50` }}
+          >
+            Sign up free
+          </motion.div>
+        </div>
+      </div>
+
+      {/* Hero */}
+      <div className="relative flex-1 flex flex-col items-center justify-center px-5 pt-5 pb-4 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: delay + 0.2 }}
+          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-semibold mb-3"
+          style={{ backgroundColor: `${page.accent}18`, color: page.accent, border: `1px solid ${page.accent}30` }}
+        >
+          <Sparkles className="h-2.5 w-2.5" />
+          Now in beta
+        </motion.div>
+
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: delay + 0.28 }}
+          className="text-[22px] font-extrabold leading-[1.1] mb-2 tracking-tight"
+          style={{ color: 'rgba(255,255,255,0.95)', textShadow: `0 0 50px ${page.accent}60` }}
+        >
+          {appTitle}
+        </motion.h1>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: delay + 0.38 }}
+          className="text-[10px] leading-relaxed mb-4 max-w-[190px]"
+          style={{ color: 'rgba(255,255,255,0.42)' }}
+        >
+          {page.features[0] || 'The smartest way to bring your idea to life'}
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: delay + 0.47 }}
+          className="flex items-center gap-2"
+        >
+          <div
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[10px] font-semibold text-white"
+            style={{ backgroundColor: page.accent, boxShadow: `0 4px 14px ${page.accent}45` }}
+          >
+            Get started <ArrowRight className="h-2.5 w-2.5" />
+          </div>
+          <div
+            className="px-3.5 py-1.5 rounded-xl text-[10px]"
+            style={{ color: 'rgba(255,255,255,0.45)', border: '1px solid rgba(255,255,255,0.09)' }}
+          >
+            Learn more
+          </div>
+        </motion.div>
+      </div>
+
+      {/* Feature cards */}
+      <div className="relative px-4 pb-4 grid grid-cols-3 gap-2">
+        {page.features.slice(0, 3).map((feature, i) => {
+          const Icon = MOCK_ICONS_ROW_1[i % MOCK_ICONS_ROW_1.length]
+          return (
+            <motion.div
+              key={feature}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: delay + 0.55 + i * 0.08, type: 'spring', damping: 22 }}
+              className="rounded-xl p-2.5"
+              style={{ backgroundColor: `${page.accent}09`, border: `1px solid ${page.accent}20` }}
+            >
+              <Icon className="h-3 w-3 mb-1.5" style={{ color: page.accent }} />
+              <div className="text-[9px] font-semibold leading-snug" style={{ color: 'rgba(255,255,255,0.75)' }}>
+                {feature}
+              </div>
+            </motion.div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Dashboard layout — SaaS app style
+function DashboardContent({ page, appTitle, delay }: { page: GeneratedPage; appTitle: string; delay: number }) {
+  const stats = page.stats?.length
+    ? page.stats
+    : [{ label: 'Active', value: '2.4k' }, { label: 'Growth', value: '+24%' }, { label: 'Score', value: '98' }]
+  const chartHeights = [38, 60, 42, 78, 52, 88, 68, 82, 56, 92, 72, 48]
+  const shortPageName = page.name.length > 11 ? page.name.slice(0, 9) + '…' : page.name
+
+  return (
+    <div className="flex" style={{ minHeight: 290 }}>
+      {/* Sidebar */}
+      <div className="w-[86px] flex flex-col shrink-0 pt-3" style={{ borderRight: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="px-3 mb-4 flex items-center gap-1.5">
+          <div className="w-4 h-4 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${page.accent}22` }}>
+            <page.icon className="h-2.5 w-2.5" style={{ color: page.accent }} />
+          </div>
+          <span className="text-[9px] font-bold truncate" style={{ color: 'rgba(255,255,255,0.82)' }}>{appTitle}</span>
+        </div>
+        <div className="px-2 space-y-0.5 flex-1">
+          {['Overview', 'Analytics', shortPageName, 'Settings'].map((item, i) => (
+            <motion.div
+              key={item}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: delay + 0.2 + i * 0.06 }}
+              className="px-2 py-1.5 rounded-lg text-[8px] truncate"
+              style={i === 2
+                ? { backgroundColor: `${page.accent}20`, color: page.accent, fontWeight: 600 }
+                : { color: 'rgba(255,255,255,0.28)' }
+              }
+            >
+              {item}
+            </motion.div>
+          ))}
+        </div>
+        {/* User avatar at bottom */}
+        <div className="px-3 pb-3 mt-auto">
+          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[7px] font-bold text-white" style={{ backgroundColor: `${page.accent}60` }}>
+            AR
+          </div>
+        </div>
+      </div>
+
+      {/* Main content */}
+      <div className="flex-1 p-3 flex flex-col gap-2 overflow-hidden">
+        {/* Header row */}
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-[10px] font-bold" style={{ color: 'rgba(255,255,255,0.85)' }}>{shortPageName}</span>
+          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[8px]" style={{ backgroundColor: `${page.accent}15`, color: page.accent }}>
+            <span className="w-1 h-1 rounded-full animate-pulse" style={{ backgroundColor: page.accent }} />
+            Live
           </div>
         </div>
 
-        {/* Page content — dark premium UI */}
-        <div className="relative min-h-[260px]">
-          {/* Background gradient glow */}
-          <div
-            className="absolute top-0 left-1/2 -translate-x-1/2 w-[200%] h-32 opacity-30 blur-3xl pointer-events-none"
-            style={{ background: `radial-gradient(ellipse, ${page.accent}, transparent 70%)` }}
-          />
+        {/* Stat cards */}
+        <div className="grid grid-cols-3 gap-1.5">
+          {stats.slice(0, 3).map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: delay + 0.28 + i * 0.07 }}
+              className="rounded-xl p-2"
+              style={{ backgroundColor: `${page.accent}09`, border: `1px solid ${page.accent}18` }}
+            >
+              <div className="text-[14px] font-extrabold leading-tight" style={{ color: page.accent }}>{stat.value}</div>
+              <div className="text-[7px] uppercase tracking-wider mt-0.5" style={{ color: 'rgba(255,255,255,0.35)' }}>{stat.label}</div>
+            </motion.div>
+          ))}
+        </div>
 
-          {/* Top nav */}
-          <div className="relative flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ backgroundColor: `${page.accent}25` }}>
-                <page.icon className="h-3 w-3" style={{ color: page.accent }} />
-              </div>
-              <span className="text-[11px] font-bold text-white/90 tracking-tight">{page.name}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Search className="h-3 w-3 text-white/25" />
-              <Bell className="h-3 w-3 text-white/25" />
-              <div className="w-4 h-4 rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/10" />
-            </div>
-          </div>
-
-          {page.layout === 'hero' && (
-            <div className="px-4 pb-4">
-              {/* Hero section */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: delay + 0.3 }}
-                className="rounded-xl p-4 mb-3 relative overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${page.accent}18, ${page.accent}08)`, border: `1px solid ${page.accent}15` }}
-              >
-                <div className="flex items-center gap-1 mb-2">
-                  <Sparkles className="h-3 w-3" style={{ color: page.accent }} />
-                  <span className="text-[9px] font-semibold uppercase tracking-widest" style={{ color: page.accent }}>Welcome</span>
-                </div>
-                <div className="h-2 w-3/4 rounded-full bg-white/15 mb-1.5" />
-                <div className="h-2 w-1/2 rounded-full bg-white/8" />
-                <motion.div
-                  className="mt-3 inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-semibold text-white"
-                  style={{ backgroundColor: page.accent }}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: delay + 0.5 }}
+        {/* Chart */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: delay + 0.4 }}
+          className="rounded-xl p-2.5"
+          style={{ backgroundColor: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}
+        >
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[9px] font-medium" style={{ color: 'rgba(255,255,255,0.45)' }}>Activity</span>
+            <div className="flex gap-0.5">
+              {['1W', '1M', '3M'].map((t, i) => (
+                <span
+                  key={t}
+                  className="text-[7px] px-1.5 py-0.5 rounded"
+                  style={i === 0
+                    ? { backgroundColor: `${page.accent}22`, color: page.accent }
+                    : { color: 'rgba(255,255,255,0.18)' }
+                  }
                 >
-                  Get Started <ChevronRight className="h-2.5 w-2.5" />
-                </motion.div>
-              </motion.div>
-
-              {/* Stats row */}
-              {page.stats && (
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {page.stats.map((stat, i) => (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, y: 6 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: delay + 0.4 + i * 0.08 }}
-                      className="rounded-lg bg-white/[0.04] border border-white/[0.06] p-2 text-center"
-                    >
-                      <div className="text-[11px] font-bold text-white/90">{stat.value}</div>
-                      <div className="text-[8px] text-white/35 uppercase tracking-wider">{stat.label}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-
-              {/* Feature cards */}
-              <div className="space-y-1.5">
-                {page.features.map((feature, i) => {
-                  const Icon = MOCK_ICONS_ROW_1[i % MOCK_ICONS_ROW_1.length]
-                  return (
-                    <motion.div
-                      key={feature}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: delay + 0.5 + i * 0.1, type: 'spring', damping: 20 }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.05] group/item hover:bg-white/[0.06] transition-colors"
-                    >
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${page.accent}15` }}>
-                        <Icon className="h-3 w-3" style={{ color: page.accent }} />
-                      </div>
-                      <span className="text-[10px] text-white/70 font-medium flex-1 truncate">{feature}</span>
-                      <ChevronRight className="h-2.5 w-2.5 text-white/15" />
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {page.layout === 'dashboard' && (
-            <div className="px-4 pb-4">
-              {/* Mini chart area */}
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: delay + 0.3 }}
-                className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 mb-3"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-1.5">
-                    <BarChart3 className="h-3 w-3" style={{ color: page.accent }} />
-                    <span className="text-[9px] font-semibold text-white/60 uppercase tracking-wider">Overview</span>
-                  </div>
-                  <div className="flex gap-1">
-                    {['1D', '1W', '1M'].map((t) => (
-                      <span key={t} className="text-[8px] px-1.5 py-0.5 rounded text-white/30 bg-white/[0.04]">{t}</span>
-                    ))}
-                  </div>
-                </div>
-                {/* Fake chart bars */}
-                <div className="flex items-end gap-1 h-12">
-                  {[40, 65, 45, 80, 55, 90, 70, 85, 60, 95, 75, 50].map((h, i) => (
-                    <motion.div
-                      key={i}
-                      className="flex-1 rounded-sm"
-                      style={{ backgroundColor: i === 9 ? page.accent : `${page.accent}30` }}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{ delay: delay + 0.4 + i * 0.03, duration: 0.4, type: 'spring' }}
-                    />
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Stats + features */}
-              {page.stats && (
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {page.stats.map((stat, i) => (
-                    <motion.div
-                      key={stat.label}
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ delay: delay + 0.5 + i * 0.08 }}
-                      className="rounded-lg bg-white/[0.04] border border-white/[0.06] p-2.5"
-                    >
-                      <div className="text-[12px] font-bold text-white/90">{stat.value}</div>
-                      <div className="text-[8px] text-white/35 uppercase tracking-wider">{stat.label}</div>
-                    </motion.div>
-                  ))}
-                </div>
-              )}
-
-              <div className="space-y-1.5">
-                {page.features.map((feature, i) => {
-                  const Icon = MOCK_ICONS_ROW_2[i % MOCK_ICONS_ROW_2.length]
-                  return (
-                    <motion.div
-                      key={feature}
-                      initial={{ opacity: 0, x: -12 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: delay + 0.6 + i * 0.1, type: 'spring', damping: 20 }}
-                      className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.05]"
-                    >
-                      <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0" style={{ backgroundColor: `${page.accent}15` }}>
-                        <Icon className="h-3 w-3" style={{ color: page.accent }} />
-                      </div>
-                      <span className="text-[10px] text-white/70 font-medium flex-1 truncate">{feature}</span>
-                      <div className="w-8 h-1 rounded-full" style={{ backgroundColor: `${page.accent}30` }} />
-                    </motion.div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {page.layout === 'feed' && (
-            <div className="px-4 pb-4">
-              {/* Tab bar */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: delay + 0.25 }}
-                className="flex gap-1 mb-3"
-              >
-                {['All', 'Popular', 'New'].map((tab, i) => (
-                  <span
-                    key={tab}
-                    className="text-[9px] px-2.5 py-1 rounded-full font-medium"
-                    style={i === 0 ? { backgroundColor: `${page.accent}20`, color: page.accent } : { color: 'rgba(255,255,255,0.3)' }}
-                  >
-                    {tab}
-                  </span>
-                ))}
-              </motion.div>
-
-              {/* Feed cards */}
-              {page.features.map((feature, i) => {
-                const Icon = MOCK_ICONS_ROW_1[i % MOCK_ICONS_ROW_1.length]
-                return (
-                  <motion.div
-                    key={feature}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: delay + 0.35 + i * 0.12, type: 'spring', damping: 20 }}
-                    className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-3 mb-2"
-                  >
-                    <div className="flex items-start gap-2.5">
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `linear-gradient(135deg, ${page.accent}25, ${page.accent}10)` }}>
-                        <Icon className="h-3.5 w-3.5" style={{ color: page.accent }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[10px] font-semibold text-white/80 mb-1 truncate">{feature}</div>
-                        <div className="flex gap-3">
-                          <div className="h-1.5 w-full rounded-full bg-white/[0.06]" />
-                        </div>
-                        <div className="flex items-center gap-3 mt-2">
-                          <div className="flex items-center gap-1">
-                            <Heart className="h-2.5 w-2.5 text-white/20" />
-                            <span className="text-[8px] text-white/25">{Math.floor(Math.random() * 40) + 5}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <MessageCircle className="h-2.5 w-2.5 text-white/20" />
-                            <span className="text-[8px] text-white/25">{Math.floor(Math.random() * 15) + 2}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          )}
-
-          {/* Bottom nav bar */}
-          <div className="px-4 pb-3">
-            <div className="flex items-center justify-around py-2 rounded-xl bg-white/[0.03] border border-white/[0.06]">
-              {[Globe, Layout, Zap, User].map((Icon, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: delay + 0.7 + i * 0.05 }}
-                >
-                  <Icon className="h-3.5 w-3.5" style={{ color: i === 0 ? page.accent : 'rgba(255,255,255,0.2)' }} />
-                </motion.div>
+                  {t}
+                </span>
               ))}
             </div>
           </div>
+          <div className="flex items-end gap-[2px] h-10">
+            {chartHeights.map((h, i) => (
+              <motion.div
+                key={i}
+                className="flex-1 rounded-sm"
+                style={{ backgroundColor: i >= 10 ? page.accent : `${page.accent}32` }}
+                initial={{ height: 0 }}
+                animate={{ height: `${h}%` }}
+                transition={{ delay: delay + 0.44 + i * 0.025, duration: 0.35, type: 'spring' }}
+              />
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Item rows */}
+        <div className="space-y-1.5">
+          {page.features.slice(0, 3).map((feature, i) => {
+            const Icon = MOCK_ICONS_ROW_2[i % MOCK_ICONS_ROW_2.length]
+            return (
+              <motion.div
+                key={feature}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: delay + 0.54 + i * 0.07 }}
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg"
+                style={{ backgroundColor: 'rgba(255,255,255,0.025)' }}
+              >
+                <Icon className="h-2.5 w-2.5 shrink-0" style={{ color: page.accent }} />
+                <span className="text-[9px] flex-1 truncate" style={{ color: 'rgba(255,255,255,0.6)' }}>{feature}</span>
+                <span
+                  className="text-[7px] font-semibold px-1.5 py-0.5 rounded-full"
+                  style={{ backgroundColor: `${page.accent}18`, color: page.accent }}
+                >
+                  Active
+                </span>
+              </motion.div>
+            )
+          })}
         </div>
+      </div>
+    </div>
+  )
+}
+
+// Feed layout — social/content app style
+function FeedContent({ page, appTitle, delay }: { page: GeneratedPage; appTitle: string; delay: number }) {
+  const posts = [
+    { initials: 'AR', name: 'Alex R.', time: '2m', content: page.features[0] || 'Just shipped something exciting', likes: 24, replies: 8 },
+    { initials: 'MK', name: 'Maya K.', time: '14m', content: page.features[1] || 'Working on a new feature', likes: 17, replies: 4 },
+    { initials: 'JL', name: 'Jake L.', time: '1h', content: page.features[2] || 'The results are incredible', likes: 41, replies: 11 },
+  ]
+
+  return (
+    <div className="flex flex-col" style={{ minHeight: 290 }}>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+        <span className="text-[12px] font-bold tracking-tight" style={{ color: 'rgba(255,255,255,0.9)' }}>{page.name}</span>
+        <div className="flex items-center gap-2">
+          <Search className="h-3 w-3" style={{ color: 'rgba(255,255,255,0.25)' }} />
+          <Bell className="h-3 w-3" style={{ color: 'rgba(255,255,255,0.25)' }} />
+          <div className="w-5 h-5 rounded-full flex items-center justify-center text-[7px] font-bold text-white" style={{ backgroundColor: page.accent }}>
+            AR
+          </div>
+        </div>
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex items-center gap-0.5 px-3 py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+        {['All', 'Popular', 'New'].map((tab, i) => (
+          <span
+            key={tab}
+            className="px-2.5 py-1 rounded-full text-[9px] font-medium"
+            style={i === 0
+              ? { backgroundColor: `${page.accent}18`, color: page.accent }
+              : { color: 'rgba(255,255,255,0.27)' }
+            }
+          >
+            {tab}
+          </span>
+        ))}
+      </div>
+
+      {/* Feed posts */}
+      <div className="flex-1 px-3 py-2.5 space-y-2 overflow-hidden">
+        {posts.map((post, i) => (
+          <motion.div
+            key={post.initials + i}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: delay + 0.28 + i * 0.12, type: 'spring', damping: 22 }}
+            className="rounded-xl p-2.5"
+            style={{ backgroundColor: 'rgba(255,255,255,0.028)', border: '1px solid rgba(255,255,255,0.05)' }}
+          >
+            <div className="flex items-start gap-2">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[7px] font-bold text-white shrink-0"
+                style={{ backgroundColor: i === 0 ? page.accent : i === 1 ? `${page.accent}bb` : `${page.accent}80` }}
+              >
+                {post.initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <span className="text-[9px] font-semibold" style={{ color: 'rgba(255,255,255,0.82)' }}>{post.name}</span>
+                  <span className="text-[7px]" style={{ color: 'rgba(255,255,255,0.25)' }}>{post.time} ago</span>
+                </div>
+                <p className="text-[9px] leading-relaxed truncate" style={{ color: 'rgba(255,255,255,0.5)' }}>{post.content}</p>
+                <div className="flex items-center gap-3 mt-1.5">
+                  <span className="text-[8px] flex items-center gap-1" style={{ color: `${page.accent}95` }}>
+                    <Heart className="h-2 w-2" /> {post.likes}
+                  </span>
+                  <span className="text-[8px] flex items-center gap-1" style={{ color: `${page.accent}95` }}>
+                    <MessageCircle className="h-2 w-2" /> {post.replies}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function PagePreviewCard({ page, delay, appTitle }: { page: GeneratedPage; delay: number; appTitle: string }) {
+  const shortTitle = appTitle.length > 14 ? appTitle.slice(0, 12) + '…' : appTitle
+  const urlSlug = appTitle.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 16)
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 32, scale: 0.91 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.65, delay, type: 'spring', damping: 18 }}
+      className="group relative rounded-2xl overflow-hidden"
+    >
+      {/* Outer accent border/glow */}
+      <div
+        className="absolute -inset-[1px] rounded-2xl opacity-55 group-hover:opacity-100 transition-opacity duration-500"
+        style={{ background: `linear-gradient(145deg, ${page.accent}55, transparent 55%, ${page.accent}22)` }}
+      />
+
+      {/* Card body */}
+      <div
+        className="relative rounded-2xl overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #10101a 0%, #0c0c12 100%)', border: '1px solid rgba(255,255,255,0.07)' }}
+      >
+        {/* Browser chrome */}
+        <div
+          className="flex items-center gap-2 px-3 py-2"
+          style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.018)' }}
+        >
+          <div className="flex gap-1.5 shrink-0">
+            <div className="w-[7px] h-[7px] rounded-full" style={{ backgroundColor: '#ff5f57' }} />
+            <div className="w-[7px] h-[7px] rounded-full" style={{ backgroundColor: '#febc2e' }} />
+            <div className="w-[7px] h-[7px] rounded-full" style={{ backgroundColor: '#28c840' }} />
+          </div>
+          <div
+            className="flex-1 flex items-center gap-1.5 px-2.5 py-1 rounded-md mx-1"
+            style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.05)' }}
+          >
+            <Globe className="h-2.5 w-2.5 shrink-0" style={{ color: 'rgba(255,255,255,0.25)' }} />
+            <span className="text-[10px] font-mono" style={{ color: 'rgba(255,255,255,0.28)' }}>
+              {urlSlug}.app{page.route}
+            </span>
+          </div>
+        </div>
+
+        {/* Page content */}
+        {page.layout === 'hero' && <HeroContent page={page} appTitle={shortTitle} delay={delay} />}
+        {page.layout === 'dashboard' && <DashboardContent page={page} appTitle={shortTitle} delay={delay} />}
+        {page.layout === 'feed' && <FeedContent page={page} appTitle={shortTitle} delay={delay} />}
       </div>
     </motion.div>
   )
