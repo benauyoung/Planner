@@ -1,10 +1,13 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { Trash2 } from 'lucide-react'
+import { Trash2, Download, FileCode, FileText, ListChecks } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { downloadFile } from '@/lib/export-import'
+import { generateCursorRules, generateClaudeMD, generatePlanMD, generateTasksMD } from '@/lib/export-project-files'
 import type { Project } from '@/types/project'
 
 interface ProjectCardProps {
@@ -13,6 +16,27 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, onDelete }: ProjectCardProps) {
+  const [exportOpen, setExportOpen] = useState(false)
+  const exportRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!exportOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
+        setExportOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [exportOpen])
+
+  const exportOptions = [
+    { label: '.cursorrules', icon: <FileCode className="h-3.5 w-3.5" />, action: () => downloadFile(generateCursorRules(project), '.cursorrules', 'text/plain') },
+    { label: 'CLAUDE.md', icon: <FileCode className="h-3.5 w-3.5" />, action: () => downloadFile(generateClaudeMD(project), 'CLAUDE.md', 'text/markdown') },
+    { label: 'plan.md', icon: <FileText className="h-3.5 w-3.5" />, action: () => downloadFile(generatePlanMD(project), 'plan.md', 'text/markdown') },
+    { label: 'tasks.md', icon: <ListChecks className="h-3.5 w-3.5" />, action: () => downloadFile(generateTasksMD(project), 'tasks.md', 'text/markdown') },
+  ]
+
   const nodeCounts = {
     goal: project.nodes.filter((n) => n.type === 'goal').length,
     subgoal: project.nodes.filter((n) => n.type === 'subgoal').length,
@@ -29,18 +53,54 @@ export function ProjectCard({ project, onDelete }: ProjectCardProps) {
         <CardHeader className="pb-2">
           <div className="flex items-start justify-between">
             <CardTitle className="text-base line-clamp-1">{project.title}</CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-0 group-hover:opacity-100 transition-opacity -mt-1 -mr-2 h-8 w-8"
-              onClick={(e) => {
-                e.preventDefault()
-                e.stopPropagation()
-                onDelete(project.id)
-              }}
-            >
-              <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
-            </Button>
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity -mt-1 -mr-2">
+              <div className="relative" ref={exportRef}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  title="Export PRDs & code"
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setExportOpen((prev) => !prev)
+                  }}
+                >
+                  <Download className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                </Button>
+                {exportOpen && (
+                  <div className="absolute right-0 top-full mt-1 bg-popover border rounded-md shadow-md py-1 z-50 min-w-[150px]">
+                    {exportOptions.map((opt) => (
+                      <button
+                        key={opt.label}
+                        className="flex items-center gap-2 w-full px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          opt.action()
+                          setExportOpen(false)
+                        }}
+                      >
+                        {opt.icon}
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  onDelete(project.id)
+                }}
+              >
+                <Trash2 className="h-4 w-4 text-muted-foreground hover:text-red-500" />
+              </Button>
+            </div>
           </div>
           <CardDescription className="line-clamp-2">
             {project.description}
