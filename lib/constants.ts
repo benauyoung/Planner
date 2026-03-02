@@ -31,7 +31,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-orange-700 dark:text-orange-300',
     badgeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
     icon: 'Target',
-    width: 160,
+    width: 220,
     height: 36,
   },
   subgoal: {
@@ -42,7 +42,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-blue-700 dark:text-blue-300',
     badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
     icon: 'Flag',
-    width: 150,
+    width: 200,
     height: 36,
   },
   feature: {
@@ -53,7 +53,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-green-700 dark:text-green-300',
     badgeClass: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
     icon: 'Puzzle',
-    width: 140,
+    width: 180,
     height: 36,
   },
   task: {
@@ -64,7 +64,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-violet-700 dark:text-violet-300',
     badgeClass: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300',
     icon: 'CheckSquare',
-    width: 130,
+    width: 160,
     height: 36,
   },
   moodboard: {
@@ -75,7 +75,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-pink-700 dark:text-pink-300',
     badgeClass: 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
     icon: 'ImagePlus',
-    width: 140,
+    width: 180,
     height: 36,
   },
   notes: {
@@ -86,7 +86,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-amber-700 dark:text-amber-300',
     badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
     icon: 'FileText',
-    width: 140,
+    width: 160,
     height: 36,
   },
   connector: {
@@ -108,7 +108,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-sky-700 dark:text-sky-300',
     badgeClass: 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
     icon: 'ScrollText',
-    width: 140,
+    width: 180,
     height: 36,
   },
   prd: {
@@ -119,7 +119,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-purple-700 dark:text-purple-300',
     badgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
     icon: 'ClipboardList',
-    width: 140,
+    width: 160,
     height: 36,
   },
   schema: {
@@ -130,7 +130,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-teal-700 dark:text-teal-300',
     badgeClass: 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
     icon: 'Braces',
-    width: 140,
+    width: 160,
     height: 36,
   },
   prompt: {
@@ -141,7 +141,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-emerald-700 dark:text-emerald-300',
     badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
     icon: 'Terminal',
-    width: 140,
+    width: 160,
     height: 36,
   },
   reference: {
@@ -152,7 +152,7 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-gray-700 dark:text-gray-300',
     badgeClass: 'bg-gray-100 text-gray-700 dark:bg-gray-900/50 dark:text-gray-300',
     icon: 'ExternalLink',
-    width: 120,
+    width: 140,
     height: 36,
   },
 }

@@ -2,6 +2,7 @@
 
 import { memo, useMemo, useEffect, useCallback } from 'react'
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react'
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG } from '@/lib/constants'
 import type { NodeType, NodeStatus } from '@/types/project'
@@ -48,13 +49,19 @@ export const BasePlanNode = memo(function BasePlanNode({
     [nodes, id]
   )
 
-  // Click handler: select the node + toggle collapse if it has children
+  // Click handler: select the node + expand if collapsed
   const handleClick = useCallback(() => {
     selectNode(id)
-    if (childCount > 0) {
+    if (childCount > 0 && data.collapsed) {
       toggleNodeCollapse(id)
     }
-  }, [id, childCount, selectNode, toggleNodeCollapse])
+  }, [id, childCount, data.collapsed, selectNode, toggleNodeCollapse])
+
+  // Collapse button handler (stops propagation so it doesn't trigger expand)
+  const handleCollapse = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleNodeCollapse(id)
+  }, [id, toggleNodeCollapse])
 
   // ── Dot LOD: tiny colored dot ──
   if (lod === 'dot') {
@@ -100,17 +107,14 @@ export const BasePlanNode = memo(function BasePlanNode({
         )}
         <div className="flex items-center gap-1.5 px-2.5">
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: config.color }} />
-          <span className={cn(
-            'text-[10px] font-medium leading-tight',
-            isSelected ? 'whitespace-nowrap' : 'truncate max-w-[100px]'
-          )}>{data.label}</span>
+          <span className="text-[10px] font-medium leading-tight truncate max-w-[140px]">{data.label}</span>
         </div>
         <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1.5 !h-1.5" />
       </div>
     )
   }
 
-  // ── Full LOD: dark card with colored dot, title, type label, children badge ──
+  // ── Full LOD: dark card with colored dot, title, type label, collapse button ──
   return (
     <div
       className={cn(
@@ -122,8 +126,7 @@ export const BasePlanNode = memo(function BasePlanNode({
             : 'hover:border-opacity-80 hover:shadow-md',
       )}
       style={{
-        minWidth: config.width,
-        width: isSelected ? 'auto' : config.width,
+        width: config.width,
         height: config.height,
         borderColor: isSelected ? config.color : `${config.color}50`,
         backgroundColor: isSelected ? `${config.color}12` : 'hsl(var(--card))',
@@ -148,10 +151,7 @@ export const BasePlanNode = memo(function BasePlanNode({
         />
         {/* Title + type label */}
         <div className="flex flex-col min-w-0 flex-1">
-          <span className={cn(
-            'text-[11px] font-semibold leading-tight',
-            isSelected ? 'whitespace-nowrap' : 'truncate'
-          )}>
+          <span className="text-[11px] font-semibold leading-tight truncate">
             {data.label}
           </span>
           <span
@@ -161,26 +161,33 @@ export const BasePlanNode = memo(function BasePlanNode({
             {config.label}
           </span>
         </div>
-        {/* Children count badge / collapse indicator */}
+        {/* Collapse/expand button for nodes with children */}
         {childCount > 0 && (
-          <div
+          <button
+            onClick={handleCollapse}
             className={cn(
-              'flex items-center justify-center rounded shrink-0 transition-colors',
-              data.collapsed ? 'opacity-100' : 'opacity-60'
+              'flex items-center justify-center rounded shrink-0 transition-all',
+              'hover:scale-110'
             )}
             style={{
-              width: 18,
-              height: 16,
+              width: 20,
+              height: 18,
               backgroundColor: `${config.color}20`,
             }}
+            title={data.collapsed ? 'Expand children' : 'Collapse children'}
           >
-            <span
-              className="text-[9px] font-semibold"
-              style={{ color: config.color }}
-            >
-              {data.collapsed ? `+${childCount}` : childCount}
-            </span>
-          </div>
+            {data.collapsed ? (
+              <ChevronRight
+                className="w-3 h-3"
+                style={{ color: config.color }}
+              />
+            ) : (
+              <ChevronLeft
+                className="w-3 h-3"
+                style={{ color: config.color }}
+              />
+            )}
+          </button>
         )}
       </div>
 
