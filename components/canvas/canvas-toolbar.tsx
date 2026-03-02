@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks, Atom, FolderSync, Map, Grid3x3 } from 'lucide-react'
+import { Maximize2, LayoutGrid, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks, FolderSync, Map, Grid3x3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -11,21 +11,18 @@ import { exportFullPlanAsMarkdown } from '@/lib/export-markdown'
 import { generateCursorRules, generateClaudeMD, generatePlanMD, generateTasksMD } from '@/lib/export-project-files'
 import { downloadRalphyZip, downloadFlatPrdMd } from '@/lib/export-ralphy'
 import { getProjectPrdSummary } from '@/lib/prd-status'
-import { springLayout } from '@/lib/canvas-physics'
-import type { LayoutMode } from '@/stores/ui-store'
+
 
 interface CanvasToolbarProps {
   onReLayout: () => void
-  onSpringLayout?: () => void
-  onAnimatedSpring?: () => void
   onToggleTerritorySync?: () => void
   territorySyncOpen?: boolean
 }
 
-export function CanvasToolbar({ onReLayout, onSpringLayout, onAnimatedSpring, onToggleTerritorySync, territorySyncOpen }: CanvasToolbarProps) {
+export function CanvasToolbar({ onReLayout, onToggleTerritorySync, territorySyncOpen }: CanvasToolbarProps) {
   const { fitView } = useReactFlow()
   const currentProject = useProjectStore((s) => s.currentProject)
-  const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
+
   const undo = useProjectStore((s) => s.undo)
   const redo = useProjectStore((s) => s.redo)
   const canUndo = useProjectStore((s) => s.canUndo)
@@ -34,31 +31,14 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onAnimatedSpring, on
   const setBlastRadiusMode = useUIStore((s) => s.setBlastRadiusMode)
   const prdPipelineOpen = useUIStore((s) => s.prdPipelineOpen)
   const setPrdPipelineOpen = useUIStore((s) => s.setPrdPipelineOpen)
-  const layoutMode = useUIStore((s) => s.layoutMode)
-  const setLayoutMode = useUIStore((s) => s.setLayoutMode)
   const minimapOpen = useUIStore((s) => s.minimapOpen)
   const setMinimapOpen = useUIStore((s) => s.setMinimapOpen)
   const snapToGrid = useUIStore((s) => s.snapToGrid)
   const setSnapToGrid = useUIStore((s) => s.setSnapToGrid)
-  const springSimulationRunning = useUIStore((s) => s.springSimulationRunning)
 
   const prdSummary = currentProject ? getProjectPrdSummary(currentProject) : null
 
-  const handleExpandAll = () => {
-    if (!currentProject) return
-    currentProject.nodes
-      .filter((n) => n.collapsed)
-      .forEach((n) => toggleNodeCollapse(n.id))
-    setTimeout(onReLayout, 50)
-  }
 
-  const handleCollapseAll = () => {
-    if (!currentProject) return
-    currentProject.nodes
-      .filter((n) => !n.collapsed && currentProject.nodes.some((c) => c.parentId === n.id))
-      .forEach((n) => toggleNodeCollapse(n.id))
-    setTimeout(onReLayout, 50)
-  }
 
   const [exportOpen, setExportOpen] = useState(false)
   const exportRef = useRef<HTMLDivElement>(null)
@@ -133,7 +113,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onAnimatedSpring, on
         navigator.clipboard.writeText(exportFullPlanAsMarkdown(currentProject))
       },
     },
-    { label: '---', icon: null, action: () => {} },
+    { label: '---', icon: null, action: () => { } },
     {
       label: 'Ralphy Package (ZIP)',
       icon: <Package className="h-3.5 w-3.5" />,
@@ -184,56 +164,13 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onAnimatedSpring, on
         <Maximize2 className="h-4 w-4" />
       </Button>
       <Button
-        variant={layoutMode === 'dagre' ? 'default' : 'outline'}
+        variant="outline"
         size="icon"
-        onClick={() => { setLayoutMode('dagre'); onReLayout() }}
-        title="Dagre layout (tree)"
-        aria-label="Dagre layout (tree)"
+        onClick={onReLayout}
+        title="Re-layout (tree)"
+        aria-label="Re-layout (tree)"
       >
         <LayoutGrid className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={layoutMode === 'spring' ? 'default' : 'outline'}
-        size="icon"
-        onClick={() => {
-          setLayoutMode('spring')
-          if (onSpringLayout) onSpringLayout()
-        }}
-        title="Spring layout (force-directed)"
-        aria-label="Spring layout (force-directed)"
-      >
-        <Atom className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={springSimulationRunning ? 'default' : 'outline'}
-        size="icon"
-        className={springSimulationRunning ? 'animate-pulse' : ''}
-        onClick={() => {
-          setLayoutMode('spring')
-          if (onAnimatedSpring) onAnimatedSpring()
-        }}
-        title={springSimulationRunning ? 'Stop spring simulation' : 'Animated spring layout'}
-        aria-label={springSimulationRunning ? 'Stop spring simulation' : 'Animated spring layout'}
-      >
-        <Atom className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleExpandAll}
-        title="Expand all"
-        aria-label="Expand all"
-      >
-        <ChevronsUpDown className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="outline"
-        size="icon"
-        onClick={handleCollapseAll}
-        title="Collapse all"
-        aria-label="Collapse all"
-      >
-        <ChevronsDownUp className="h-4 w-4" />
       </Button>
       <Button
         variant={blastRadiusMode ? 'default' : 'outline'}

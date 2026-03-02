@@ -28,9 +28,7 @@ import { PaneContextMenu } from './context-menu/pane-context-menu'
 import { SmartGuidesOverlay } from './smart-guides-overlay'
 import { NODE_CONFIG } from '@/lib/constants'
 import { getBlastRadius } from '@/lib/blast-radius'
-import { springLayout } from '@/lib/canvas-physics'
 import { snapToGridPosition, computeSmartGuides, type GuideLine } from '@/lib/canvas-guides'
-import { createSpringSimulation, type SpringSimulation } from '@/lib/canvas-physics-animated'
 import { BulkActionsBar } from './bulk-actions-bar'
 import { PrdBottomStrip } from './prd-bottom-strip'
 import { TerritorySyncPanel } from './territory-sync-panel'
@@ -71,8 +69,6 @@ export function GraphCanvas() {
   const layoutMode = useUIStore((s) => s.layoutMode)
   const setSpringSimulationRunning = useUIStore((s) => s.setSpringSimulationRunning)
 
-  // Animated spring simulation ref
-  const simulationRef = useRef<SpringSimulation | null>(null)
 
   // Compute blast radius affected node IDs
   const blastRadiusIds = useCallback(() => {
@@ -143,21 +139,7 @@ export function GraphCanvas() {
     }, 50)
   }, [selectedNodeId, flowNodes, flowEdges, fitView])
 
-  // Stop spring simulation on unmount or layout mode change away from spring
-  useEffect(() => {
-    if (layoutMode !== 'spring' && simulationRef.current?.isRunning()) {
-      simulationRef.current.stop()
-      setSpringSimulationRunning(false)
-    }
-  }, [layoutMode, setSpringSimulationRunning])
 
-  useEffect(() => {
-    return () => {
-      if (simulationRef.current?.isRunning()) {
-        simulationRef.current.stop()
-      }
-    }
-  }, [])
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
@@ -231,63 +213,9 @@ export function GraphCanvas() {
     setTimeout(() => fitView({ padding: 0.2 }), 50)
   }, [flowNodes, flowEdges, getLayoutedElements, setFlowNodes, setFlowEdges, fitView])
 
-  const handleSpringLayout = useCallback(() => {
-    const updated = springLayout(flowNodes, flowEdges)
-    setFlowNodes(updated)
-    setTimeout(() => fitView({ padding: 0.2 }), 50)
-  }, [flowNodes, flowEdges, setFlowNodes, fitView])
 
-  // Animated spring layout toggle
-  const handleAnimatedSpring = useCallback(() => {
-    if (simulationRef.current?.isRunning()) {
-      simulationRef.current.stop()
-      setSpringSimulationRunning(false)
-      return
-    }
 
-    if (!simulationRef.current) {
-      simulationRef.current = createSpringSimulation()
-    }
 
-    setSpringSimulationRunning(true)
-    simulationRef.current.start(
-      flowNodes,
-      flowEdges,
-      (updatedNodes) => {
-        setFlowNodes(updatedNodes)
-      },
-      () => {
-        setSpringSimulationRunning(false)
-        setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50)
-      }
-    )
-  }, [flowNodes, flowEdges, setFlowNodes, setSpringSimulationRunning, fitView])
-
-  // Drag handlers for pinning nodes during animated spring
-  const handleNodeDragStart = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      if (simulationRef.current?.isRunning()) {
-        simulationRef.current.pinNode(node.id, node.position)
-      }
-    },
-    []
-  )
-
-  const handleNodeDrag = useCallback(
-    (_event: React.MouseEvent, node: Node) => {
-      if (simulationRef.current?.isRunning()) {
-        simulationRef.current.updatePinnedPosition(node.id, node.position)
-      }
-    },
-    []
-  )
-
-  const handleNodeDragStop = useCallback(
-    (_event: React.MouseEvent, _node: Node) => {
-      // Keep pinned for remainder of simulation -- don't unpin
-    },
-    []
-  )
 
   const onConnect: OnConnect = useCallback(
     (connection) => {
@@ -361,9 +289,6 @@ export function GraphCanvas() {
         onPaneClick={handlePaneClick}
         onPaneContextMenu={handlePaneContextMenu}
         onNodeContextMenu={handleNodeContextMenu}
-        onNodeDragStart={handleNodeDragStart}
-        onNodeDrag={handleNodeDrag}
-        onNodeDragStop={handleNodeDragStop}
         nodeTypes={nodeTypes}
         connectOnClick={false}
         selectionOnDrag
@@ -403,8 +328,6 @@ export function GraphCanvas() {
       )}
       <CanvasToolbar
         onReLayout={handleReLayout}
-        onSpringLayout={handleSpringLayout}
-        onAnimatedSpring={handleAnimatedSpring}
         onToggleTerritorySync={() => setTerritorySyncOpen((p) => !p)}
         territorySyncOpen={territorySyncOpen}
       />
