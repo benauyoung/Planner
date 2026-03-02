@@ -2,15 +2,12 @@
 
 import { memo, useMemo, useEffect } from 'react'
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react'
-import { ChevronDown, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { NODE_CONFIG, STATUS_COLORS } from '@/lib/constants'
 import type { NodeType, NodeStatus } from '@/types/project'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
-import { getNodePrdStatus, PRD_STATUS_CONFIG } from '@/lib/prd-status'
 import { useZoomLevel } from '@/hooks/use-zoom-level'
-import { NodeToolbar } from './node-toolbar'
 
 interface BasePlanNodeProps {
   id: string
@@ -27,13 +24,6 @@ interface BasePlanNodeProps {
   icon: React.ReactNode
 }
 
-const STATUS_CIRCLE_COLORS: Record<NodeStatus, string> = {
-  not_started: 'bg-gray-400/20 text-gray-500 dark:bg-gray-600/30 dark:text-gray-400',
-  in_progress: 'bg-blue-400/20 text-blue-600 dark:bg-blue-600/30 dark:text-blue-400',
-  completed: 'bg-green-400/20 text-green-600 dark:bg-green-600/30 dark:text-green-400',
-  blocked: 'bg-red-400/20 text-red-600 dark:bg-red-600/30 dark:text-red-400',
-}
-
 export const BasePlanNode = memo(function BasePlanNode({
   id,
   data,
@@ -43,7 +33,6 @@ export const BasePlanNode = memo(function BasePlanNode({
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const selectNode = useUIStore((s) => s.selectNode)
-  const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
   const isSelected = selectedNodeId === id
   const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
   const lod = useZoomLevel()
@@ -53,81 +42,65 @@ export const BasePlanNode = memo(function BasePlanNode({
   }, [lod, id, updateNodeInternals])
 
   const nodes = useProjectStore((s) => s.currentProject?.nodes)
-  const children = useMemo(
-    () => nodes?.filter((n) => n.parentId === id) ?? [],
+  const hasChildren = useMemo(
+    () => nodes?.some((n) => n.parentId === id) ?? false,
     [nodes, id]
   )
-  const hasChildren = children.length > 0
 
-  const fullNode = useMemo(() => nodes?.find((n) => n.id === id), [nodes, id])
-  const prdStatus = useMemo(
-    () => (fullNode ? getNodePrdStatus(fullNode) : null),
-    [fullNode]
-  )
-
-  const statusCounts = useMemo(() => {
-    if (!hasChildren) return null
-    const counts: Partial<Record<NodeStatus, number>> = {}
-    children.forEach((c) => {
-      counts[c.status] = (counts[c.status] || 0) + 1
-    })
-    return counts
-  }, [children, hasChildren])
-
-  // ── Dot LOD: tiny colored pill ──
+  // ── Dot LOD: tiny colored dot ──
   if (lod === 'dot') {
     return (
       <div
         className={cn(
-          'rounded-md border shadow-sm cursor-pointer flex items-center justify-center',
+          'rounded-full border shadow-sm cursor-pointer flex items-center justify-center',
           config.bgClass,
           isSelected ? 'ring-2 ring-primary' : isInMultiSelect ? 'ring-2 ring-blue-400/60' : '',
         )}
-        style={{ width: 48, height: 28, borderColor: config.color }}
+        style={{ width: 24, height: 24, borderColor: config.color }}
+        onClick={() => selectNode(id)}
+      >
+        {data.parentId && (
+          <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-1 !h-1" />
+        )}
+        <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[data.status])} />
+        <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-1 !h-1" />
+      </div>
+    )
+  }
+
+  // ── Compact LOD: icon + truncated title ──
+  if (lod === 'compact') {
+    return (
+      <div
+        className={cn(
+          'rounded-full border shadow-sm cursor-pointer flex items-center',
+          config.bgClass,
+          isSelected
+            ? 'ring-2 ring-primary shadow-glow'
+            : isInMultiSelect
+              ? 'ring-2 ring-blue-400/60'
+              : 'hover:shadow-md',
+        )}
+        style={{ height: 28, borderColor: config.color }}
         onClick={() => selectNode(id)}
       >
         {data.parentId && (
           <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-1.5 !h-1.5" />
         )}
-        <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[data.status])} />
+        <div className="flex items-center gap-1.5 px-2.5">
+          <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', STATUS_COLORS[data.status])} />
+          <span className="text-[10px] font-medium leading-tight truncate max-w-[100px]">{data.label}</span>
+        </div>
         <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-1.5 !h-1.5" />
       </div>
     )
   }
 
-  // ── Compact LOD: title + status only ──
-  if (lod === 'compact') {
-    return (
-      <div
-        className={cn(
-          'group relative rounded-lg border-2 shadow-sm cursor-pointer',
-          config.bgClass,
-          isSelected
-            ? 'ring-2 ring-primary shadow-glow'
-            : isInMultiSelect
-              ? 'ring-2 ring-blue-400/60 ring-dashed'
-              : 'hover:shadow-md',
-        )}
-        style={{ width: 140, minHeight: 32, borderColor: config.color }}
-        onClick={() => selectNode(id)}
-      >
-        {data.parentId && (
-          <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-2 !h-2" />
-        )}
-        <div className="p-2 flex items-center gap-2">
-          <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_COLORS[data.status])} />
-          <span className="text-xs font-medium leading-tight truncate">{data.label}</span>
-        </div>
-        <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-2 !h-2" />
-      </div>
-    )
-  }
-
-  // ── Full LOD ──
+  // ── Full LOD: pill with icon + title + status ──
   return (
     <div
       className={cn(
-        'group relative rounded-lg border-2 shadow-sm transition-all cursor-pointer',
+        'group relative rounded-xl border-2 shadow-sm transition-all cursor-pointer',
         config.bgClass,
         isSelected
           ? 'ring-2 ring-primary shadow-glow'
@@ -137,102 +110,39 @@ export const BasePlanNode = memo(function BasePlanNode({
       )}
       style={{
         width: config.width,
-        minHeight: config.height,
+        height: config.height,
         borderColor: config.color,
       }}
       onClick={() => selectNode(id)}
       onContextMenu={(e) => e.preventDefault()}
     >
-      <NodeToolbar
-        nodeId={id}
-        nodeType={data.nodeType}
-        status={data.status}
-        collapsed={data.collapsed}
-        hasChildren={hasChildren}
-      />
-
       {data.parentId && (
         <Handle
           type="target"
           position={Position.Top}
-          className="!bg-muted-foreground !w-2 !h-2"
+          className="!bg-muted-foreground !w-1.5 !h-1.5"
         />
       )}
 
-      <div className="p-2.5">
-        {/* Header: type indicator + status circles */}
-        <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1">
-            <span className={cn('opacity-70', config.textClass)}>{icon}</span>
-            <span className={cn('text-[9px] font-semibold uppercase tracking-wider', config.textClass)}>
-              {config.label}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            {statusCounts ? (
-              Object.entries(statusCounts).map(([status, count]) => (
-                <div
-                  key={status}
-                  className={cn(
-                    'w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold',
-                    STATUS_CIRCLE_COLORS[status as NodeStatus],
-                  )}
-                  title={`${count} ${status.replace('_', ' ')}`}
-                >
-                  {count}
-                </div>
-              ))
-            ) : (
-              <div className={cn('w-2.5 h-2.5 rounded-full', STATUS_COLORS[data.status])} />
-            )}
-            {hasChildren && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation()
-                  toggleNodeCollapse(id)
-                }}
-                className="p-0.5 hover:bg-black/10 dark:hover:bg-white/10 rounded ml-0.5"
-              >
-                {data.collapsed ? (
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                )}
-              </button>
-            )}
-          </div>
-        </div>
-
+      <div className="flex items-center gap-1.5 h-full px-2.5">
+        {/* Status dot */}
+        <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_COLORS[data.status])} />
+        {/* Type icon */}
+        <span className={cn('shrink-0 opacity-80', config.textClass)}>{icon}</span>
         {/* Title */}
-        <h4 className="text-xs font-semibold leading-snug mb-0.5 line-clamp-2">
+        <span className="text-[11px] font-medium leading-tight truncate flex-1 min-w-0">
           {data.label}
-        </h4>
-
-        {/* Description */}
-        {data.description && (
-          <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
-            {data.description}
-          </p>
-        )}
-
-        {/* PRD status dot */}
-        {prdStatus && (
-          <div className="flex items-center gap-1 mt-1.5">
-            <div
-              className={cn('w-1.5 h-1.5 rounded-full shrink-0', PRD_STATUS_CONFIG[prdStatus].dot)}
-              title={`PRD: ${PRD_STATUS_CONFIG[prdStatus].label}`}
-            />
-            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-wider font-medium">
-              {PRD_STATUS_CONFIG[prdStatus].label}
-            </span>
-          </div>
+        </span>
+        {/* Children indicator */}
+        {hasChildren && (
+          <div className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
         )}
       </div>
 
       <Handle
         type="source"
         position={Position.Bottom}
-        className="!bg-muted-foreground !w-2 !h-2"
+        className="!bg-muted-foreground !w-1.5 !h-1.5"
       />
     </div>
   )

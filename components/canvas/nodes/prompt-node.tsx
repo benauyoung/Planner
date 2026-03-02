@@ -1,118 +1,17 @@
 'use client'
 
 import { memo } from 'react'
-import { Handle, Position } from '@xyflow/react'
 import { Terminal } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { NODE_CONFIG, STATUS_COLORS } from '@/lib/constants'
-import { Badge } from '@/components/ui/badge'
+import { BasePlanNode } from './base-plan-node'
 import type { NodeProps } from '@xyflow/react'
 import type { PlanNodeData } from '@/types/canvas'
-import { useUIStore } from '@/stores/ui-store'
-import { useProjectStore } from '@/stores/project-store'
-import { NodeToolbar } from './node-toolbar'
-
-const PROMPT_TYPE_LABELS: Record<string, string> = {
-  implementation: 'Implementation',
-  refactor: 'Refactor',
-  test: 'Test',
-  review: 'Review',
-}
-
-const TARGET_TOOL_LABELS: Record<string, string> = {
-  cursor: 'Cursor',
-  windsurf: 'Windsurf',
-  claude: 'Claude',
-  generic: 'Generic',
-}
 
 export const PromptNode = memo(function PromptNode({ id, data }: NodeProps) {
-  const nodeData = data as unknown as PlanNodeData
-  const config = NODE_CONFIG.prompt
-  const selectedNodeId = useUIStore((s) => s.selectedNodeId)
-  const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
-  const selectNode = useUIStore((s) => s.selectNode)
-  const isSelected = selectedNodeId === id
-  const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
-  const hasChildren = useProjectStore((s) =>
-    s.currentProject?.nodes.some((n) => n.parentId === id) ?? false
-  )
-
-  const promptType = nodeData.promptType || 'implementation'
-  const targetTool = nodeData.targetTool || 'generic'
-  const description = nodeData.description
-
   return (
-    <div
-      className={cn(
-        'group relative rounded-lg border-2 shadow-sm transition-all cursor-pointer',
-        config.bgClass,
-        isSelected
-          ? 'ring-2 ring-primary shadow-glow'
-          : isInMultiSelect
-            ? 'ring-2 ring-blue-400/60 ring-dashed'
-            : 'hover:shadow-md',
-      )}
-      style={{
-        width: config.width,
-        minHeight: config.height,
-        borderColor: config.color,
-      }}
-      onClick={() => selectNode(id)}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <NodeToolbar
-        nodeId={id}
-        nodeType="prompt"
-        status={nodeData.status}
-        collapsed={nodeData.collapsed}
-        hasChildren={hasChildren}
-      />
-
-      {nodeData.parentId && (
-        <Handle
-          type="target"
-          position={Position.Top}
-          className="!bg-muted-foreground !w-2 !h-2"
-        />
-      )}
-
-      <div className="p-3">
-        <div className="flex items-center gap-2 mb-2">
-          <Badge className={cn('text-[10px] px-1.5 py-0', config.badgeClass)}>
-            <Terminal className="h-3 w-3 mr-1" />
-            {config.label}
-          </Badge>
-          <span className="text-[10px] text-muted-foreground">
-            {PROMPT_TYPE_LABELS[promptType]}
-          </span>
-          <span className="text-[10px] text-muted-foreground font-mono">
-            {TARGET_TOOL_LABELS[targetTool]}
-          </span>
-          <div className={cn('w-2 h-2 rounded-full ml-auto', STATUS_COLORS[nodeData.status])} />
-        </div>
-
-        <h4 className="text-sm font-medium leading-tight mb-2 line-clamp-1">
-          {nodeData.label}
-        </h4>
-
-        {description ? (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 font-mono">
-            {description}
-          </p>
-        ) : (
-          <div className="flex flex-col items-center justify-center py-3 border border-dashed rounded-md text-muted-foreground">
-            <Terminal className="h-6 w-6 mb-1.5 opacity-50" />
-            <span className="text-xs">Click to write prompt</span>
-          </div>
-        )}
-      </div>
-
-      <Handle
-        type="source"
-        position={Position.Bottom}
-        className="!bg-muted-foreground !w-2 !h-2"
-      />
-    </div>
+    <BasePlanNode
+      id={id}
+      data={data as unknown as PlanNodeData}
+      icon={<Terminal className="h-3 w-3" />}
+    />
   )
 })
