@@ -32,6 +32,7 @@ import { snapToGridPosition, computeSmartGuides, type GuideLine } from '@/lib/ca
 import { BulkActionsBar } from './bulk-actions-bar'
 import { PrdBottomStrip } from './prd-bottom-strip'
 import { TerritorySyncPanel } from './territory-sync-panel'
+import { SubtreeBackgrounds } from './subtree-backgrounds'
 import type { NodeType } from '@/types/project'
 import type { Node } from '@xyflow/react'
 
@@ -323,6 +324,7 @@ export function GraphCanvas() {
           />
         )}
       </ReactFlow>
+      <SubtreeBackgrounds />
       {showSmartGuides && !snapToGrid && smartGuides.length > 0 && (
         <SmartGuidesOverlay guides={smartGuides} />
       )}
