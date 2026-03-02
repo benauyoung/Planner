@@ -105,7 +105,7 @@ const CHILD_TYPE: Record<string, PlanNode['type']> = {
 }
 
 const STATUS_CONFIG: Record<NodeStatus, { color: string; label: string }> = {
-    not_started: { color: 'rgba(255,255,255,0.25)', label: 'Not started' },
+    not_started: { color: 'rgba(28,36,24,0.25)', label: 'Not started' },
     in_progress: { color: '#3b82f6', label: 'In progress' },
     completed: { color: '#22c55e', label: 'Completed' },
 }
@@ -225,7 +225,7 @@ function LoadingPhase() {
                     animate={{ rotate: 360 }}
                     transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                 />
-                <div className="relative w-20 h-20 rounded-3xl bg-[#0a0e1a] flex items-center justify-center m-[3px]">
+                <div className="relative w-20 h-20 rounded-3xl bg-[hsl(42,35%,97%)] flex items-center justify-center m-[3px]">
                     <Sparkles className="h-9 w-9 text-blue-400" />
                 </div>
             </div>
@@ -237,14 +237,14 @@ function LoadingPhase() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.3 }}
-                        className="text-base font-semibold text-white"
+                        className="text-base font-semibold text-[hsl(103,18%,12%)]"
                     >
                         {LOADING_STEPS[step]}
                     </motion.p>
                 </AnimatePresence>
-                <p className="text-xs text-white/40 mt-2">Building your project plan…</p>
+                <p className="text-xs text-[hsl(100,10%,38%)] mt-2">Building your project plan…</p>
             </div>
-            <div className="w-72 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="w-72 h-1.5 rounded-full bg-[hsl(40,18%,85%)] overflow-hidden">
                 <motion.div
                     className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400/60"
                     initial={{ width: '0%' }}
@@ -266,9 +266,9 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
     }, [nodes])
 
     return (
-        <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-white/[0.04] border border-white/[0.08]">
-            <span className="text-[11px] font-semibold text-white/60">{nodes.length} nodes</span>
-            <div className="w-px h-3 bg-white/10" />
+        <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)]">
+            <span className="text-[11px] font-semibold text-[hsl(100,10%,38%)]">{nodes.length} nodes</span>
+            <div className="w-px h-3 bg-[hsl(40,20%,80%)]" />
             {(['goal', 'subgoal', 'feature', 'task'] as const).map((type) =>
                 counts[type] > 0 ? (
                     <div key={type} className="flex items-center gap-1.5">
@@ -276,7 +276,7 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
                             className="w-2 h-2 rounded-full"
                             style={{ backgroundColor: TYPE_COLORS[type] }}
                         />
-                        <span className="text-[11px] text-white/50">
+                        <span className="text-[11px] text-[hsl(100,10%,38%)]">
                             {counts[type]} {TYPE_LABELS[type]}{counts[type] > 1 ? 's' : ''}
                         </span>
                     </div>
@@ -291,11 +291,11 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
 function ActionProgress({ count, limit }: { count: number; limit: number }) {
     const pct = Math.min((count / limit) * 100, 100)
     return (
-        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08]">
-            <span className="text-[11px] font-semibold text-white/50">
+        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)]">
+            <span className="text-[11px] font-semibold text-[hsl(100,10%,38%)]">
                 {count}/{limit} actions
             </span>
-            <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+            <div className="w-24 h-1.5 rounded-full bg-[hsl(40,18%,85%)] overflow-hidden">
                 <motion.div
                     className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
                     animate={{ width: `${pct}%` }}
@@ -403,7 +403,7 @@ function DetailSidebar({
                         {/* Status toggle */}
                         <button
                             onClick={() => onToggleStatus(node.id)}
-                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-[hsl(40,18%,85%)]/60 hover:bg-[hsl(40,18%,85%)] transition-colors"
                             style={{ color: statusCfg.color }}
                             title={`Status: ${statusCfg.label}. Click to change.`}
                         >
@@ -427,14 +427,14 @@ function DetailSidebar({
                                 if (e.key === 'Enter') commitTitle()
                                 if (e.key === 'Escape') { setEditingTitle(false); setTitleDraft(node.title) }
                             }}
-                            className="w-full text-sm font-bold text-white bg-white/[0.06] border border-white/[0.15] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                            className="w-full text-sm font-bold text-[hsl(103,18%,12%)] bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[hsl(149,23%,37%)]/50"
                         />
                     ) : (
                         <div className="flex items-center gap-1.5 group">
-                            <h3 className="text-sm font-bold text-white leading-snug">{node.title}</h3>
+                            <h3 className="text-sm font-bold text-[hsl(103,18%,12%)] leading-snug">{node.title}</h3>
                             <button
                                 onClick={() => setEditingTitle(true)}
-                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-white/10 transition-all text-white/30 hover:text-white/60"
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[hsl(40,18%,85%)] transition-all text-[hsl(100,10%,38%)] hover:text-[hsl(103,18%,12%)]"
                                 title="Edit title"
                             >
                                 <Pencil className="h-3 w-3" />
@@ -445,14 +445,14 @@ function DetailSidebar({
                 <div className="flex items-center gap-1 shrink-0">
                     <button
                         onClick={() => onDeleteNode(node.id)}
-                        className="p-1 rounded-md hover:bg-red-500/20 transition-colors text-white/30 hover:text-red-400"
+                        className="p-1 rounded-md hover:bg-red-500/10 transition-colors text-[hsl(100,10%,38%)] hover:text-red-500"
                         title="Delete node"
                     >
                         <Trash2 className="h-3.5 w-3.5" />
                     </button>
                     <button
                         onClick={onClose}
-                        className="p-1 rounded-md hover:bg-white/10 transition-colors text-white/40 hover:text-white/70"
+                        className="p-1 rounded-md hover:bg-[hsl(40,18%,85%)] transition-colors text-[hsl(100,10%,38%)] hover:text-[hsl(103,18%,12%)]"
                     >
                         <X className="h-4 w-4" />
                     </button>
@@ -463,23 +463,23 @@ function DetailSidebar({
             <div className="flex-1 overflow-y-auto px-5 py-4 space-y-5">
                 {/* Description */}
                 <div>
-                    <p className="text-[12px] leading-relaxed text-white/60">{node.description}</p>
+                    <p className="text-[12px] leading-relaxed text-[hsl(100,10%,38%)]">{node.description}</p>
                 </div>
 
                 {/* Parent */}
                 {parent && (
                     <div>
-                        <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold mb-2">Parent</h4>
+                        <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold mb-2">Parent</h4>
                         <button
                             onClick={() => onSelectNode(parent.id)}
-                            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] transition-colors text-left"
+                            className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)] hover:bg-[hsl(40,18%,85%)]/70 transition-colors text-left"
                         >
                             <span
                                 className="w-2 h-2 rounded-full shrink-0"
                                 style={{ backgroundColor: TYPE_COLORS[parent.type] }}
                             />
-                            <span className="text-[11px] text-white/70 truncate">{parent.title}</span>
-                            <ChevronRight className="h-3 w-3 text-white/25 ml-auto shrink-0" />
+                            <span className="text-[11px] text-[hsl(103,18%,12%)]/70 truncate">{parent.title}</span>
+                            <ChevronRight className="h-3 w-3 text-[hsl(100,10%,38%)]/50 ml-auto shrink-0" />
                         </button>
                     </div>
                 )}
@@ -487,7 +487,7 @@ function DetailSidebar({
                 {/* Children */}
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                        <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold">
                             Children {children.length > 0 && `(${children.length})`}
                         </h4>
                         {!gated && (
@@ -507,14 +507,14 @@ function DetailSidebar({
                                 <button
                                     key={child.id}
                                     onClick={() => onSelectNode(child.id)}
-                                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.07] transition-colors text-left"
+                                    className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)] hover:bg-[hsl(40,18%,85%)]/70 transition-colors text-left"
                                 >
                                     <span
                                         className="w-2 h-2 rounded-full shrink-0"
                                         style={{ backgroundColor: TYPE_COLORS[child.type] }}
                                     />
-                                    <span className="text-[11px] text-white/70 truncate">{child.title}</span>
-                                    <ChevronRight className="h-3 w-3 text-white/25 ml-auto shrink-0" />
+                                    <span className="text-[11px] text-[hsl(103,18%,12%)]/70 truncate">{child.title}</span>
+                                    <ChevronRight className="h-3 w-3 text-[hsl(100,10%,38%)]/50 ml-auto shrink-0" />
                                 </button>
                             ))}
                         </div>
@@ -538,7 +538,7 @@ function DetailSidebar({
                                             if (e.key === 'Escape') { setAddingChild(false); setChildDraft('') }
                                         }}
                                         placeholder={`New ${CHILD_TYPE[node.type] || 'task'}...`}
-                                        className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] bg-white/[0.06] border border-white/[0.12] text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-blue-500/40"
+                                        className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)] text-[hsl(103,18%,12%)] placeholder:text-[hsl(100,10%,38%)]/40 focus:outline-none focus:ring-1 focus:ring-[hsl(149,23%,37%)]/40"
                                     />
                                     <button
                                         onClick={commitChild}
@@ -549,7 +549,7 @@ function DetailSidebar({
                                     </button>
                                     <button
                                         onClick={() => { setAddingChild(false); setChildDraft('') }}
-                                        className="p-1.5 rounded-lg bg-white/[0.06] text-white/40 hover:bg-white/[0.1] transition-colors"
+                                        className="p-1.5 rounded-lg bg-[hsl(40,18%,85%)]/60 text-[hsl(100,10%,38%)] hover:bg-[hsl(40,18%,85%)] transition-colors"
                                     >
                                         <X className="h-3 w-3" />
                                     </button>
@@ -562,7 +562,7 @@ function DetailSidebar({
                 {/* Questions */}
                 {questions.length > 0 && (
                     <div>
-                        <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold mb-2 flex items-center gap-1.5">
+                        <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold mb-2 flex items-center gap-1.5">
                             <HelpCircle className="h-3 w-3" />
                             Planning Questions
                         </h4>
@@ -573,9 +573,9 @@ function DetailSidebar({
                                 return (
                                     <div
                                         key={q.id}
-                                        className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-3"
+                                        className="rounded-xl bg-[hsl(40,18%,85%)]/30 border border-[hsl(40,20%,80%)] p-3"
                                     >
-                                        <p className="text-[11px] text-white/70 font-medium mb-2">{q.question}</p>
+                                        <p className="text-[11px] text-[hsl(103,18%,12%)]/70 font-medium mb-2">{q.question}</p>
                                         <div className="space-y-1">
                                             {q.options.map((opt) => {
                                                 const isSelected = currentAnswer === opt
@@ -592,7 +592,7 @@ function DetailSidebar({
                                                             'flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg transition-colors text-left',
                                                             isSelected
                                                                 ? 'bg-blue-500/15 border border-blue-500/30'
-                                                                : 'bg-white/[0.04] hover:bg-white/[0.08] border border-transparent',
+                                                                : 'bg-[hsl(40,18%,85%)]/30 hover:bg-[hsl(40,18%,85%)]/60 border border-transparent',
                                                             gated && !isSelected && 'opacity-50 cursor-not-allowed'
                                                         )}
                                                     >
@@ -600,7 +600,7 @@ function DetailSidebar({
                                                             'w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center transition-colors',
                                                             isSelected
                                                                 ? 'border-blue-400 bg-blue-500'
-                                                                : 'border-white/20'
+                                                                : 'border-[hsl(40,20%,80%)]'
                                                         )}>
                                                             {isSelected && (
                                                                 <motion.div
@@ -614,7 +614,7 @@ function DetailSidebar({
                                                         </div>
                                                         <span className={cn(
                                                             'text-[10px] transition-colors',
-                                                            isSelected ? 'text-blue-300' : 'text-white/50'
+                                                            isSelected ? 'text-blue-600' : 'text-[hsl(100,10%,38%)]'
                                                         )}>
                                                             {opt}
                                                         </span>
@@ -644,8 +644,8 @@ function DetailSidebar({
                     <div className="flex items-start gap-2.5">
                         <Lightbulb className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
                         <div>
-                            <p className="text-[11px] text-white/70 font-medium mb-1">Want to refine this plan?</p>
-                            <p className="text-[10px] text-white/40 leading-relaxed">
+                            <p className="text-[11px] text-[hsl(103,18%,12%)]/70 font-medium mb-1">Want to refine this plan?</p>
+                            <p className="text-[10px] text-[hsl(100,10%,38%)] leading-relaxed">
                                 Sign up to get AI-powered suggestions, drag-and-drop editing, and PRD generation.
                             </p>
                         </div>
@@ -676,22 +676,22 @@ function EmailGateOverlay({
             className="absolute inset-0 z-20 flex items-center justify-center"
         >
             {/* Frosted backdrop */}
-            <div className="absolute inset-0 bg-[#0a0e1a]/70 backdrop-blur-md" />
+            <div className="absolute inset-0 bg-[#EBE7DC]/80 backdrop-blur-md" />
 
             {/* Card */}
             <motion.div
                 initial={{ opacity: 0, scale: 0.9, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 20 }}
-                className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.1] bg-white/[0.06] backdrop-blur-xl shadow-2xl shadow-blue-500/10 p-8 text-center mx-4"
+                className="relative z-10 w-full max-w-sm rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/10 p-8 text-center mx-4"
             >
                 <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-5">
                     <Sparkles className="h-7 w-7 text-blue-400" />
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2">You&apos;re on a roll!</h3>
-                <p className="text-sm text-white/50 mb-6">
+                <h3 className="text-xl font-bold text-[hsl(103,18%,12%)] mb-2">You&apos;re on a roll!</h3>
+                <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
                     Enter your email to keep building{' '}
-                    <span className="font-medium text-white/80">{appTitle}</span> with the full planning canvas, AI tools, and more.
+                    <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> with the full planning canvas, AI tools, and more.
                 </p>
 
                 <div className="space-y-3">
@@ -701,7 +701,7 @@ function EmailGateOverlay({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         onKeyDown={(e) => { if (e.key === 'Enter' && email.includes('@')) onSubmitEmail(email) }}
-                        className="w-full px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.06] text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        className="w-full px-4 py-3 rounded-xl border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-sm text-[hsl(103,18%,12%)] placeholder:text-[hsl(100,10%,38%)]/40 focus:outline-none focus:ring-2 focus:ring-[hsl(149,23%,37%)]/30"
                         autoFocus
                     />
                     <button
@@ -717,7 +717,7 @@ function EmailGateOverlay({
                         {emailSubmitting ? 'Joining…' : 'Continue Planning'}
                     </button>
                 </div>
-                <p className="text-[10px] text-white/25 mt-4">
+                <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-4">
                     No credit card required
                 </p>
             </motion.div>
@@ -813,7 +813,7 @@ function InteractiveCanvas({
             </div>
 
             {/* Canvas + Sidebar */}
-            <div className="relative flex rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden" style={{ minHeight: 320 }}>
+            <div className="relative flex rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] overflow-hidden" style={{ minHeight: 320 }}>
                 {/* SVG Canvas */}
                 <div
                     ref={svgRef}
@@ -822,9 +822,9 @@ function InteractiveCanvas({
                 >
                     {/* Dot grid bg */}
                     <div
-                        className="absolute inset-0 pointer-events-none opacity-20"
+                        className="absolute inset-0 pointer-events-none opacity-30"
                         style={{
-                            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)',
+                            backgroundImage: 'radial-gradient(circle, rgba(28,36,24,0.08) 1px, transparent 1px)',
                             backgroundSize: '24px 24px',
                         }}
                     />
@@ -848,7 +848,7 @@ function InteractiveCanvas({
                                     key={`${edge.from.id}-${edge.to.id}`}
                                     d={`M ${sx} ${sy} C ${mx} ${sy}, ${mx} ${ey}, ${ex} ${ey}`}
                                     fill="none"
-                                    stroke="rgba(255,255,255,0.12)"
+                                    stroke="rgba(28,36,24,0.12)"
                                     strokeWidth="1.5"
                                     strokeDasharray="6 4"
                                     initial={{ pathLength: 0, opacity: 0 }}
@@ -921,8 +921,8 @@ function InteractiveCanvas({
                                         width={node.w}
                                         height={node.h}
                                         rx={11}
-                                        fill={isSelected ? `${color}15` : 'rgba(10,14,26,0.85)'}
-                                        stroke={isSelected ? color : `${color}40`}
+                                        fill={isSelected ? `${color}15` : 'rgba(250,249,246,0.95)'}
+                                        stroke={isSelected ? color : `${color}50`}
                                         strokeWidth={isSelected ? 1.5 : 1}
                                     />
 
@@ -938,7 +938,7 @@ function InteractiveCanvas({
                                     <text
                                         x={node.x + 22}
                                         y={node.y + 17}
-                                        fill="rgba(255,255,255,0.9)"
+                                        fill="rgba(28,36,24,0.85)"
                                         fontSize="10"
                                         fontWeight="600"
                                         fontFamily="system-ui, -apple-system, sans-serif"
@@ -1222,7 +1222,7 @@ export function PlanningPlayground() {
     return (
         <section
             id="planning-playground"
-            className="features-dark-override relative py-14 sm:py-20 overflow-hidden"
+            className="relative py-14 sm:py-20 overflow-hidden"
         >
             {/* Background effects */}
             <div className="absolute inset-0 pointer-events-none">
@@ -1237,7 +1237,7 @@ export function PlanningPlayground() {
                     className="absolute inset-0 opacity-[0.025]"
                     style={{
                         backgroundImage:
-                            'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)',
+                            'radial-gradient(circle, rgba(28,36,24,0.04) 1px, transparent 1px)',
                         backgroundSize: '32px 32px',
                     }}
                 />
@@ -1264,19 +1264,19 @@ export function PlanningPlayground() {
                                     <Sparkles className="h-3.5 w-3.5" />
                                     Try it now -- free
                                 </motion.div>
-                                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-white mb-4">
+                                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-[hsl(103,18%,12%)] mb-4">
                                     Start planning{' '}
                                     <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                                         your project
                                     </span>
                                 </h2>
-                                <p className="text-base sm:text-lg text-white/50 max-w-xl mx-auto">
+                                <p className="text-base sm:text-lg text-[hsl(100,10%,38%)] max-w-xl mx-auto">
                                     Describe your idea and watch it transform into an interactive project plan.
                                 </p>
                             </div>
 
                             <div className="max-w-3xl mx-auto">
-                                <div className="relative rounded-2xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-sm shadow-2xl shadow-blue-500/5 overflow-hidden">
+                                <div className="relative rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/5 overflow-hidden">
                                     <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-blue-500/10 pointer-events-none" />
 
                                     <div className="p-5 sm:p-7">
@@ -1287,16 +1287,16 @@ export function PlanningPlayground() {
                                             onKeyDown={handleKeyDown}
                                             placeholder={PLACEHOLDER_IDEAS[placeholderIdx]}
                                             rows={4}
-                                            className="w-full bg-transparent text-base sm:text-lg resize-none focus:outline-none placeholder:text-white/25 text-white leading-relaxed"
+                                            className="w-full bg-transparent text-base sm:text-lg resize-none focus:outline-none placeholder:text-[hsl(100,10%,38%)]/40 text-[hsl(103,18%,12%)] leading-relaxed"
                                         />
 
-                                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/[0.08]">
+                                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(40,20%,80%)]">
                                             <div className="flex items-center gap-2 flex-wrap">
                                                 {EXAMPLE_CHIPS.map((chip) => (
                                                     <button
                                                         key={chip}
                                                         onClick={() => handleChipClick(chip)}
-                                                        className="px-3 py-1 rounded-full text-xs font-medium bg-white/[0.06] text-white/40 hover:bg-white/[0.12] hover:text-white/70 transition-colors"
+                                                        className="px-3 py-1 rounded-full text-xs font-medium bg-[hsl(40,18%,85%)]/60 text-[hsl(100,10%,38%)] hover:bg-[hsl(40,18%,85%)] hover:text-[hsl(103,18%,12%)] transition-colors"
                                                     >
                                                         {chip}
                                                     </button>
@@ -1319,13 +1319,13 @@ export function PlanningPlayground() {
                                     <p className="text-center text-sm text-red-400 mt-4">{error}</p>
                                 )}
 
-                                <p className="text-center text-xs text-white/25 mt-4">
+                                <p className="text-center text-xs text-[hsl(100,10%,38%)]/50 mt-4">
                                     Press{' '}
-                                    <kbd className="px-1.5 py-0.5 rounded border border-white/10 bg-white/[0.05] text-[10px] font-mono text-white/40">
+                                    <kbd className="px-1.5 py-0.5 rounded border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-[10px] font-mono text-[hsl(100,10%,38%)]">
                                         Enter
                                     </kbd>{' '}
                                     to plan ·{' '}
-                                    <kbd className="px-1.5 py-0.5 rounded border border-white/10 bg-white/[0.05] text-[10px] font-mono text-white/40">
+                                    <kbd className="px-1.5 py-0.5 rounded border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-[10px] font-mono text-[hsl(100,10%,38%)]">
                                         Shift+Enter
                                     </kbd>{' '}
                                     for new line
@@ -1372,10 +1372,10 @@ export function PlanningPlayground() {
                                     </motion.div>
                                     Plan Generated
                                 </div>
-                                <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
+                                <h2 className="text-2xl sm:text-3xl font-bold text-[hsl(103,18%,12%)] mb-2 tracking-tight">
                                     {appTitle}
                                 </h2>
-                                <p className="text-sm text-white/40 max-w-md mx-auto">
+                                <p className="text-sm text-[hsl(100,10%,38%)] max-w-md mx-auto">
                                     Explore your plan. Click nodes, answer questions, and add new items to build it out.
                                 </p>
                             </motion.div>
@@ -1411,14 +1411,14 @@ export function PlanningPlayground() {
                         >
                             <div className="max-w-md mx-auto">
                                 {!emailSubmitted ? (
-                                    <div className="rounded-2xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-sm shadow-2xl shadow-blue-500/5 p-8 text-center">
+                                    <div className="rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/5 p-8 text-center">
                                         <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-5">
                                             <Sparkles className="h-7 w-7 text-blue-400" />
                                         </div>
-                                        <h2 className="text-2xl font-bold text-white mb-2">Keep building!</h2>
-                                        <p className="text-sm text-white/50 mb-6">
+                                        <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">Keep building!</h2>
+                                        <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
                                             Enter your email to access the full canvas for{' '}
-                                            <span className="font-medium text-white/80">{appTitle}</span> with AI tools,
+                                            <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> with AI tools,
                                             drag-and-drop editing, and more.
                                         </p>
 
@@ -1437,7 +1437,7 @@ export function PlanningPlayground() {
                                                         handleEmailSubmit(el.value)
                                                     }
                                                 }}
-                                                className="w-full px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.06] text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                                className="w-full px-4 py-3 rounded-xl border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-sm text-[hsl(103,18%,12%)] placeholder:text-[hsl(100,10%,38%)]/40 focus:outline-none focus:ring-2 focus:ring-[hsl(149,23%,37%)]/30"
                                                 autoFocus
                                             />
                                             <button
@@ -1457,13 +1457,13 @@ export function PlanningPlayground() {
                                             </button>
                                         </div>
 
-                                        <p className="text-[10px] text-white/25 mt-4">
+                                        <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-4">
                                             No credit card required
                                         </p>
 
                                         <button
                                             onClick={() => setPhase('canvas')}
-                                            className="mt-4 text-xs text-white/30 hover:text-white/60 transition-colors"
+                                            className="mt-4 text-xs text-[hsl(100,10%,38%)] hover:text-[hsl(103,18%,12%)] transition-colors"
                                         >
                                             ← Back to plan
                                         </button>
@@ -1472,15 +1472,15 @@ export function PlanningPlayground() {
                                     <motion.div
                                         initial={{ opacity: 0, scale: 0.95 }}
                                         animate={{ opacity: 1, scale: 1 }}
-                                        className="rounded-2xl border border-white/[0.1] bg-white/[0.04] backdrop-blur-sm shadow-2xl shadow-blue-500/5 p-8 text-center"
+                                        className="rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/5 p-8 text-center"
                                     >
                                         <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-5">
                                             <Check className="h-7 w-7 text-green-500" />
                                         </div>
-                                        <h2 className="text-2xl font-bold text-white mb-2">You&apos;re in!</h2>
-                                        <p className="text-sm text-white/50 mb-6">
+                                        <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">You&apos;re in!</h2>
+                                        <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
                                             We&apos;ll send you access to continue building{' '}
-                                            <span className="font-medium text-white">{appTitle}</span> with the full planning canvas.
+                                            <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> with the full planning canvas.
                                         </p>
                                         <button
                                             onClick={() => {
