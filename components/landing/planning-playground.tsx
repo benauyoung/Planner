@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     ArrowRight,
@@ -16,6 +16,12 @@ import {
     X,
     HelpCircle,
     Lightbulb,
+    Plus,
+    Pencil,
+    Trash2,
+    Circle,
+    CheckCircle2,
+    Clock,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { track } from '@vercel/analytics'
@@ -23,6 +29,7 @@ import { track } from '@vercel/analytics'
 // ─── Types ───────────────────────────────────────────────────
 
 type Phase = 'input' | 'loading' | 'canvas' | 'email'
+type NodeStatus = 'not_started' | 'in_progress' | 'completed'
 
 interface PlanNode {
     id: string
@@ -30,7 +37,7 @@ interface PlanNode {
     title: string
     description: string
     parentId: string | null
-    questions?: { question: string; options: string[] }[]
+    questions?: { id: string; question: string; options: string[] }[]
 }
 
 interface LayoutNode extends PlanNode {
@@ -43,6 +50,8 @@ interface LayoutNode extends PlanNode {
 }
 
 // ─── Constants ───────────────────────────────────────────────
+
+const ACTION_LIMIT = 10
 
 const PLACEHOLDER_IDEAS = [
     'A recipe sharing platform with AI meal planning...',
@@ -88,6 +97,21 @@ const TYPE_LABELS: Record<string, string> = {
     task: 'Task',
 }
 
+const CHILD_TYPE: Record<string, PlanNode['type']> = {
+    goal: 'subgoal',
+    subgoal: 'feature',
+    feature: 'task',
+    task: 'task',
+}
+
+const STATUS_CONFIG: Record<NodeStatus, { color: string; label: string }> = {
+    not_started: { color: 'rgba(255,255,255,0.25)', label: 'Not started' },
+    in_progress: { color: '#3b82f6', label: 'In progress' },
+    completed: { color: '#22c55e', label: 'Completed' },
+}
+
+const STATUS_ORDER: NodeStatus[] = ['not_started', 'in_progress', 'completed']
+
 // ─── Tree layout helper ──────────────────────────────────────
 
 const NODE_W = 140
@@ -113,7 +137,6 @@ function layoutTree(nodes: PlanNode[]): { laid: LayoutNode[]; width: number; hei
         }
     }
 
-    // Compute subtree widths bottom-up
     const subtreeWidth = new Map<string, number>()
     function calcWidth(id: string): number {
         const kids = childrenMap.get(id) || []
@@ -128,7 +151,6 @@ function layoutTree(nodes: PlanNode[]): { laid: LayoutNode[]; width: number; hei
 
     for (const r of roots) calcWidth(r)
 
-    // Position: left-to-right (depth = x), top-to-bottom (siblings = y)
     const laid: LayoutNode[] = []
     let totalHeight = 0
 
@@ -137,20 +159,17 @@ function layoutTree(nodes: PlanNode[]): { laid: LayoutNode[]; width: number; hei
         const kids = childrenMap.get(id) || []
         const myWidth = subtreeWidth.get(id) || NODE_W
 
-        // Center this node vertically in its subtree
         const x = depth * (NODE_W + H_GAP)
         let y: number
 
         if (kids.length === 0) {
             y = yOffset + (myWidth - NODE_H) / 2
         } else {
-            // Position children first
             let childY = yOffset
             for (const kid of kids) {
                 positionNode(kid, depth + 1, childY)
                 childY += (subtreeWidth.get(kid) || NODE_W) + V_GAP
             }
-            // Center parent among its children
             const firstChild = laid.find((l) => l.id === kids[0])
             const lastChild = laid.find((l) => l.id === kids[kids.length - 1])
             y = firstChild && lastChild
@@ -182,6 +201,8 @@ function layoutTree(nodes: PlanNode[]): { laid: LayoutNode[]; width: number; hei
 
     return { laid, width, height: totalHeight + 20 }
 }
+
+let nextNodeId = 1000
 
 // ─── Loading Animation ───────────────────────────────────────
 
@@ -265,6 +286,26 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
     )
 }
 
+// ─── Progress Bar ───────────────────────────────────────────
+
+function ActionProgress({ count, limit }: { count: number; limit: number }) {
+    const pct = Math.min((count / limit) * 100, 100)
+    return (
+        <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-white/[0.04] border border-white/[0.08]">
+            <span className="text-[11px] font-semibold text-white/50">
+                {count}/{limit} actions
+            </span>
+            <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <motion.div
+                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    animate={{ width: `${pct}%` }}
+                    transition={{ type: 'spring', stiffness: 200, damping: 25 }}
+                />
+            </div>
+        </div>
+    )
+}
+
 // ─── Detail Sidebar ─────────────────────────────────────────
 
 function DetailSidebar({
@@ -272,16 +313,73 @@ function DetailSidebar({
     allNodes,
     onClose,
     onSelectNode,
+    answeredQuestions,
+    onAnswerQuestion,
+    nodeStatuses,
+    onToggleStatus,
+    onAddChild,
+    onEditTitle,
+    onDeleteNode,
+    gated,
 }: {
     node: LayoutNode
     allNodes: LayoutNode[]
     onClose: () => void
     onSelectNode: (id: string) => void
+    answeredQuestions: Record<string, string>
+    onAnswerQuestion: (nodeId: string, questionId: string, answer: string) => void
+    nodeStatuses: Record<string, NodeStatus>
+    onToggleStatus: (nodeId: string) => void
+    onAddChild: (parentId: string, title: string) => void
+    onEditTitle: (nodeId: string, newTitle: string) => void
+    onDeleteNode: (nodeId: string) => void
+    gated: boolean
 }) {
     const Icon = TYPE_ICONS[node.type] || Target
     const parent = node.parentId ? allNodes.find((n) => n.id === node.parentId) : null
     const children = allNodes.filter((n) => n.parentId === node.id)
     const questions = node.questions || []
+    const status = nodeStatuses[node.id] || 'not_started'
+    const statusCfg = STATUS_CONFIG[status]
+
+    const [editingTitle, setEditingTitle] = useState(false)
+    const [titleDraft, setTitleDraft] = useState(node.title)
+    const [addingChild, setAddingChild] = useState(false)
+    const [childDraft, setChildDraft] = useState('')
+    const titleInputRef = useRef<HTMLInputElement>(null)
+    const childInputRef = useRef<HTMLInputElement>(null)
+
+    useEffect(() => {
+        setTitleDraft(node.title)
+        setEditingTitle(false)
+        setAddingChild(false)
+        setChildDraft('')
+    }, [node.id, node.title])
+
+    useEffect(() => {
+        if (editingTitle) titleInputRef.current?.focus()
+    }, [editingTitle])
+
+    useEffect(() => {
+        if (addingChild) childInputRef.current?.focus()
+    }, [addingChild])
+
+    function commitTitle() {
+        const trimmed = titleDraft.trim()
+        if (trimmed && trimmed !== node.title) {
+            onEditTitle(node.id, trimmed)
+        }
+        setEditingTitle(false)
+    }
+
+    function commitChild() {
+        const trimmed = childDraft.trim()
+        if (trimmed) {
+            onAddChild(node.id, trimmed)
+            setChildDraft('')
+            setAddingChild(false)
+        }
+    }
 
     return (
         <motion.div
@@ -302,15 +400,63 @@ function DetailSidebar({
                             <Icon className="h-3 w-3" />
                             {TYPE_LABELS[node.type]}
                         </span>
+                        {/* Status toggle */}
+                        <button
+                            onClick={() => onToggleStatus(node.id)}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium bg-white/[0.06] hover:bg-white/[0.1] transition-colors"
+                            style={{ color: statusCfg.color }}
+                            title={`Status: ${statusCfg.label}. Click to change.`}
+                        >
+                            {status === 'completed' ? (
+                                <CheckCircle2 className="h-3 w-3" />
+                            ) : status === 'in_progress' ? (
+                                <Clock className="h-3 w-3" />
+                            ) : (
+                                <Circle className="h-3 w-3" />
+                            )}
+                            {statusCfg.label}
+                        </button>
                     </div>
-                    <h3 className="text-sm font-bold text-white leading-snug">{node.title}</h3>
+                    {editingTitle ? (
+                        <input
+                            ref={titleInputRef}
+                            value={titleDraft}
+                            onChange={(e) => setTitleDraft(e.target.value)}
+                            onBlur={commitTitle}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') commitTitle()
+                                if (e.key === 'Escape') { setEditingTitle(false); setTitleDraft(node.title) }
+                            }}
+                            className="w-full text-sm font-bold text-white bg-white/[0.06] border border-white/[0.15] rounded-lg px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+                        />
+                    ) : (
+                        <div className="flex items-center gap-1.5 group">
+                            <h3 className="text-sm font-bold text-white leading-snug">{node.title}</h3>
+                            <button
+                                onClick={() => setEditingTitle(true)}
+                                className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-white/10 transition-all text-white/30 hover:text-white/60"
+                                title="Edit title"
+                            >
+                                <Pencil className="h-3 w-3" />
+                            </button>
+                        </div>
+                    )}
                 </div>
-                <button
-                    onClick={onClose}
-                    className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors text-white/40 hover:text-white/70"
-                >
-                    <X className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                    <button
+                        onClick={() => onDeleteNode(node.id)}
+                        className="p-1 rounded-md hover:bg-red-500/20 transition-colors text-white/30 hover:text-red-400"
+                        title="Delete node"
+                    >
+                        <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="p-1 rounded-md hover:bg-white/10 transition-colors text-white/40 hover:text-white/70"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
             </div>
 
             {/* Content */}
@@ -339,12 +485,24 @@ function DetailSidebar({
                 )}
 
                 {/* Children */}
-                {children.length > 0 && (
-                    <div>
-                        <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold mb-2">
-                            Children ({children.length})
+                <div>
+                    <div className="flex items-center justify-between mb-2">
+                        <h4 className="text-[10px] uppercase tracking-wider text-white/30 font-semibold">
+                            Children {children.length > 0 && `(${children.length})`}
                         </h4>
-                        <div className="space-y-1">
+                        {!gated && (
+                            <button
+                                onClick={() => setAddingChild(true)}
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                                title="Add child node"
+                            >
+                                <Plus className="h-3 w-3" />
+                                Add
+                            </button>
+                        )}
+                    </div>
+                    {children.length > 0 && (
+                        <div className="space-y-1 mb-2">
                             {children.map((child) => (
                                 <button
                                     key={child.id}
@@ -360,8 +518,46 @@ function DetailSidebar({
                                 </button>
                             ))}
                         </div>
-                    </div>
-                )}
+                    )}
+                    {/* Add child inline form */}
+                    <AnimatePresence>
+                        {addingChild && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="flex items-center gap-2 mt-1">
+                                    <input
+                                        ref={childInputRef}
+                                        value={childDraft}
+                                        onChange={(e) => setChildDraft(e.target.value)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter') commitChild()
+                                            if (e.key === 'Escape') { setAddingChild(false); setChildDraft('') }
+                                        }}
+                                        placeholder={`New ${CHILD_TYPE[node.type] || 'task'}...`}
+                                        className="flex-1 px-2.5 py-1.5 rounded-lg text-[11px] bg-white/[0.06] border border-white/[0.12] text-white placeholder:text-white/25 focus:outline-none focus:ring-1 focus:ring-blue-500/40"
+                                    />
+                                    <button
+                                        onClick={commitChild}
+                                        disabled={!childDraft.trim()}
+                                        className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-30 transition-colors"
+                                    >
+                                        <Check className="h-3 w-3" />
+                                    </button>
+                                    <button
+                                        onClick={() => { setAddingChild(false); setChildDraft('') }}
+                                        className="p-1.5 rounded-lg bg-white/[0.06] text-white/40 hover:bg-white/[0.1] transition-colors"
+                                    >
+                                        <X className="h-3 w-3" />
+                                    </button>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+                </div>
 
                 {/* Questions */}
                 {questions.length > 0 && (
@@ -371,25 +567,74 @@ function DetailSidebar({
                             Planning Questions
                         </h4>
                         <div className="space-y-3">
-                            {questions.slice(0, 3).map((q, qi) => (
-                                <div
-                                    key={qi}
-                                    className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-3"
-                                >
-                                    <p className="text-[11px] text-white/70 font-medium mb-2">{q.question}</p>
-                                    <div className="space-y-1">
-                                        {q.options.map((opt, oi) => (
-                                            <div
-                                                key={oi}
-                                                className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] transition-colors cursor-pointer group"
+                            {questions.slice(0, 3).map((q) => {
+                                const answeredKey = `${node.id}:${q.id}`
+                                const currentAnswer = answeredQuestions[answeredKey]
+                                return (
+                                    <div
+                                        key={q.id}
+                                        className="rounded-xl bg-white/[0.03] border border-white/[0.08] p-3"
+                                    >
+                                        <p className="text-[11px] text-white/70 font-medium mb-2">{q.question}</p>
+                                        <div className="space-y-1">
+                                            {q.options.map((opt) => {
+                                                const isSelected = currentAnswer === opt
+                                                return (
+                                                    <button
+                                                        key={opt}
+                                                        onClick={() => {
+                                                            if (!gated && !isSelected) {
+                                                                onAnswerQuestion(node.id, q.id, opt)
+                                                            }
+                                                        }}
+                                                        disabled={gated}
+                                                        className={cn(
+                                                            'flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg transition-colors text-left',
+                                                            isSelected
+                                                                ? 'bg-blue-500/15 border border-blue-500/30'
+                                                                : 'bg-white/[0.04] hover:bg-white/[0.08] border border-transparent',
+                                                            gated && !isSelected && 'opacity-50 cursor-not-allowed'
+                                                        )}
+                                                    >
+                                                        <div className={cn(
+                                                            'w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center transition-colors',
+                                                            isSelected
+                                                                ? 'border-blue-400 bg-blue-500'
+                                                                : 'border-white/20'
+                                                        )}>
+                                                            {isSelected && (
+                                                                <motion.div
+                                                                    initial={{ scale: 0 }}
+                                                                    animate={{ scale: 1 }}
+                                                                    transition={{ type: 'spring', stiffness: 300 }}
+                                                                >
+                                                                    <Check className="h-2 w-2 text-white" />
+                                                                </motion.div>
+                                                            )}
+                                                        </div>
+                                                        <span className={cn(
+                                                            'text-[10px] transition-colors',
+                                                            isSelected ? 'text-blue-300' : 'text-white/50'
+                                                        )}>
+                                                            {opt}
+                                                        </span>
+                                                    </button>
+                                                )
+                                            })}
+                                        </div>
+                                        {currentAnswer && (
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                className="flex items-center gap-1 mt-2 text-[9px] text-green-400/70"
                                             >
-                                                <div className="w-3.5 h-3.5 rounded-full border border-white/20 group-hover:border-blue-400/50 transition-colors shrink-0" />
-                                                <span className="text-[10px] text-white/50 group-hover:text-white/70 transition-colors">{opt}</span>
-                                            </div>
-                                        ))}
+                                                <Check className="h-2.5 w-2.5" />
+                                                Answer saved
+                                            </motion.div>
+                                        )}
                                     </div>
-                                </div>
-                            ))}
+                                )
+                            })}
                         </div>
                     </div>
                 )}
@@ -401,7 +646,7 @@ function DetailSidebar({
                         <div>
                             <p className="text-[11px] text-white/70 font-medium mb-1">Want to refine this plan?</p>
                             <p className="text-[10px] text-white/40 leading-relaxed">
-                                Sign up to answer these questions, add nodes, and get AI-powered suggestions.
+                                Sign up to get AI-powered suggestions, drag-and-drop editing, and PRD generation.
                             </p>
                         </div>
                     </div>
@@ -411,26 +656,120 @@ function DetailSidebar({
     )
 }
 
+// ─── Email Gate Overlay ─────────────────────────────────────
+
+function EmailGateOverlay({
+    onSubmitEmail,
+    emailSubmitting,
+    appTitle,
+}: {
+    onSubmitEmail: (email: string) => void
+    emailSubmitting: boolean
+    appTitle: string
+}) {
+    const [email, setEmail] = useState('')
+
+    return (
+        <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 z-20 flex items-center justify-center"
+        >
+            {/* Frosted backdrop */}
+            <div className="absolute inset-0 bg-[#0a0e1a]/70 backdrop-blur-md" />
+
+            {/* Card */}
+            <motion.div
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 20 }}
+                className="relative z-10 w-full max-w-sm rounded-2xl border border-white/[0.1] bg-white/[0.06] backdrop-blur-xl shadow-2xl shadow-blue-500/10 p-8 text-center mx-4"
+            >
+                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-5">
+                    <Sparkles className="h-7 w-7 text-blue-400" />
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2">You&apos;re on a roll!</h3>
+                <p className="text-sm text-white/50 mb-6">
+                    Enter your email to keep building{' '}
+                    <span className="font-medium text-white/80">{appTitle}</span> with the full planning canvas, AI tools, and more.
+                </p>
+
+                <div className="space-y-3">
+                    <input
+                        type="email"
+                        placeholder="you@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && email.includes('@')) onSubmitEmail(email) }}
+                        className="w-full px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.06] text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                        autoFocus
+                    />
+                    <button
+                        onClick={() => onSubmitEmail(email)}
+                        disabled={emailSubmitting || !email.includes('@')}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-500/20"
+                    >
+                        {emailSubmitting ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                            <Mail className="h-4 w-4" />
+                        )}
+                        {emailSubmitting ? 'Joining…' : 'Continue Planning'}
+                    </button>
+                </div>
+                <p className="text-[10px] text-white/25 mt-4">
+                    No credit card required
+                </p>
+            </motion.div>
+        </motion.div>
+    )
+}
+
 // ─── Interactive Canvas ──────────────────────────────────────
 
 function InteractiveCanvas({
     nodes,
+    setNodes,
     onContinue,
+    actionCount,
+    onRecordAction,
+    answeredQuestions,
+    onAnswerQuestion,
+    nodeStatuses,
+    onToggleStatus,
+    onAddChild,
+    onEditTitle,
+    onDeleteNode,
+    gated,
+    onSubmitEmail,
+    emailSubmitting,
+    appTitle,
 }: {
     nodes: PlanNode[]
+    setNodes: React.Dispatch<React.SetStateAction<PlanNode[]>>
     onContinue: () => void
+    actionCount: number
+    onRecordAction: () => void
+    answeredQuestions: Record<string, string>
+    onAnswerQuestion: (nodeId: string, questionId: string, answer: string) => void
+    nodeStatuses: Record<string, NodeStatus>
+    onToggleStatus: (nodeId: string) => void
+    onAddChild: (parentId: string, title: string) => void
+    onEditTitle: (nodeId: string, newTitle: string) => void
+    onDeleteNode: (nodeId: string) => void
+    gated: boolean
+    onSubmitEmail: (email: string) => void
+    emailSubmitting: boolean
+    appTitle: string
 }) {
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const svgRef = useRef<HTMLDivElement>(null)
-    const [scrollOffset, setScrollOffset] = useState({ x: 0, y: 0 })
 
     const { laid, width, height } = useMemo(() => layoutTree(nodes), [nodes])
     const selectedNode = selectedId ? laid.find((n) => n.id === selectedId) || null : null
 
-    // Build a map for edge lookup
     const laidMap = useMemo(() => new Map(laid.map((n) => [n.id, n])), [laid])
 
-    // Edges: parent → child
     const edges = useMemo(() => {
         const result: { from: LayoutNode; to: LayoutNode }[] = []
         for (const node of laid) {
@@ -441,6 +780,13 @@ function InteractiveCanvas({
         return result
     }, [laid, laidMap])
 
+    // Clear selection if node was deleted
+    useEffect(() => {
+        if (selectedId && !nodes.find(n => n.id === selectedId)) {
+            setSelectedId(null)
+        }
+    }, [nodes, selectedId])
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
@@ -450,7 +796,10 @@ function InteractiveCanvas({
         >
             {/* Header row */}
             <div className="flex items-center justify-between flex-wrap gap-3">
-                <StatsStrip nodes={nodes} />
+                <div className="flex items-center gap-3 flex-wrap">
+                    <StatsStrip nodes={nodes} />
+                    <ActionProgress count={actionCount} limit={ACTION_LIMIT} />
+                </div>
                 <motion.button
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -464,7 +813,7 @@ function InteractiveCanvas({
             </div>
 
             {/* Canvas + Sidebar */}
-            <div className="flex rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden" style={{ minHeight: 320 }}>
+            <div className="relative flex rounded-2xl border border-white/[0.08] bg-white/[0.02] overflow-hidden" style={{ minHeight: 320 }}>
                 {/* SVG Canvas */}
                 <div
                     ref={svgRef}
@@ -513,7 +862,11 @@ function InteractiveCanvas({
                         {laid.map((node, i) => {
                             const isSelected = selectedId === node.id
                             const color = TYPE_COLORS[node.type]
-                            const Icon = TYPE_ICONS[node.type]
+                            const status = nodeStatuses[node.id] || 'not_started'
+                            const statusColor = STATUS_CONFIG[status].color
+                            const hasAnswers = (node.questions || []).some(
+                                q => answeredQuestions[`${node.id}:${q.id}`]
+                            )
 
                             return (
                                 <motion.g
@@ -546,6 +899,21 @@ function InteractiveCanvas({
                                         />
                                     )}
 
+                                    {/* Answered glow */}
+                                    {hasAnswers && !isSelected && (
+                                        <rect
+                                            x={node.x - 2}
+                                            y={node.y - 2}
+                                            width={node.w + 4}
+                                            height={node.h + 4}
+                                            rx={13}
+                                            fill="none"
+                                            stroke="#3b82f6"
+                                            strokeWidth={1}
+                                            opacity={0.3}
+                                        />
+                                    )}
+
                                     {/* Card background */}
                                     <rect
                                         x={node.x}
@@ -558,12 +926,12 @@ function InteractiveCanvas({
                                         strokeWidth={isSelected ? 1.5 : 1}
                                     />
 
-                                    {/* Type indicator dot */}
+                                    {/* Status dot (top-left) */}
                                     <circle
                                         cx={node.x + 12}
                                         cy={node.y + node.h / 2}
                                         r={3.5}
-                                        fill={color}
+                                        fill={statusColor}
                                     />
 
                                     {/* Title */}
@@ -627,7 +995,7 @@ function InteractiveCanvas({
                         <motion.div
                             key={selectedNode.id}
                             initial={{ width: 0, opacity: 0 }}
-                            animate={{ width: 280, opacity: 1 }}
+                            animate={{ width: 300, opacity: 1 }}
                             exit={{ width: 0, opacity: 0 }}
                             transition={{ duration: 0.25 }}
                             className="border-l border-white/[0.08] bg-white/[0.02] shrink-0 overflow-hidden"
@@ -637,8 +1005,27 @@ function InteractiveCanvas({
                                 allNodes={laid}
                                 onClose={() => setSelectedId(null)}
                                 onSelectNode={setSelectedId}
+                                answeredQuestions={answeredQuestions}
+                                onAnswerQuestion={onAnswerQuestion}
+                                nodeStatuses={nodeStatuses}
+                                onToggleStatus={onToggleStatus}
+                                onAddChild={onAddChild}
+                                onEditTitle={onEditTitle}
+                                onDeleteNode={onDeleteNode}
+                                gated={gated}
                             />
                         </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Email gate overlay */}
+                <AnimatePresence>
+                    {gated && (
+                        <EmailGateOverlay
+                            onSubmitEmail={onSubmitEmail}
+                            emailSubmitting={emailSubmitting}
+                            appTitle={appTitle}
+                        />
                     )}
                 </AnimatePresence>
             </div>
@@ -650,7 +1037,7 @@ function InteractiveCanvas({
                 transition={{ delay: 1.2 }}
                 className="text-center text-xs text-white/30"
             >
-                Click any node to explore · Sign up to continue building with AI
+                Click any node to explore · Answer questions and add nodes to build your plan
             </motion.p>
         </motion.div>
     )
@@ -665,10 +1052,15 @@ export function PlanningPlayground() {
     const [planNodes, setPlanNodes] = useState<PlanNode[]>([])
     const [suggestedTitle, setSuggestedTitle] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
-    const [emailValue, setEmailValue] = useState('')
     const [emailSubmitted, setEmailSubmitted] = useState(false)
     const [emailSubmitting, setEmailSubmitting] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    // Interactive tutorial state
+    const [actionCount, setActionCount] = useState(0)
+    const [answeredQuestions, setAnsweredQuestions] = useState<Record<string, string>>({})
+    const [nodeStatuses, setNodeStatuses] = useState<Record<string, NodeStatus>>({})
+    const [gated, setGated] = useState(false)
 
     // Rotate placeholder
     useEffect(() => {
@@ -676,6 +1068,67 @@ export function PlanningPlayground() {
             setPlaceholderIdx((prev) => (prev + 1) % PLACEHOLDER_IDEAS.length)
         }, 3200)
         return () => clearInterval(interval)
+    }, [])
+
+    // ─── Action tracking ────────────────────────────────────────
+
+    const recordAction = useCallback(() => {
+        setActionCount((prev) => {
+            const next = prev + 1
+            if (next >= ACTION_LIMIT) {
+                setTimeout(() => setGated(true), 400)
+            }
+            return next
+        })
+    }, [])
+
+    const handleAnswerQuestion = useCallback((nodeId: string, questionId: string, answer: string) => {
+        const key = `${nodeId}:${questionId}`
+        setAnsweredQuestions((prev) => {
+            if (prev[key]) return prev // already answered, don't double-count
+            return { ...prev, [key]: answer }
+        })
+        recordAction()
+    }, [recordAction])
+
+    const handleAddChild = useCallback((parentId: string, title: string) => {
+        const parentNode = planNodes.find(n => n.id === parentId)
+        const childType = parentNode ? CHILD_TYPE[parentNode.type] : 'task'
+        const newNode: PlanNode = {
+            id: `demo-${++nextNodeId}`,
+            type: childType,
+            title,
+            description: `User-created ${childType} under "${parentNode?.title || 'parent'}"`,
+            parentId,
+        }
+        setPlanNodes((prev) => [...prev, newNode])
+        recordAction()
+    }, [planNodes, recordAction])
+
+    const handleToggleStatus = useCallback((nodeId: string) => {
+        setNodeStatuses((prev) => {
+            const current = prev[nodeId] || 'not_started'
+            const idx = STATUS_ORDER.indexOf(current)
+            const next = STATUS_ORDER[(idx + 1) % STATUS_ORDER.length]
+            return { ...prev, [nodeId]: next }
+        })
+    }, [])
+
+    const handleEditTitle = useCallback((nodeId: string, newTitle: string) => {
+        setPlanNodes((prev) =>
+            prev.map((n) => (n.id === nodeId ? { ...n, title: newTitle } : n))
+        )
+    }, [])
+
+    const handleDeleteNode = useCallback((nodeId: string) => {
+        setPlanNodes((prev) => {
+            const node = prev.find(n => n.id === nodeId)
+            if (!node) return prev
+            // Re-parent children to deleted node's parent
+            return prev
+                .filter(n => n.id !== nodeId)
+                .map(n => n.parentId === nodeId ? { ...n, parentId: node.parentId } : n)
+        })
     }, [])
 
     // ─── Handlers ─────────────────────────────────────────────
@@ -704,19 +1157,27 @@ export function PlanningPlayground() {
             const data = await res.json()
             if (data.error) throw new Error(data.error)
 
-            const nodes: PlanNode[] = (data.nodes || []).map((n: PlanNode) => ({
+            const nodes: PlanNode[] = (data.nodes || []).map((n: PlanNode, i: number) => ({
                 id: n.id,
                 type: n.type,
                 title: n.title,
                 description: n.description,
                 parentId: n.parentId,
-                questions: n.questions,
+                questions: (n.questions || []).map((q: { question: string; options: string[] }, qi: number) => ({
+                    id: `q-${n.id}-${qi}`,
+                    question: q.question,
+                    options: q.options,
+                })),
             }))
 
             if (nodes.length === 0) throw new Error('No plan nodes generated')
 
             setPlanNodes(nodes)
             setSuggestedTitle(data.suggestedTitle || null)
+            setActionCount(0)
+            setAnsweredQuestions({})
+            setNodeStatuses({})
+            setGated(false)
             setPhase('canvas')
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Something went wrong')
@@ -736,14 +1197,14 @@ export function PlanningPlayground() {
         textareaRef.current?.focus()
     }
 
-    async function handleEmailSubmit() {
-        if (!emailValue.includes('@') || !emailValue.includes('.')) return
+    async function handleEmailSubmit(email: string) {
+        if (!email.includes('@') || !email.includes('.')) return
         setEmailSubmitting(true)
         try {
             await fetch('/api/waitlist', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: emailValue, prompt, appTitle: suggestedTitle || '' }),
+                body: JSON.stringify({ email, prompt, appTitle: suggestedTitle || '' }),
             })
         } catch {
             // Silently succeed to not block UX
@@ -801,7 +1262,7 @@ export function PlanningPlayground() {
                                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-xs font-medium text-blue-400 mb-5"
                                 >
                                     <Sparkles className="h-3.5 w-3.5" />
-                                    Try it now — free
+                                    Try it now -- free
                                 </motion.div>
                                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-white mb-4">
                                     Start planning{' '}
@@ -915,13 +1376,27 @@ export function PlanningPlayground() {
                                     {appTitle}
                                 </h2>
                                 <p className="text-sm text-white/40 max-w-md mx-auto">
-                                    Explore your project plan. Click any node to see details, questions, and relationships.
+                                    Explore your plan. Click nodes, answer questions, and add new items to build it out.
                                 </p>
                             </motion.div>
 
                             <InteractiveCanvas
                                 nodes={planNodes}
+                                setNodes={setPlanNodes}
                                 onContinue={() => setPhase('email')}
+                                actionCount={actionCount}
+                                onRecordAction={recordAction}
+                                answeredQuestions={answeredQuestions}
+                                onAnswerQuestion={handleAnswerQuestion}
+                                nodeStatuses={nodeStatuses}
+                                onToggleStatus={handleToggleStatus}
+                                onAddChild={handleAddChild}
+                                onEditTitle={handleEditTitle}
+                                onDeleteNode={handleDeleteNode}
+                                gated={gated}
+                                onSubmitEmail={handleEmailSubmit}
+                                emailSubmitting={emailSubmitting}
+                                appTitle={appTitle}
                             />
                         </motion.div>
                     )}
@@ -951,14 +1426,25 @@ export function PlanningPlayground() {
                                             <input
                                                 type="email"
                                                 placeholder="you@email.com"
-                                                value={emailValue}
-                                                onChange={(e) => setEmailValue(e.target.value)}
-                                                onKeyDown={(e) => { if (e.key === 'Enter') handleEmailSubmit() }}
+                                                id="email-phase-input"
+                                                onChange={(e) => {
+                                                    const el = e.target as HTMLInputElement
+                                                    el.dataset.value = el.value
+                                                }}
+                                                onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                        const el = e.target as HTMLInputElement
+                                                        handleEmailSubmit(el.value)
+                                                    }
+                                                }}
                                                 className="w-full px-4 py-3 rounded-xl border border-white/[0.1] bg-white/[0.06] text-sm text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                                                 autoFocus
                                             />
                                             <button
-                                                onClick={handleEmailSubmit}
+                                                onClick={() => {
+                                                    const el = document.getElementById('email-phase-input') as HTMLInputElement
+                                                    if (el) handleEmailSubmit(el.value)
+                                                }}
                                                 disabled={emailSubmitting}
                                                 className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-400 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-500/20"
                                             >
@@ -972,7 +1458,7 @@ export function PlanningPlayground() {
                                         </div>
 
                                         <p className="text-[10px] text-white/25 mt-4">
-                                            No credit card required · Free forever
+                                            No credit card required
                                         </p>
 
                                         <button
@@ -993,18 +1479,19 @@ export function PlanningPlayground() {
                                         </div>
                                         <h2 className="text-2xl font-bold text-white mb-2">You&apos;re in!</h2>
                                         <p className="text-sm text-white/50 mb-6">
-                                            Check your inbox at{' '}
-                                            <span className="font-medium text-white">{emailValue}</span> to access
-                                            your full project canvas for{' '}
-                                            <span className="font-medium text-white">{appTitle}</span>.
+                                            We&apos;ll send you access to continue building{' '}
+                                            <span className="font-medium text-white">{appTitle}</span> with the full planning canvas.
                                         </p>
                                         <button
                                             onClick={() => {
                                                 setPhase('input')
                                                 setPrompt('')
-                                                setEmailValue('')
                                                 setEmailSubmitted(false)
                                                 setPlanNodes([])
+                                                setActionCount(0)
+                                                setAnsweredQuestions({})
+                                                setNodeStatuses({})
+                                                setGated(false)
                                             }}
                                             className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
                                         >
