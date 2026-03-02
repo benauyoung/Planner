@@ -817,8 +817,8 @@ function InteractiveCanvas({
                 {/* SVG Canvas */}
                 <div
                     ref={svgRef}
-                    className="flex-1 overflow-auto relative"
-                    style={{ maxHeight: 400 }}
+                    className="flex-1 relative"
+                    style={{ minHeight: 300 }}
                 >
                     {/* Dot grid bg */}
                     <div
@@ -830,9 +830,9 @@ function InteractiveCanvas({
                     />
 
                     <svg
-                        viewBox={`0 0 ${Math.max(width, 500)} ${Math.max(height, 300)}`}
-                        className="relative w-full"
-                        style={{ minWidth: Math.max(width, 500), minHeight: Math.max(height, 300) }}
+                        viewBox={`-20 -20 ${Math.max(width, 500) + 40} ${Math.max(height, 300) + 40}`}
+                        className="relative w-full h-full"
+                        preserveAspectRatio="xMidYMid meet"
                         xmlns="http://www.w3.org/2000/svg"
                     >
                         {/* Edges */}

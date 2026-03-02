@@ -20,6 +20,7 @@ export function BaguetteFooter() {
                         alt="TinyBaguette"
                         width={500}
                         height={300}
+                        unoptimized
                         className="w-[320px] sm:w-[420px] lg:w-[500px] h-auto drop-shadow-2xl"
                         priority={false}
                     />
