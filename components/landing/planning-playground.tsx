@@ -226,7 +226,7 @@ function LoadingPhase() {
                     transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                 />
                 <div className="relative w-20 h-20 rounded-3xl bg-[hsl(42,35%,97%)] flex items-center justify-center m-[3px]">
-                    <Sparkles className="h-9 w-9 text-blue-400" />
+                    <Sparkles className="h-9 w-9 text-[#8BAF8A]" />
                 </div>
             </div>
             <div className="text-center">
@@ -246,7 +246,7 @@ function LoadingPhase() {
             </div>
             <div className="w-72 h-1.5 rounded-full bg-[hsl(40,18%,85%)] overflow-hidden">
                 <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-blue-400/60"
+                    className="h-full rounded-full bg-gradient-to-r from-[#4A7459] to-[#8BAF8A]/60"
                     initial={{ width: '0%' }}
                     animate={{ width: '85%' }}
                     transition={{ duration: 8, ease: 'easeOut' }}
@@ -297,7 +297,7 @@ function ActionProgress({ count, limit }: { count: number; limit: number }) {
             </span>
             <div className="w-24 h-1.5 rounded-full bg-[hsl(40,18%,85%)] overflow-hidden">
                 <motion.div
-                    className="h-full rounded-full bg-gradient-to-r from-blue-500 to-purple-500"
+                    className="h-full rounded-full bg-gradient-to-r from-[#4A7459] to-[#3a5e47]"
                     animate={{ width: `${pct}%` }}
                     transition={{ type: 'spring', stiffness: 200, damping: 25 }}
                 />
@@ -493,7 +493,7 @@ function DetailSidebar({
                         {!gated && (
                             <button
                                 onClick={() => setAddingChild(true)}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-blue-400 bg-blue-500/10 hover:bg-blue-500/20 transition-colors"
+                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-[#4A7459] bg-[#4A7459]/10 hover:bg-[#4A7459]/20 transition-colors"
                                 title="Add child node"
                             >
                                 <Plus className="h-3 w-3" />
@@ -543,7 +543,7 @@ function DetailSidebar({
                                     <button
                                         onClick={commitChild}
                                         disabled={!childDraft.trim()}
-                                        className="p-1.5 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 disabled:opacity-30 transition-colors"
+                                        className="p-1.5 rounded-lg bg-[#4A7459]/20 text-[#4A7459] hover:bg-[#4A7459]/30 disabled:opacity-30 transition-colors"
                                     >
                                         <Check className="h-3 w-3" />
                                     </button>
@@ -591,7 +591,7 @@ function DetailSidebar({
                                                         className={cn(
                                                             'flex items-center gap-2 w-full px-2.5 py-1.5 rounded-lg transition-colors text-left',
                                                             isSelected
-                                                                ? 'bg-blue-500/15 border border-blue-500/30'
+                                                                ? 'bg-[#4A7459]/15 border border-[#4A7459]/30'
                                                                 : 'bg-[hsl(40,18%,85%)]/30 hover:bg-[hsl(40,18%,85%)]/60 border border-transparent',
                                                             gated && !isSelected && 'opacity-50 cursor-not-allowed'
                                                         )}
@@ -599,7 +599,7 @@ function DetailSidebar({
                                                         <div className={cn(
                                                             'w-3.5 h-3.5 rounded-full border shrink-0 flex items-center justify-center transition-colors',
                                                             isSelected
-                                                                ? 'border-blue-400 bg-blue-500'
+                                                                ? 'border-[#4A7459] bg-[#4A7459]'
                                                                 : 'border-[hsl(40,20%,80%)]'
                                                         )}>
                                                             {isSelected && (
@@ -614,7 +614,7 @@ function DetailSidebar({
                                                         </div>
                                                         <span className={cn(
                                                             'text-[10px] transition-colors',
-                                                            isSelected ? 'text-blue-600' : 'text-[hsl(100,10%,38%)]'
+                                                            isSelected ? 'text-[#4A7459]' : 'text-[hsl(100,10%,38%)]'
                                                         )}>
                                                             {opt}
                                                         </span>
@@ -640,9 +640,9 @@ function DetailSidebar({
                 )}
 
                 {/* Sign up hint */}
-                <div className="rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/20 p-4">
+                <div className="rounded-xl bg-gradient-to-br from-[#4A7459]/10 to-[#8BAF8A]/10 border border-[#4A7459]/20 p-4">
                     <div className="flex items-start gap-2.5">
-                        <Lightbulb className="h-4 w-4 text-blue-400 shrink-0 mt-0.5" />
+                        <Lightbulb className="h-4 w-4 text-[#8BAF8A] shrink-0 mt-0.5" />
                         <div>
                             <p className="text-[11px] text-[hsl(103,18%,12%)]/70 font-medium mb-1">Want to refine this plan?</p>
                             <p className="text-[10px] text-[hsl(100,10%,38%)] leading-relaxed">
@@ -685,8 +685,8 @@ function EmailGateOverlay({
                 transition={{ delay: 0.15, type: 'spring', stiffness: 200, damping: 20 }}
                 className="relative z-10 w-full max-w-sm rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/10 p-8 text-center mx-4"
             >
-                <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-5">
-                    <Sparkles className="h-7 w-7 text-blue-400" />
+                <div className="w-14 h-14 rounded-2xl bg-[#4A7459]/10 flex items-center justify-center mx-auto mb-5">
+                    <Sparkles className="h-7 w-7 text-[#8BAF8A]" />
                 </div>
                 <h3 className="text-xl font-bold text-[hsl(103,18%,12%)] mb-2">You&apos;re on a roll!</h3>
                 <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
@@ -707,7 +707,7 @@ function EmailGateOverlay({
                     <button
                         onClick={() => onSubmitEmail(email)}
                         disabled={emailSubmitting || !email.includes('@')}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-400 disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-500/20"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-lg shadow-[#4A7459]/20"
                     >
                         {emailSubmitting ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -805,7 +805,7 @@ function InteractiveCanvas({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.6 }}
                     onClick={onContinue}
-                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-400 transition-all shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30 hover:scale-[1.02] active:scale-[0.98]"
+                    className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] transition-all shadow-lg shadow-[#4A7459]/25 hover:shadow-xl hover:shadow-[#4A7459]/30 hover:scale-[1.02] active:scale-[0.98]"
                 >
                     Continue Planning
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
@@ -1222,7 +1222,7 @@ export function PlanningPlayground() {
     return (
         <section
             id="planning-playground"
-            className="relative py-14 sm:py-20 overflow-hidden"
+            className="relative pt-24 pb-14 sm:pt-28 sm:pb-20 overflow-hidden"
         >
             {/* Background effects */}
             <div className="absolute inset-0 pointer-events-none">
@@ -1259,14 +1259,14 @@ export function PlanningPlayground() {
                                     initial={{ opacity: 0, y: 8 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ delay: 0.1 }}
-                                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 text-xs font-medium text-blue-400 mb-5"
+                                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#4A7459]/20 bg-[#4A7459]/10 text-xs font-medium text-[#4A7459] mb-5"
                                 >
                                     <Sparkles className="h-3.5 w-3.5" />
                                     Try it now -- free
                                 </motion.div>
                                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-[hsl(103,18%,12%)] mb-4">
                                     Start planning{' '}
-                                    <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                                    <span className="italic" style={{ color: '#4A7459' }}>
                                         your project
                                     </span>
                                 </h2>
@@ -1277,7 +1277,7 @@ export function PlanningPlayground() {
 
                             <div className="max-w-3xl mx-auto">
                                 <div className="relative rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/5 overflow-hidden">
-                                    <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-blue-500/10 pointer-events-none" />
+                                    <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[#4A7459]/10 pointer-events-none" />
 
                                     <div className="p-5 sm:p-7">
                                         <textarea
@@ -1306,7 +1306,7 @@ export function PlanningPlayground() {
                                             <button
                                                 onClick={handleBuild}
                                                 disabled={!prompt.trim()}
-                                                className="shrink-0 ml-3 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-400 disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-blue-500/20"
+                                                className="shrink-0 ml-3 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#4A7459]/20"
                                             >
                                                 Plan
                                                 <ArrowRight className="h-4 w-4" />
@@ -1412,8 +1412,8 @@ export function PlanningPlayground() {
                             <div className="max-w-md mx-auto">
                                 {!emailSubmitted ? (
                                     <div className="rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/5 p-8 text-center">
-                                        <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center mx-auto mb-5">
-                                            <Sparkles className="h-7 w-7 text-blue-400" />
+                                        <div className="w-14 h-14 rounded-2xl bg-[#4A7459]/10 flex items-center justify-center mx-auto mb-5">
+                                            <Sparkles className="h-7 w-7 text-[#8BAF8A]" />
                                         </div>
                                         <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">Keep building!</h2>
                                         <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
@@ -1446,7 +1446,7 @@ export function PlanningPlayground() {
                                                     if (el) handleEmailSubmit(el.value)
                                                 }}
                                                 disabled={emailSubmitting}
-                                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-blue-500 text-white text-sm font-semibold hover:bg-blue-400 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-blue-500/20"
+                                                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-[#4A7459]/20"
                                             >
                                                 {emailSubmitting ? (
                                                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -1493,7 +1493,7 @@ export function PlanningPlayground() {
                                                 setNodeStatuses({})
                                                 setGated(false)
                                             }}
-                                            className="text-sm text-blue-400 hover:text-blue-300 font-medium transition-colors"
+                                            className="text-sm text-[#4A7459] hover:text-[#3a5e47] font-medium transition-colors"
                                         >
                                             Plan another project →
                                         </button>
