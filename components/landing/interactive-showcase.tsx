@@ -589,7 +589,7 @@ export function HeroSectionNew() {
           </h1>
 
           <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed mb-10 max-w-2xl mx-auto">
-            Create your website or mobile application in minutes, then add your own AI agent.
+            Plan your project in minutes.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center gap-4 justify-center">
