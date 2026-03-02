@@ -7,9 +7,9 @@ export default function LandingPage() {
   return (
     <div className="french-editorial">
       <HeroConversion />
+      <PlanningPlayground />
       <SocialProofStrip />
       <FeaturesTabs />
-      <PlanningPlayground />
     </div>
   )
 }

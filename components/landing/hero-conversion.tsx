@@ -7,12 +7,11 @@ import { addEmailToWaitlist } from '@/services/firestore'
 import { track } from '@vercel/analytics'
 
 // ─── French editorial palette ────────────────────────────────
-// Vert d'eau · céladon · crème · parchemin
-// As seen in Milk Magazine, Marie Claire Maison, Côté Maison
+// Vert d'eau · celadon · cream · parchment
 const C = {
-    bg: '#F4F0E6',              // warm parchment / crème
+    bg: '#F4F0E6',              // warm parchment / cream
     surface: '#EDE9DE',         // slightly darker cream for blobs
-    sage: '#8BAF8A',            // vert d'eau / céladon
+    sage: '#8BAF8A',            // vert d'eau / celadon
     sageDark: '#4A7459',        // deeper sage for button
     sageLight: '#B8D4C0',       // pale mint
     text: '#1C2418',            // near-black with green undertone
@@ -47,7 +46,7 @@ function HeroEmailCapture() {
                 style={{ background: 'rgba(74,116,89,0.10)', border: '1px solid rgba(74,116,89,0.30)', color: C.sageDark }}
             >
                 <Check className="h-4 w-4" />
-                <span>Parfait — vous êtes sur la liste.</span>
+                <span>You&apos;re on the list!</span>
             </div>
         )
     }
@@ -57,7 +56,7 @@ function HeroEmailCapture() {
             <div className="flex gap-2">
                 <input
                     type="email"
-                    placeholder="votre@email.com"
+                    placeholder="you@email.com"
                     value={email}
                     onChange={(e) => { setEmail(e.target.value); if (status === 'error') setStatus('idle') }}
                     className="flex-1 px-4 py-3.5 rounded-xl text-sm focus:outline-none transition-all"
@@ -82,15 +81,15 @@ function HeroEmailCapture() {
                     {status === 'loading' ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                        <>Rejoindre <ArrowRight className="h-3.5 w-3.5" /></>
+                        <>Join <ArrowRight className="h-3.5 w-3.5" /></>
                     )}
                 </button>
             </div>
             {status === 'error' && (
-                <p className="text-xs mt-2 text-center" style={{ color: 'rgb(180,60,60)' }}>Email invalide — réessayez.</p>
+                <p className="text-xs mt-2 text-center" style={{ color: 'rgb(180,60,60)' }}>Invalid email — please try again.</p>
             )}
             <p className="text-[11px] mt-2.5 text-center tracking-wide" style={{ color: C.muted }}>
-                Gratuit · Sans carte · Rejoignez 500+ créatrices
+                Free &middot; No credit card &middot; Join 500+ creators
             </p>
         </form>
     )
@@ -115,7 +114,7 @@ function LightBg() {
                 transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
             />
 
-            {/* Blush/rose blob — top right (feminine warmth) */}
+            {/* Blush/rose blob — top right */}
             <motion.div
                 className="absolute rounded-full"
                 style={{
@@ -195,7 +194,7 @@ export function HeroConversion() {
                         className="font-light uppercase"
                         style={{ fontSize: 10, color: C.sage, letterSpacing: '0.3em' }}
                     >
-                        Paris · Fait pour vous · 2026
+                        Paris &middot; Made for you &middot; 2026
                     </span>
                     <div className="h-px w-8" style={{ background: C.sage + '60' }} />
                 </div>
@@ -205,7 +204,7 @@ export function HeroConversion() {
                     className="font-extrabold tracking-tight leading-[1.04] mb-5"
                     style={{ fontSize: 'clamp(3rem, 9vw, 7rem)', color: C.text }}
                 >
-                    <span className="block">Grandes idées.</span>
+                    <span className="block">Big ideas.</span>
                     <span
                         className="block italic"
                         style={{
@@ -224,8 +223,8 @@ export function HeroConversion() {
                     className="text-lg sm:text-xl max-w-xl leading-relaxed mb-8 font-light"
                     style={{ color: C.subtext }}
                 >
-                    Votre idée mérite d’exister. Créez votre boutique,
-                    portfolio ou app en quelques minutes — sans coder.
+                    Your idea deserves to exist. Build your store,
+                    portfolio, or app in minutes &mdash; no coding needed.
                 </p>
 
                 {/* Email capture */}
@@ -240,7 +239,7 @@ export function HeroConversion() {
                         onMouseEnter={e => (e.currentTarget.style.color = C.sageDark)}
                         onMouseLeave={e => (e.currentTarget.style.color = C.muted)}
                     >
-                        Voir comment ça marche
+                        See how it works
                         <ChevronDown className="h-3.5 w-3.5" />
                     </a>
                 </div>

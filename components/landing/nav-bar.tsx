@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 export function LandingNavBar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [lang, setLang] = useState<'en' | 'fr'>('en')
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 10)
@@ -48,6 +49,13 @@ export function LandingNavBar() {
             >
               Get Started
             </a>
+            <button
+              onClick={() => setLang(lang === 'en' ? 'fr' : 'en')}
+              className="ml-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
+              title={lang === 'en' ? 'Switch to French' : 'Switch to English'}
+            >
+              {lang === 'en' ? 'FR' : 'EN'}
+            </button>
           </div>
 
           {/* Mobile toggle */}
@@ -92,6 +100,12 @@ export function LandingNavBar() {
               >
                 Get Started
               </a>
+              <button
+                onClick={() => setLang(lang === 'en' ? 'fr' : 'en')}
+                className="block w-full text-center px-4 py-2 rounded-lg text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
+              >
+                {lang === 'en' ? 'FR' : 'EN'}
+              </button>
             </div>
           </motion.div>
         )}
