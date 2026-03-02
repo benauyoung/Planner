@@ -12,6 +12,7 @@ import {
   type OnEdgesChange,
   type OnConnect,
   type OnSelectionChangeFunc,
+  type NodeChange,
   applyNodeChanges,
   applyEdgeChanges,
   BackgroundVariant,
@@ -24,9 +25,12 @@ import { nodeTypes } from './nodes/node-types'
 import { CanvasToolbar } from './canvas-toolbar'
 import { NodeContextMenu } from './context-menu/node-context-menu'
 import { PaneContextMenu } from './context-menu/pane-context-menu'
+import { SmartGuidesOverlay } from './smart-guides-overlay'
 import { NODE_CONFIG } from '@/lib/constants'
 import { getBlastRadius } from '@/lib/blast-radius'
 import { springLayout } from '@/lib/canvas-physics'
+import { snapToGridPosition, computeSmartGuides, type GuideLine } from '@/lib/canvas-guides'
+import { createSpringSimulation, type SpringSimulation } from '@/lib/canvas-physics-animated'
 import { BulkActionsBar } from './bulk-actions-bar'
 import { TerritorySyncPanel } from './territory-sync-panel'
 import type { NodeType } from '@/types/project'
@@ -48,6 +52,7 @@ export function GraphCanvas() {
     position: { x: number; y: number }
     canvasPosition: { x: number; y: number }
   } | null>(null)
+  const [smartGuides, setSmartGuides] = useState<GuideLine[]>([])
   const connectNodes = useProjectStore((s) => s.connectNodes)
   const addDependencyEdge = useProjectStore((s) => s.addDependencyEdge)
   const currentProject = useProjectStore((s) => s.currentProject)
@@ -58,6 +63,15 @@ export function GraphCanvas() {
   const pendingEdge = useUIStore((s) => s.pendingEdge)
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const setSelectedNodes = useUIStore((s) => s.setSelectedNodes)
+  const minimapOpen = useUIStore((s) => s.minimapOpen)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const gridSize = useUIStore((s) => s.gridSize)
+  const showSmartGuides = useUIStore((s) => s.showSmartGuides)
+  const layoutMode = useUIStore((s) => s.layoutMode)
+  const setSpringSimulationRunning = useUIStore((s) => s.setSpringSimulationRunning)
+
+  // Animated spring simulation ref
+  const simulationRef = useRef<SpringSimulation | null>(null)
 
   // Compute blast radius affected node IDs
   const blastRadiusIds = useCallback(() => {
@@ -128,12 +142,77 @@ export function GraphCanvas() {
     }, 50)
   }, [selectedNodeId, flowNodes, flowEdges, fitView])
 
+  // Stop spring simulation on unmount or layout mode change away from spring
+  useEffect(() => {
+    if (layoutMode !== 'spring' && simulationRef.current?.isRunning()) {
+      simulationRef.current.stop()
+      setSpringSimulationRunning(false)
+    }
+  }, [layoutMode, setSpringSimulationRunning])
+
+  useEffect(() => {
+    return () => {
+      if (simulationRef.current?.isRunning()) {
+        simulationRef.current.stop()
+      }
+    }
+  }, [])
+
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
-      const updated = applyNodeChanges(changes, flowNodes) as typeof flowNodes
+      // Intercept position changes for snap-to-grid and smart guides
+      const processedChanges = changes.map((change) => {
+        if (change.type !== 'position' || !change.position) return change
+
+        const posChange = change as NodeChange & { dragging?: boolean; position?: { x: number; y: number }; id: string }
+        if (!posChange.dragging || !posChange.position) return change
+
+        if (snapToGrid) {
+          const snapped = snapToGridPosition(posChange.position.x, posChange.position.y, gridSize)
+          return { ...posChange, position: snapped }
+        }
+
+        if (showSmartGuides) {
+          // Find the dragged node to get its dimensions
+          const draggedFlowNode = flowNodes.find((n) => n.id === posChange.id)
+          if (draggedFlowNode) {
+            const width = (draggedFlowNode.measured?.width ?? draggedFlowNode.width) || 200
+            const height = (draggedFlowNode.measured?.height ?? draggedFlowNode.height) || 100
+            const draggedRect = {
+              x: posChange.position.x,
+              y: posChange.position.y,
+              width,
+              height,
+            }
+            const otherRects = flowNodes
+              .filter((n) => n.id !== posChange.id)
+              .map((n) => ({
+                x: n.position.x,
+                y: n.position.y,
+                width: (n.measured?.width ?? n.width) || 200,
+                height: (n.measured?.height ?? n.height) || 100,
+              }))
+            const { guides, snappedPosition } = computeSmartGuides(draggedRect, otherRects)
+            setSmartGuides(guides)
+            return { ...posChange, position: snappedPosition }
+          }
+        }
+
+        return change
+      })
+
+      // Clear smart guides when drag ends
+      const anyDragEnd = changes.some(
+        (c) => c.type === 'position' && (c as NodeChange & { dragging?: boolean }).dragging === false
+      )
+      if (anyDragEnd) {
+        setSmartGuides([])
+      }
+
+      const updated = applyNodeChanges(processedChanges, flowNodes) as typeof flowNodes
       setFlowNodes(updated)
     },
-    [flowNodes, setFlowNodes]
+    [flowNodes, setFlowNodes, snapToGrid, gridSize, showSmartGuides]
   )
 
   const onEdgesChange: OnEdgesChange = useCallback(
@@ -156,6 +235,58 @@ export function GraphCanvas() {
     setFlowNodes(updated)
     setTimeout(() => fitView({ padding: 0.2 }), 50)
   }, [flowNodes, flowEdges, setFlowNodes, fitView])
+
+  // Animated spring layout toggle
+  const handleAnimatedSpring = useCallback(() => {
+    if (simulationRef.current?.isRunning()) {
+      simulationRef.current.stop()
+      setSpringSimulationRunning(false)
+      return
+    }
+
+    if (!simulationRef.current) {
+      simulationRef.current = createSpringSimulation()
+    }
+
+    setSpringSimulationRunning(true)
+    simulationRef.current.start(
+      flowNodes,
+      flowEdges,
+      (updatedNodes) => {
+        setFlowNodes(updatedNodes)
+      },
+      () => {
+        setSpringSimulationRunning(false)
+        setTimeout(() => fitView({ padding: 0.2, duration: 400 }), 50)
+      }
+    )
+  }, [flowNodes, flowEdges, setFlowNodes, setSpringSimulationRunning, fitView])
+
+  // Drag handlers for pinning nodes during animated spring
+  const handleNodeDragStart = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (simulationRef.current?.isRunning()) {
+        simulationRef.current.pinNode(node.id, node.position)
+      }
+    },
+    []
+  )
+
+  const handleNodeDrag = useCallback(
+    (_event: React.MouseEvent, node: Node) => {
+      if (simulationRef.current?.isRunning()) {
+        simulationRef.current.updatePinnedPosition(node.id, node.position)
+      }
+    },
+    []
+  )
+
+  const handleNodeDragStop = useCallback(
+    (_event: React.MouseEvent, _node: Node) => {
+      // Keep pinned for remainder of simulation -- don't unpin
+    },
+    []
+  )
 
   const onConnect: OnConnect = useCallback(
     (connection) => {
@@ -229,6 +360,9 @@ export function GraphCanvas() {
         onPaneClick={handlePaneClick}
         onPaneContextMenu={handlePaneContextMenu}
         onNodeContextMenu={handleNodeContextMenu}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
+        onNodeDragStop={handleNodeDragStop}
         nodeTypes={nodeTypes}
         connectOnClick={false}
         selectionOnDrag
@@ -245,21 +379,31 @@ export function GraphCanvas() {
         maxZoom={2}
         proOptions={{ hideAttribution: true }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
-        <Controls showInteractive={false} />
-        <MiniMap
-          nodeColor={(node) => {
-            const nodeType = (node.data?.nodeType || node.type) as NodeType
-            return NODE_CONFIG[nodeType]?.color || '#888'
-          }}
-          maskColor="rgba(0,0,0,0.1)"
-          pannable
-          zoomable
+        <Background
+          variant={snapToGrid ? BackgroundVariant.Lines : BackgroundVariant.Dots}
+          gap={snapToGrid ? gridSize : 20}
+          size={snapToGrid ? 0.5 : 1}
         />
+        <Controls showInteractive={false} />
+        {minimapOpen && (
+          <MiniMap
+            nodeColor={(node) => {
+              const nodeType = (node.data?.nodeType || node.type) as NodeType
+              return NODE_CONFIG[nodeType]?.color || '#888'
+            }}
+            maskColor="rgba(0,0,0,0.1)"
+            pannable
+            zoomable
+          />
+        )}
       </ReactFlow>
+      {showSmartGuides && !snapToGrid && smartGuides.length > 0 && (
+        <SmartGuidesOverlay guides={smartGuides} />
+      )}
       <CanvasToolbar
         onReLayout={handleReLayout}
         onSpringLayout={handleSpringLayout}
+        onAnimatedSpring={handleAnimatedSpring}
         onToggleTerritorySync={() => setTerritorySyncOpen((p) => !p)}
         territorySyncOpen={territorySyncOpen}
       />

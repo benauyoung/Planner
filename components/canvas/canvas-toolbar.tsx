@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks, Atom, FolderSync } from 'lucide-react'
+import { Maximize2, LayoutGrid, ChevronsDownUp, ChevronsUpDown, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks, Atom, FolderSync, Map, Grid3x3 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -17,11 +17,12 @@ import type { LayoutMode } from '@/stores/ui-store'
 interface CanvasToolbarProps {
   onReLayout: () => void
   onSpringLayout?: () => void
+  onAnimatedSpring?: () => void
   onToggleTerritorySync?: () => void
   territorySyncOpen?: boolean
 }
 
-export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySync, territorySyncOpen }: CanvasToolbarProps) {
+export function CanvasToolbar({ onReLayout, onSpringLayout, onAnimatedSpring, onToggleTerritorySync, territorySyncOpen }: CanvasToolbarProps) {
   const { fitView } = useReactFlow()
   const currentProject = useProjectStore((s) => s.currentProject)
   const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
@@ -35,6 +36,11 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
   const setPrdPipelineOpen = useUIStore((s) => s.setPrdPipelineOpen)
   const layoutMode = useUIStore((s) => s.layoutMode)
   const setLayoutMode = useUIStore((s) => s.setLayoutMode)
+  const minimapOpen = useUIStore((s) => s.minimapOpen)
+  const setMinimapOpen = useUIStore((s) => s.setMinimapOpen)
+  const snapToGrid = useUIStore((s) => s.snapToGrid)
+  const setSnapToGrid = useUIStore((s) => s.setSnapToGrid)
+  const springSimulationRunning = useUIStore((s) => s.springSimulationRunning)
 
   const prdSummary = currentProject ? getProjectPrdSummary(currentProject) : null
 
@@ -199,6 +205,19 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         <Atom className="h-4 w-4" />
       </Button>
       <Button
+        variant={springSimulationRunning ? 'default' : 'outline'}
+        size="icon"
+        className={springSimulationRunning ? 'animate-pulse' : ''}
+        onClick={() => {
+          setLayoutMode('spring')
+          if (onAnimatedSpring) onAnimatedSpring()
+        }}
+        title={springSimulationRunning ? 'Stop spring simulation' : 'Animated spring layout'}
+        aria-label={springSimulationRunning ? 'Stop spring simulation' : 'Animated spring layout'}
+      >
+        <Atom className="h-4 w-4" />
+      </Button>
+      <Button
         variant="outline"
         size="icon"
         onClick={handleExpandAll}
@@ -251,6 +270,24 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         aria-label="Territory Sync (Markdown files)"
       >
         <FolderSync className="h-4 w-4" />
+      </Button>
+      <Button
+        variant={minimapOpen ? 'default' : 'outline'}
+        size="icon"
+        onClick={() => setMinimapOpen(!minimapOpen)}
+        title={minimapOpen ? 'Hide minimap' : 'Show minimap'}
+        aria-label={minimapOpen ? 'Hide minimap' : 'Show minimap'}
+      >
+        <Map className="h-4 w-4" />
+      </Button>
+      <Button
+        variant={snapToGrid ? 'default' : 'outline'}
+        size="icon"
+        onClick={() => setSnapToGrid(!snapToGrid)}
+        title={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid (Ctrl+G)'}
+        aria-label={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid (Ctrl+G)'}
+      >
+        <Grid3x3 className="h-4 w-4" />
       </Button>
       <div className="h-px bg-border my-1" />
       <div className="relative" ref={exportRef}>

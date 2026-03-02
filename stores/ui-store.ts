@@ -30,6 +30,11 @@ interface UIState {
   prdPipelineOpen: boolean
   territorySyncOpen: boolean
   layoutMode: LayoutMode
+  minimapOpen: boolean
+  snapToGrid: boolean
+  gridSize: number
+  showSmartGuides: boolean
+  springSimulationRunning: boolean
   setTheme: (theme: 'light' | 'dark') => void
   selectNode: (nodeId: string | null) => void
   toggleNodeSelection: (nodeId: string) => void
@@ -56,6 +61,11 @@ interface UIState {
   setPrdPipelineOpen: (open: boolean) => void
   setTerritorySyncOpen: (open: boolean) => void
   setLayoutMode: (mode: LayoutMode) => void
+  setMinimapOpen: (open: boolean) => void
+  setSnapToGrid: (on: boolean) => void
+  setGridSize: (size: number) => void
+  setShowSmartGuides: (on: boolean) => void
+  setSpringSimulationRunning: (running: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -77,6 +87,11 @@ export const useUIStore = create<UIState>((set) => ({
   prdPipelineOpen: false,
   territorySyncOpen: false,
   layoutMode: 'dagre' as LayoutMode,
+  minimapOpen: true,
+  snapToGrid: false,
+  gridSize: 20,
+  showSmartGuides: true,
+  springSimulationRunning: false,
   setTheme: (theme) => set({ theme }),
   selectNode: (nodeId) =>
     set({ selectedNodeId: nodeId, selectedNodeIds: nodeId ? new Set([nodeId]) : new Set(), detailPanelOpen: nodeId !== null }),
@@ -122,4 +137,9 @@ export const useUIStore = create<UIState>((set) => ({
   setPrdPipelineOpen: (open) => set({ prdPipelineOpen: open }),
   setTerritorySyncOpen: (open) => set({ territorySyncOpen: open }),
   setLayoutMode: (mode) => set({ layoutMode: mode }),
+  setMinimapOpen: (open) => set({ minimapOpen: open }),
+  setSnapToGrid: (on) => set({ snapToGrid: on }),
+  setGridSize: (size) => set({ gridSize: size }),
+  setShowSmartGuides: (on) => set({ showSmartGuides: on }),
+  setSpringSimulationRunning: (running) => set({ springSimulationRunning: running }),
 }))

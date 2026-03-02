@@ -172,6 +172,63 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
       // Don't handle other shortcuts when typing in inputs
       if (isInput) return
 
+      // Ctrl+G — toggle snap to grid
+      if (mod && e.key === 'g') {
+        e.preventDefault()
+        const ui = useUIStore.getState()
+        ui.setSnapToGrid(!ui.snapToGrid)
+        return
+      }
+
+      // Arrow keys — nudge selected node(s)
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        const ui = useUIStore.getState()
+        const store = useProjectStore.getState()
+        const ids = ui.selectedNodeIds.size > 0
+          ? Array.from(ui.selectedNodeIds)
+          : ui.selectedNodeId ? [ui.selectedNodeId] : []
+        if (ids.length === 0) return
+
+        e.preventDefault()
+        const snapOn = ui.snapToGrid
+        const grid = ui.gridSize
+        const smallStep = snapOn ? grid : 10
+        const bigStep = snapOn ? grid * 5 : 50
+        const step = e.shiftKey ? bigStep : smallStep
+
+        const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0
+        const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0
+
+        const updated = store.flowNodes.map((n) => {
+          if (!ids.includes(n.id)) return n
+          return { ...n, position: { x: n.position.x + dx, y: n.position.y + dy } }
+        })
+        store.setFlowNodes(updated)
+        return
+      }
+
+      // Tab / Shift+Tab — cycle through nodes
+      if (e.key === 'Tab') {
+        const store = useProjectStore.getState()
+        const ui = useUIStore.getState()
+        if (store.flowNodes.length === 0) return
+
+        e.preventDefault()
+        const currentIdx = ui.selectedNodeId
+          ? store.flowNodes.findIndex((n) => n.id === ui.selectedNodeId)
+          : -1
+
+        let nextIdx: number
+        if (e.shiftKey) {
+          nextIdx = currentIdx <= 0 ? store.flowNodes.length - 1 : currentIdx - 1
+        } else {
+          nextIdx = currentIdx >= store.flowNodes.length - 1 ? 0 : currentIdx + 1
+        }
+
+        ui.selectNode(store.flowNodes[nextIdx].id)
+        return
+      }
+
       // ? — shortcuts help
       if (e.key === '?' && !mod) {
         e.preventDefault()

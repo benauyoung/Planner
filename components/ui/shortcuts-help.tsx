@@ -22,6 +22,11 @@ const SHORTCUT_GROUPS = [
       { keys: ['⌘', 'B'], desc: 'Toggle blast radius' },
       { keys: ['⌘', 'E'], desc: 'Toggle detail panel' },
       { keys: ['⌘', 'J'], desc: 'Toggle chat panel' },
+      { keys: ['⌘', 'G'], desc: 'Toggle snap to grid' },
+      { keys: ['←', '→', '↑', '↓'], desc: 'Nudge selected node (10px)' },
+      { keys: ['⇧', '←', '→', '↑', '↓'], desc: 'Nudge selected node (50px)' },
+      { keys: ['Tab'], desc: 'Cycle to next node' },
+      { keys: ['⇧', 'Tab'], desc: 'Cycle to previous node' },
     ],
   },
   {
