@@ -70,7 +70,7 @@ export function FeaturesGrid() {
               transition={{ duration: 0.4, delay: i * 0.08 }}
               className="group p-6 rounded-xl border bg-background hover:shadow-lg hover:border-primary/30 transition-all duration-300"
             >
-              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors">
+              <div className="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors" aria-hidden="true">
                 <feature.icon className="h-5 w-5 text-primary" />
               </div>
               <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>

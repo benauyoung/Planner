@@ -196,6 +196,7 @@ function PageChat({
             onClick={() => undoPageHtml(page.id)}
             className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded hover:bg-muted"
             title="Undo last change"
+            aria-label="Undo last edit"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </button>
@@ -302,9 +303,10 @@ function PageChat({
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
             placeholder="Tell Baguette what to change..."
             className="flex-1 h-8 px-3 text-xs bg-muted rounded-lg border-0 outline-none focus:ring-1 focus:ring-primary"
+            aria-label="Chat message for design edits"
             disabled={loading}
           />
-          <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => handleSend()} disabled={!input.trim() || loading}>
+          <Button size="icon" className="h-8 w-8 shrink-0" onClick={() => handleSend()} disabled={!input.trim() || loading} aria-label="Send message">
             <Send className="h-3.5 w-3.5" />
           </Button>
         </div>
@@ -785,6 +787,8 @@ export function DesignView() {
                     : 'text-muted-foreground hover:text-foreground'
                 )}
                 title={VIEWPORT_SIZES[size].label}
+                aria-label={VIEWPORT_SIZES[size].label}
+                aria-pressed={viewport === size}
               >
                 <Icon className="h-3.5 w-3.5" />
               </button>
@@ -803,6 +807,8 @@ export function DesignView() {
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="Single page view"
+            aria-label="Single page view"
+            aria-pressed={designMode === 'single'}
           >
             <AppWindow className="h-3.5 w-3.5" />
           </button>
@@ -815,6 +821,8 @@ export function DesignView() {
                 : 'text-muted-foreground hover:text-foreground'
             )}
             title="All pages canvas"
+            aria-label="All pages canvas"
+            aria-pressed={designMode === 'canvas'}
           >
             <LayoutGrid className="h-3.5 w-3.5" />
           </button>
@@ -841,6 +849,7 @@ export function DesignView() {
               onClick={() => setAddPageOpen(true)}
               className="h-7 w-7 flex items-center justify-center rounded-md hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
               title="Add a new page"
+              aria-label="Add a new page"
             >
               <Plus className="h-3.5 w-3.5" />
             </button>

@@ -432,16 +432,16 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
 
   return (
     <ReactFlowProvider>
-      <div className="h-full flex flex-col">
+      <main className="h-full flex flex-col">
         {/* Project Toolbar — always visible */}
-        <ProjectToolbar
+        <nav aria-label="Project navigation"><ProjectToolbar
           chatOpen={chatOpen}
           onToggleChat={() => setChatOpen((prev) => !prev)}
           onOpenTeamManager={() => setTeamManagerOpen(true)}
           onOpenSmartSuggestions={() => { setSmartPanelOpen(true); smartAnalyze() }}
           onOpenVersionHistory={() => setVersionHistoryOpen(true)}
           onOpenIntegrations={() => setIntegrationsOpen(true)}
-        />
+        /></nav>
 
         <div className="flex-1 flex min-h-0">
           {/* Chat Panel */}
@@ -453,6 +453,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ type: 'spring', damping: 25, stiffness: 250 }}
                 className="border-r overflow-hidden shrink-0"
+                aria-label="Planning chat"
               >
                 <div className="w-96 h-full">
                   <PlanningChat />
@@ -528,7 +529,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
             />
           )}
         </div>
-      </div>
+      </main>
       <CommandPalette
         open={commandPaletteOpen}
         onClose={() => useUIStore.getState().closeCommandPalette()}

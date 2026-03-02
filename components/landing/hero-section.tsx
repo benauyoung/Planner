@@ -109,7 +109,7 @@ function NodeStrip() {
             className="relative mx-auto w-full max-w-lg overflow-hidden"
             style={{ height: 92 }}
         >
-            <svg viewBox="0 0 480 88" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+            <svg viewBox="0 0 480 88" className="w-full h-full" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Project planning node graph">
                 {/* Edges */}
                 {EDGES.map((e, i) => {
                     const fromNode = HERO_NODES.find(n => n.id === e.from)!

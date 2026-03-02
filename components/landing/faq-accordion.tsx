@@ -63,6 +63,7 @@ export function FaqAccordion() {
                   className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left hover:bg-muted/40 transition-colors"
                   onClick={() => setOpen(isOpen ? null : i)}
                   aria-expanded={isOpen}
+                  aria-controls={`faq-${i}`}
                 >
                   <span className="font-medium text-base">{faq.q}</span>
                   {isOpen ? (
@@ -75,6 +76,7 @@ export function FaqAccordion() {
                 <AnimatePresence initial={false}>
                   {isOpen && (
                     <motion.div
+                      id={`faq-${i}`}
                       key="content"
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: 'auto', opacity: 1 }}

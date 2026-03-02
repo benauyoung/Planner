@@ -45,10 +45,13 @@ export function Dialog({ open, onClose, children, className }: DialogProps) {
           'animate-in fade-in-0 zoom-in-95',
           className
         )}
+        role="dialog"
+        aria-modal="true"
       >
         <button
           onClick={onClose}
           className="absolute right-4 top-4 p-1 rounded-sm hover:bg-accent transition-colors"
+          aria-label="Close dialog"
         >
           <X className="h-4 w-4" />
         </button>

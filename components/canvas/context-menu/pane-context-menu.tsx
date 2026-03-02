@@ -135,6 +135,8 @@ export function PaneContextMenu({ position, canvasPosition, onClose }: PaneConte
       transition={{ duration: 0.1 }}
       className="fixed z-50 min-w-[200px] rounded-lg border bg-background/95 backdrop-blur-sm shadow-lg py-1.5"
       style={menuStyle}
+      role="menu"
+      aria-label="Canvas actions"
     >
       <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         Add Node
@@ -156,6 +158,7 @@ export function PaneContextMenu({ position, canvasPosition, onClose }: PaneConte
               <button
                 className="flex items-center gap-2.5 flex-1 px-3 py-1.5 text-sm hover:bg-accent transition-colors"
                 onClick={() => handleCreate(type, false)}
+                role="menuitem"
               >
                 <div style={{ color: NODE_CONFIG[type].color }}>{icon}</div>
                 <span>{NODE_CONFIG[type].label}</span>
@@ -165,6 +168,7 @@ export function PaneContextMenu({ position, canvasPosition, onClose }: PaneConte
                   className="px-2 py-1.5 hover:bg-accent transition-colors group/connect"
                   onClick={() => handleCreate(type, true)}
                   title={`Auto-connect to "${parentNode.title}"`}
+                  role="menuitem"
                 >
                   <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover/connect:text-primary transition-colors" />
                 </button>

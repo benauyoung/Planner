@@ -225,7 +225,7 @@ export function CommandPalette({ open, onClose, reLayout, fitView, toggleChat }:
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             transition={{ duration: 0.15 }}
           >
-            <div className="bg-background border rounded-xl shadow-2xl overflow-hidden">
+            <div className="bg-background border rounded-xl shadow-2xl overflow-hidden" role="dialog" aria-modal="true">
               {/* Search input */}
               <div className="flex items-center gap-3 px-4 py-3 border-b">
                 <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -237,6 +237,7 @@ export function CommandPalette({ open, onClose, reLayout, fitView, toggleChat }:
                   onKeyDown={handleKeyDown}
                   placeholder="Type a command or search..."
                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  aria-label="Search commands"
                   autoComplete="off"
                   spellCheck={false}
                 />
@@ -246,7 +247,7 @@ export function CommandPalette({ open, onClose, reLayout, fitView, toggleChat }:
               </div>
 
               {/* Command list */}
-              <div ref={listRef} className="max-h-80 overflow-y-auto py-2">
+              <div ref={listRef} className="max-h-80 overflow-y-auto py-2" role="listbox">
                 {grouped.length === 0 && (
                   <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                     No matching commands
@@ -265,6 +266,7 @@ export function CommandPalette({ open, onClose, reLayout, fitView, toggleChat }:
                         <button
                           key={cmd.id}
                           data-selected={isSelected}
+                          role="option"
                           className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors ${
                             isSelected
                               ? 'bg-primary/10 text-primary'

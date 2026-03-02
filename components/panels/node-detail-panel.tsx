@@ -356,7 +356,7 @@ export function NodeDetailPanel() {
               <Badge className={NODE_CONFIG[node.type].badgeClass}>
                 {NODE_CONFIG[node.type].label}
               </Badge>
-              <Button variant="ghost" size="icon" onClick={closeDetailPanel}>
+              <Button variant="ghost" size="icon" onClick={closeDetailPanel} aria-label="Close">
                 <X className="h-4 w-4" />
               </Button>
             </div>
@@ -416,6 +416,7 @@ export function NodeDetailPanel() {
                             return next
                           })}
                           className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-accent/50 transition-colors"
+                          aria-expanded={isExpanded}
                         >
                           <div className="flex items-center gap-1.5">
                             {isExpanded ? (
@@ -493,6 +494,7 @@ export function NodeDetailPanel() {
                                     value={q.answer}
                                     onChange={(e) => answerNodeQuestion(node.id, q.id, e.target.value)}
                                     placeholder="Type your answer..."
+                                    aria-label={`Answer for: ${q.question}`}
                                     rows={2}
                                     className="w-full text-xs px-2 py-1.5 rounded-md border bg-background text-foreground resize-none focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground/60 ml-5"
                                     style={{ width: 'calc(100% - 1.25rem)' }}
@@ -544,7 +546,7 @@ export function NodeDetailPanel() {
                     placeholder="Type your own question or note..."
                     className="flex-1 text-xs px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
                   />
-                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAddCustomQuestion} disabled={!customQuestion.trim()}>
+                  <Button size="sm" variant="ghost" className="h-7 px-2" onClick={handleAddCustomQuestion} disabled={!customQuestion.trim()} aria-label="Add custom question">
                     <Plus className="h-3.5 w-3.5" />
                   </Button>
                   <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => { setShowCustomInput(false); setCustomQuestion('') }}>
@@ -690,6 +692,7 @@ export function NodeDetailPanel() {
                         value={prdContent}
                         onChange={(e) => setPrdContent(e.target.value)}
                         placeholder="Write your PRD content here..."
+                        aria-label="Edit PRD content"
                         rows={8}
                         className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                       />
@@ -748,6 +751,7 @@ export function NodeDetailPanel() {
                     value={prdContent}
                     onChange={(e) => setPrdContent(e.target.value)}
                     placeholder="Write your PRD content here..."
+                    aria-label="New PRD content"
                     rows={8}
                     className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                   />
@@ -845,6 +849,7 @@ export function NodeDetailPanel() {
                         value={promptContent}
                         onChange={(e) => setPromptContent(e.target.value)}
                         placeholder="Write your prompt here..."
+                        aria-label="Edit prompt content"
                         rows={6}
                         className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                       />
@@ -882,6 +887,7 @@ export function NodeDetailPanel() {
                     value={promptContent}
                     onChange={(e) => setPromptContent(e.target.value)}
                     placeholder="Write your prompt here..."
+                    aria-label="New prompt content"
                     rows={6}
                     className="w-full text-sm px-2 py-1.5 rounded-md border bg-background text-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-y font-mono"
                   />
@@ -937,6 +943,9 @@ export function NodeDetailPanel() {
                     'border-2 border-dashed rounded-lg p-4 text-center transition-colors cursor-pointer mb-2',
                     isDragging ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-muted-foreground/50'
                   )}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Upload image"
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={(e) => { e.preventDefault(); setIsDragging(true) }}
                   onDragLeave={() => setIsDragging(false)}
@@ -979,6 +988,7 @@ export function NodeDetailPanel() {
                     size="sm" variant="ghost" className="h-8 px-2"
                     disabled={!imageUrl.trim()}
                     onClick={() => { if (imageUrl.trim()) { addNodeImage(node.id, imageUrl.trim()); setImageUrl('') } }}
+                    aria-label="Add image from URL"
                   >
                     <ImagePlus className="h-3.5 w-3.5" />
                   </Button>
@@ -1018,14 +1028,15 @@ export function NodeDetailPanel() {
               {children.length > 0 && !node.collapsed && (
                 <div className="space-y-1">
                   {children.map((child) => (
-                    <div
+                    <button
+                      type="button"
                       key={child.id}
-                      className="text-sm flex items-center gap-2 p-1.5 rounded hover:bg-accent cursor-pointer"
+                      className="text-sm flex items-center gap-2 p-1.5 rounded hover:bg-accent cursor-pointer w-full text-left"
                       onClick={() => useUIStore.getState().selectNode(child.id)}
                     >
                       <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[child.status])} />
                       {child.title}
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -1066,13 +1077,14 @@ export function NodeDetailPanel() {
 
             {/* Actions */}
             <div className="mt-6 pt-4 border-t flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1" onClick={handleDuplicate}>
+              <Button variant="outline" size="sm" className="flex-1" onClick={handleDuplicate} aria-label="Duplicate node">
                 <Copy className="h-4 w-4" />
                 Duplicate
               </Button>
               <Button
                 variant="destructive" size="sm" className="flex-1"
                 onClick={() => { deleteNode(node.id); closeDetailPanel() }}
+                aria-label="Delete node"
               >
                 <Trash2 className="h-4 w-4" />
                 Delete

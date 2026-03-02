@@ -154,6 +154,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         onClick={undo}
         disabled={!canUndo}
         title="Undo (Ctrl+Z)"
+        aria-label="Undo (Ctrl+Z)"
       >
         <Undo2 className="h-4 w-4" />
       </Button>
@@ -163,6 +164,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         onClick={redo}
         disabled={!canRedo}
         title="Redo (Ctrl+Shift+Z)"
+        aria-label="Redo (Ctrl+Shift+Z)"
       >
         <Redo2 className="h-4 w-4" />
       </Button>
@@ -171,6 +173,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         size="icon"
         onClick={() => fitView({ padding: 0.2 })}
         title="Fit view"
+        aria-label="Fit view"
       >
         <Maximize2 className="h-4 w-4" />
       </Button>
@@ -179,6 +182,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         size="icon"
         onClick={() => { setLayoutMode('dagre'); onReLayout() }}
         title="Dagre layout (tree)"
+        aria-label="Dagre layout (tree)"
       >
         <LayoutGrid className="h-4 w-4" />
       </Button>
@@ -190,6 +194,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
           if (onSpringLayout) onSpringLayout()
         }}
         title="Spring layout (force-directed)"
+        aria-label="Spring layout (force-directed)"
       >
         <Atom className="h-4 w-4" />
       </Button>
@@ -198,6 +203,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         size="icon"
         onClick={handleExpandAll}
         title="Expand all"
+        aria-label="Expand all"
       >
         <ChevronsUpDown className="h-4 w-4" />
       </Button>
@@ -206,6 +212,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         size="icon"
         onClick={handleCollapseAll}
         title="Collapse all"
+        aria-label="Collapse all"
       >
         <ChevronsDownUp className="h-4 w-4" />
       </Button>
@@ -214,6 +221,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         size="icon"
         onClick={() => setBlastRadiusMode(!blastRadiusMode)}
         title={blastRadiusMode ? 'Hide blast radius' : 'Show blast radius'}
+        aria-label={blastRadiusMode ? 'Hide blast radius' : 'Show blast radius'}
       >
         <Radar className="h-4 w-4" />
       </Button>
@@ -224,6 +232,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
           onClick={() => setPrdPipelineOpen(!prdPipelineOpen)}
           disabled={!currentProject}
           title="PRD Pipeline"
+          aria-label="PRD Pipeline"
         >
           <ListChecks className="h-4 w-4" />
         </Button>
@@ -239,6 +248,7 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
         onClick={onToggleTerritorySync}
         disabled={!currentProject}
         title="Territory Sync (Markdown files)"
+        aria-label="Territory Sync (Markdown files)"
       >
         <FolderSync className="h-4 w-4" />
       </Button>
@@ -250,20 +260,22 @@ export function CanvasToolbar({ onReLayout, onSpringLayout, onToggleTerritorySyn
           onClick={() => setExportOpen(!exportOpen)}
           disabled={!currentProject}
           title="Export project"
+          aria-label="Export project"
         >
           <Download className="h-4 w-4" />
         </Button>
         {exportOpen && (
-          <div className="absolute right-full mr-2 top-0 w-52 py-1 bg-background border rounded-lg shadow-lg">
+          <div className="absolute right-full mr-2 top-0 w-52 py-1 bg-background border rounded-lg shadow-lg" role="menu" aria-label="Export options">
             <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               Export
             </div>
             {exportActions.map((item) =>
               item.label === '---' ? (
-                <div key="sep-ralphy" className="h-px bg-border mx-2 my-1" />
+                <div key="sep-ralphy" className="h-px bg-border mx-2 my-1" role="separator" />
               ) : (
                 <button
                   key={item.label}
+                  role="menuitem"
                   className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
                   onClick={() => {
                     item.action()

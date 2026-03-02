@@ -407,64 +407,6 @@ export const agentChatSchema: Schema = {
   required: ['message'],
 }
 
-export const appGenerationSchema: Schema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    files: {
-      type: SchemaType.ARRAY,
-      description: 'Generated React component files for the app',
-      items: {
-        type: SchemaType.OBJECT,
-        properties: {
-          path: {
-            type: SchemaType.STRING,
-            description: 'File path relative to project root (e.g. src/App.tsx, src/pages/HomePage.tsx, src/components/Header.tsx)',
-          },
-          content: {
-            type: SchemaType.STRING,
-            description: 'Complete file content (valid JSX/TSX)',
-          },
-        },
-        required: ['path', 'content'],
-      },
-    },
-    summary: {
-      type: SchemaType.STRING,
-      description: 'Brief summary of the generated app structure and design decisions',
-    },
-  },
-  required: ['files', 'summary'],
-}
-
-export const appEditSchema: Schema = {
-  type: SchemaType.OBJECT,
-  properties: {
-    files: {
-      type: SchemaType.ARRAY,
-      description: 'Files that were created or modified. Only include files that changed — do not return unchanged files.',
-      items: {
-        type: SchemaType.OBJECT,
-        properties: {
-          path: {
-            type: SchemaType.STRING,
-            description: 'File path relative to project root (e.g. src/App.tsx, src/components/Header.tsx)',
-          },
-          content: {
-            type: SchemaType.STRING,
-            description: 'Complete updated file content (valid JSX/TSX)',
-          },
-        },
-        required: ['path', 'content'],
-      },
-    },
-    summary: {
-      type: SchemaType.STRING,
-      description: 'Brief user-friendly summary of what was changed (1-2 sentences)',
-    },
-  },
-  required: ['files', 'summary'],
-}
-
 export const iterationSchema: Schema = {
   type: SchemaType.OBJECT,
   properties: {

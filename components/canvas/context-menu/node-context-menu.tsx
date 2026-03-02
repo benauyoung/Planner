@@ -273,12 +273,15 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
       transition={{ duration: 0.1 }}
       className="fixed z-[100] min-w-[200px] py-1 bg-background border rounded-lg shadow-lg"
       style={{ left: menuPos.x, top: menuPos.y }}
+      role="menu"
+      aria-label="Node actions"
     >
       {/* Edit */}
       <button
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleEdit}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Pencil className="h-4 w-4" />
         <span>Edit</span>
@@ -294,6 +297,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         )}
         onMouseEnter={(e) => handleSubmenuEnter('type', e)}
         onMouseLeave={handleSubmenuLeave}
+        role="menuitem"
       >
         <ArrowRightLeft className="h-4 w-4" />
         <span className="flex-1 text-left">Change Type</span>
@@ -308,6 +312,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         )}
         onMouseEnter={(e) => handleSubmenuEnter('status', e)}
         onMouseLeave={handleSubmenuLeave}
+        role="menuitem"
       >
         <CircleDot className="h-4 w-4" />
         <span className="flex-1 text-left">Set Status</span>
@@ -322,6 +327,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
           className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
           onClick={handleAddChild}
           onMouseEnter={handleItemHover}
+          role="menuitem"
         >
           <Plus className="h-4 w-4" />
           <span>Add {NODE_CONFIG[childType].label}</span>
@@ -333,6 +339,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleAddMoodboard}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ImagePlus className="h-4 w-4" />
         <span>Add Mood Board</span>
@@ -343,6 +350,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleAddNotes}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <FileText className="h-4 w-4" />
         <span>Add Notes</span>
@@ -353,6 +361,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleAddConnector}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Circle className="h-4 w-4" />
         <span>Add Connector</span>
@@ -366,6 +375,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddDocNode('spec', 'New Specification')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ScrollText className="h-4 w-4" style={{ color: NODE_CONFIG.spec.color }} />
         <span>Add Specification</span>
@@ -374,6 +384,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddDocNode('prd', 'New PRD')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ClipboardList className="h-4 w-4" style={{ color: NODE_CONFIG.prd.color }} />
         <span>Add PRD</span>
@@ -382,6 +393,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddDocNode('schema', 'New Schema')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Braces className="h-4 w-4" style={{ color: NODE_CONFIG.schema.color }} />
         <span>Add Schema</span>
@@ -390,6 +402,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddDocNode('prompt', 'New Prompt')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Terminal className="h-4 w-4" style={{ color: NODE_CONFIG.prompt.color }} />
         <span>Add Prompt</span>
@@ -398,6 +411,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddDocNode('reference', 'New Reference')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ExternalLink className="h-4 w-4" style={{ color: NODE_CONFIG.reference.color }} />
         <span>Add Reference</span>
@@ -410,6 +424,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleAddBlocksEdge}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Ban className="h-4 w-4 text-red-500" />
         <span>Add &quot;Blocks&quot; Edge</span>
@@ -420,6 +435,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleAddDependsOnEdge}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ArrowRight className="h-4 w-4 text-blue-500" />
         <span>Add &quot;Depends On&quot; Edge</span>
@@ -433,6 +449,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddEdge('informs')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ArrowRight className="h-4 w-4 text-sky-500" />
         <span>Informs...</span>
@@ -441,6 +458,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddEdge('defines')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ArrowRight className="h-4 w-4 text-purple-500" />
         <span>Defines...</span>
@@ -449,6 +467,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddEdge('implements')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <ArrowRight className="h-4 w-4 text-emerald-500" />
         <span>Implements...</span>
@@ -457,6 +476,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddEdge('references')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Link className="h-4 w-4 text-gray-500" />
         <span>References...</span>
@@ -465,6 +485,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => handleAddEdge('supersedes')}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <RotateCcw className="h-4 w-4 text-red-500" />
         <span>Supersedes...</span>
@@ -477,6 +498,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleCopyContext}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Clipboard className="h-4 w-4" />
         <span>Copy Context for AI</span>
@@ -487,6 +509,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleDownloadMarkdown}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Download className="h-4 w-4" />
         <span>Export as Markdown</span>
@@ -502,6 +525,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'break_down', nodeId } })); onClose() }}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Sparkles className="h-4 w-4 text-primary" />
         <span>AI: Break Down</span>
@@ -510,6 +534,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'rewrite', nodeId } })); onClose() }}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Sparkles className="h-4 w-4 text-primary" />
         <span>AI: Rewrite</span>
@@ -518,6 +543,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'estimate', nodeId } })); onClose() }}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Sparkles className="h-4 w-4 text-primary" />
         <span>AI: Estimate</span>
@@ -526,6 +552,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={() => { window.dispatchEvent(new CustomEvent('ai-iterate', { detail: { action: 'suggest_deps', nodeId } })); onClose() }}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Sparkles className="h-4 w-4 text-primary" />
         <span>AI: Suggest Dependencies</span>
@@ -538,6 +565,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
         onClick={handleDuplicate}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Copy className="h-4 w-4" />
         <span>Duplicate</span>
@@ -549,6 +577,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
           className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent transition-colors"
           onClick={handleToggleCollapse}
           onMouseEnter={handleItemHover}
+          role="menuitem"
         >
           {node.collapsed ? (
             <ChevronDown className="h-4 w-4" />
@@ -566,6 +595,7 @@ export function NodeContextMenu({ nodeId, position, onClose }: NodeContextMenuPr
         className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
         onClick={handleDelete}
         onMouseEnter={handleItemHover}
+        role="menuitem"
       >
         <Trash2 className="h-4 w-4" />
         <span>Delete</span>
