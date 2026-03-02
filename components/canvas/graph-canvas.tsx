@@ -372,7 +372,7 @@ export function GraphCanvas() {
         defaultEdgeOptions={{
           type: 'bezier',
           animated: false,
-          style: { strokeDasharray: '6 4', strokeWidth: 1.5 },
+          style: { strokeDasharray: '6 4', strokeWidth: 1.5, stroke: 'hsl(var(--muted-foreground) / 0.2)' },
         }}
         fitView
         fitViewOptions={{ padding: 0.2, maxZoom: 0.9 }}

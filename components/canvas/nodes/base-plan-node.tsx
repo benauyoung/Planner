@@ -42,8 +42,8 @@ export const BasePlanNode = memo(function BasePlanNode({
   }, [lod, id, updateNodeInternals])
 
   const nodes = useProjectStore((s) => s.currentProject?.nodes)
-  const hasChildren = useMemo(
-    () => nodes?.some((n) => n.parentId === id) ?? false,
+  const childCount = useMemo(
+    () => nodes?.filter((n) => n.parentId === id).length ?? 0,
     [nodes, id]
   )
 
@@ -53,17 +53,16 @@ export const BasePlanNode = memo(function BasePlanNode({
       <div
         className={cn(
           'rounded-full border shadow-sm cursor-pointer flex items-center justify-center',
-          config.bgClass,
           isSelected ? 'ring-2 ring-primary' : isInMultiSelect ? 'ring-2 ring-blue-400/60' : '',
         )}
-        style={{ width: 24, height: 24, borderColor: config.color }}
+        style={{ width: 24, height: 24, borderColor: config.color, backgroundColor: `${config.color}30` }}
         onClick={() => selectNode(id)}
       >
         {data.parentId && (
-          <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-1 !h-1" />
+          <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1 !h-1" />
         )}
-        <div className={cn('w-2 h-2 rounded-full', STATUS_COLORS[data.status])} />
-        <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-1 !h-1" />
+        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: config.color }} />
+        <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1 !h-1" />
       </div>
     )
   }
@@ -73,45 +72,49 @@ export const BasePlanNode = memo(function BasePlanNode({
     return (
       <div
         className={cn(
-          'rounded-full border shadow-sm cursor-pointer flex items-center',
-          config.bgClass,
+          'rounded-lg border cursor-pointer flex items-center',
           isSelected
             ? 'ring-2 ring-primary shadow-glow'
             : isInMultiSelect
               ? 'ring-2 ring-blue-400/60'
-              : 'hover:shadow-md',
+              : 'hover:border-white/30',
         )}
-        style={{ height: 28, borderColor: config.color }}
+        style={{
+          height: 28,
+          borderColor: `${config.color}40`,
+          backgroundColor: 'hsl(var(--card))',
+        }}
         onClick={() => selectNode(id)}
       >
         {data.parentId && (
-          <Handle type="target" position={Position.Top} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+          <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1.5 !h-1.5" />
         )}
         <div className="flex items-center gap-1.5 px-2.5">
-          <div className={cn('w-1.5 h-1.5 rounded-full shrink-0', STATUS_COLORS[data.status])} />
+          <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: config.color }} />
           <span className="text-[10px] font-medium leading-tight truncate max-w-[100px]">{data.label}</span>
         </div>
-        <Handle type="source" position={Position.Bottom} className="!bg-muted-foreground !w-1.5 !h-1.5" />
+        <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1.5 !h-1.5" />
       </div>
     )
   }
 
-  // ── Full LOD: pill with icon + title + status ──
+  // ── Full LOD: dark card with colored dot, title, type label, children badge ──
   return (
     <div
       className={cn(
-        'group relative rounded-xl border-2 shadow-sm transition-all cursor-pointer',
-        config.bgClass,
+        'group relative rounded-xl border transition-all cursor-pointer',
         isSelected
-          ? 'ring-2 ring-primary shadow-glow'
+          ? 'ring-2 ring-offset-1 ring-offset-background shadow-lg'
           : isInMultiSelect
             ? 'ring-2 ring-blue-400/60 ring-dashed'
-            : 'hover:shadow-md',
+            : 'hover:border-opacity-80 hover:shadow-md',
       )}
       style={{
         width: config.width,
         height: config.height,
-        borderColor: config.color,
+        borderColor: isSelected ? config.color : `${config.color}50`,
+        backgroundColor: isSelected ? `${config.color}12` : 'hsl(var(--card))',
+        boxShadow: isSelected ? `0 0 16px ${config.color}25` : undefined,
       }}
       onClick={() => selectNode(id)}
       onContextMenu={(e) => e.preventDefault()}
@@ -119,29 +122,52 @@ export const BasePlanNode = memo(function BasePlanNode({
       {data.parentId && (
         <Handle
           type="target"
-          position={Position.Top}
+          position={Position.Left}
           className="!bg-muted-foreground !w-1.5 !h-1.5"
         />
       )}
 
-      <div className="flex items-center gap-1.5 h-full px-2.5">
-        {/* Status dot */}
-        <div className={cn('w-2 h-2 rounded-full shrink-0', STATUS_COLORS[data.status])} />
-        {/* Type icon */}
-        <span className={cn('shrink-0 opacity-80', config.textClass)}>{icon}</span>
-        {/* Title */}
-        <span className="text-[11px] font-medium leading-tight truncate flex-1 min-w-0">
-          {data.label}
-        </span>
-        {/* Children indicator */}
-        {hasChildren && (
-          <div className="w-1 h-1 rounded-full bg-muted-foreground/40 shrink-0" />
+      <div className="flex items-center gap-2 h-full px-3">
+        {/* Colored type dot */}
+        <div
+          className="w-2.5 h-2.5 rounded-full shrink-0"
+          style={{ backgroundColor: config.color }}
+        />
+        {/* Title + type label */}
+        <div className="flex flex-col min-w-0 flex-1">
+          <span className="text-[11px] font-semibold leading-tight truncate">
+            {data.label}
+          </span>
+          <span
+            className="text-[8px] font-medium leading-tight opacity-60"
+            style={{ color: config.color }}
+          >
+            {config.label}
+          </span>
+        </div>
+        {/* Children count badge */}
+        {childCount > 0 && (
+          <div
+            className="flex items-center justify-center rounded shrink-0"
+            style={{
+              width: 18,
+              height: 16,
+              backgroundColor: `${config.color}20`,
+            }}
+          >
+            <span
+              className="text-[9px] font-semibold"
+              style={{ color: config.color }}
+            >
+              {childCount}
+            </span>
+          </div>
         )}
       </div>
 
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         className="!bg-muted-foreground !w-1.5 !h-1.5"
       />
     </div>

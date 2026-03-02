@@ -1,14 +1,14 @@
 import type { NodeType } from '@/types/project'
 
 export const QUESTION_CATEGORIES: Partial<Record<NodeType, string[]>> = {
-  goal:      ['Vision & Scope', 'Success Metrics', 'Constraints', 'Stakeholders'],
-  subgoal:   ['Scope & Boundaries', 'Dependencies', 'Acceptance Criteria', 'Technical Approach'],
-  feature:   ['Technical Approach', 'UX Patterns', 'Data Model', 'Edge Cases', 'Dependencies'],
-  task:      ['Implementation Details', 'Tooling', 'Testing Approach', 'Edge Cases'],
-  spec:      ['Scope', 'Architecture Style', 'Constraints', 'Stakeholders'],
-  prd:       ['User Stories', 'Acceptance Criteria', 'Edge Cases', 'Dependencies'],
-  schema:    ['Entities & Relationships', 'Validation Rules', 'API Format', 'Migration Strategy'],
-  prompt:    ['Target Tool', 'Coding Style', 'Framework Constraints', 'Test Coverage'],
+  goal: ['Vision & Scope', 'Success Metrics', 'Constraints', 'Stakeholders'],
+  subgoal: ['Scope & Boundaries', 'Dependencies', 'Acceptance Criteria', 'Technical Approach'],
+  feature: ['Technical Approach', 'UX Patterns', 'Data Model', 'Edge Cases', 'Dependencies'],
+  task: ['Implementation Details', 'Tooling', 'Testing Approach', 'Edge Cases'],
+  spec: ['Scope', 'Architecture Style', 'Constraints', 'Stakeholders'],
+  prd: ['User Stories', 'Acceptance Criteria', 'Edge Cases', 'Dependencies'],
+  schema: ['Entities & Relationships', 'Validation Rules', 'API Format', 'Migration Strategy'],
+  prompt: ['Target Tool', 'Coding Style', 'Framework Constraints', 'Test Coverage'],
   reference: ['Relevance', 'Incorporation', 'Licensing'],
 }
 
@@ -173,9 +173,9 @@ export const NODE_CHILD_TYPE: Record<NodeType, NodeType | null> = {
 }
 
 export const DAGRE_CONFIG = {
-  rankdir: 'TB' as const,
-  nodesep: 16,    // horizontal gap between sibling nodes
-  ranksep: 36,    // vertical gap between hierarchy levels
+  rankdir: 'LR' as const,
+  nodesep: 14,    // vertical gap between sibling nodes
+  ranksep: 40,    // horizontal gap between hierarchy levels
   marginx: 20,
   marginy: 20,
 }
