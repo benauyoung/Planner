@@ -12,7 +12,7 @@ interface Vec2 {
 
 const REPULSION_STRENGTH = 20000
 const ATTRACTION_STRENGTH = 0.008
-const REST_LENGTH = 220        // spring only attracts when nodes are farther than this
+const REST_LENGTH = 150        // spring only attracts when nodes are farther than this
 const HIERARCHY_GRAVITY = 0.025
 const DAMPING = 0.80
 const MIN_DISTANCE = 50

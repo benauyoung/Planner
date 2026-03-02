@@ -348,7 +348,7 @@ export function NodeDetailPanel() {
           animate={{ x: 0 }}
           exit={{ x: '100%' }}
           transition={{ type: 'spring', damping: 25, stiffness: 250 }}
-          className="w-80 border-l bg-background h-full overflow-y-auto shrink-0"
+          className="w-96 border-l bg-background h-full overflow-y-auto shrink-0"
         >
           <div className="p-4">
             {/* Header */}

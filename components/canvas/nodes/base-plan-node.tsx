@@ -108,7 +108,7 @@ export const BasePlanNode = memo(function BasePlanNode({
               ? 'ring-2 ring-blue-400/60 ring-dashed'
               : 'hover:shadow-md',
         )}
-        style={{ width: 180, minHeight: 40, borderColor: config.color }}
+        style={{ width: 140, minHeight: 32, borderColor: config.color }}
         onClick={() => selectNode(id)}
       >
         {data.parentId && (
@@ -159,12 +159,12 @@ export const BasePlanNode = memo(function BasePlanNode({
         />
       )}
 
-      <div className="p-3.5">
+      <div className="p-2.5">
         {/* Header: type indicator + status circles */}
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-1">
             <span className={cn('opacity-70', config.textClass)}>{icon}</span>
-            <span className={cn('text-[10px] font-semibold uppercase tracking-wider', config.textClass)}>
+            <span className={cn('text-[9px] font-semibold uppercase tracking-wider', config.textClass)}>
               {config.label}
             </span>
           </div>
@@ -204,20 +204,20 @@ export const BasePlanNode = memo(function BasePlanNode({
         </div>
 
         {/* Title */}
-        <h4 className="text-sm font-semibold leading-snug mb-1 line-clamp-2">
+        <h4 className="text-xs font-semibold leading-snug mb-0.5 line-clamp-2">
           {data.label}
         </h4>
 
         {/* Description */}
         {data.description && (
-          <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+          <p className="text-[11px] text-muted-foreground leading-snug line-clamp-2">
             {data.description}
           </p>
         )}
 
         {/* PRD status dot */}
         {prdStatus && (
-          <div className="flex items-center gap-1 mt-2">
+          <div className="flex items-center gap-1 mt-1.5">
             <div
               className={cn('w-1.5 h-1.5 rounded-full shrink-0', PRD_STATUS_CONFIG[prdStatus].dot)}
               title={`PRD: ${PRD_STATUS_CONFIG[prdStatus].label}`}

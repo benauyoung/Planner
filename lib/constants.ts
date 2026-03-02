@@ -31,8 +31,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-orange-700 dark:text-orange-300',
     badgeClass: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
     icon: 'Target',
-    width: 280,
-    height: 120,
+    width: 220,
+    height: 80,
   },
   subgoal: {
     label: 'Subgoal',
@@ -42,8 +42,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-blue-700 dark:text-blue-300',
     badgeClass: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
     icon: 'Flag',
-    width: 260,
-    height: 110,
+    width: 200,
+    height: 72,
   },
   feature: {
     label: 'Feature',
@@ -53,8 +53,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-green-700 dark:text-green-300',
     badgeClass: 'bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300',
     icon: 'Puzzle',
-    width: 240,
-    height: 100,
+    width: 190,
+    height: 68,
   },
   task: {
     label: 'Task',
@@ -64,8 +64,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-violet-700 dark:text-violet-300',
     badgeClass: 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300',
     icon: 'CheckSquare',
-    width: 220,
-    height: 90,
+    width: 180,
+    height: 60,
   },
   moodboard: {
     label: 'Mood Board',
@@ -75,8 +75,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-pink-700 dark:text-pink-300',
     badgeClass: 'bg-pink-100 text-pink-700 dark:bg-pink-900/50 dark:text-pink-300',
     icon: 'ImagePlus',
-    width: 300,
-    height: 250,
+    width: 220,
+    height: 160,
   },
   notes: {
     label: 'Notes',
@@ -86,8 +86,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-amber-700 dark:text-amber-300',
     badgeClass: 'bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300',
     icon: 'FileText',
-    width: 320,
-    height: 200,
+    width: 220,
+    height: 120,
   },
   connector: {
     label: 'Connector',
@@ -97,8 +97,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-slate-700 dark:text-slate-300',
     badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300',
     icon: 'Circle',
-    width: 120,
-    height: 40,
+    width: 100,
+    height: 32,
   },
   spec: {
     label: 'Specification',
@@ -108,8 +108,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-sky-700 dark:text-sky-300',
     badgeClass: 'bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300',
     icon: 'ScrollText',
-    width: 300,
-    height: 140,
+    width: 220,
+    height: 80,
   },
   prd: {
     label: 'PRD',
@@ -119,8 +119,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-purple-700 dark:text-purple-300',
     badgeClass: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
     icon: 'ClipboardList',
-    width: 280,
-    height: 130,
+    width: 210,
+    height: 76,
   },
   schema: {
     label: 'Schema',
@@ -130,8 +130,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-teal-700 dark:text-teal-300',
     badgeClass: 'bg-teal-100 text-teal-700 dark:bg-teal-900/50 dark:text-teal-300',
     icon: 'Braces',
-    width: 260,
-    height: 120,
+    width: 200,
+    height: 72,
   },
   prompt: {
     label: 'Prompt',
@@ -141,8 +141,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-emerald-700 dark:text-emerald-300',
     badgeClass: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300',
     icon: 'Terminal',
-    width: 240,
-    height: 110,
+    width: 190,
+    height: 68,
   },
   reference: {
     label: 'Reference',
@@ -152,8 +152,8 @@ export const NODE_CONFIG: Record<NodeType, {
     textClass: 'text-gray-700 dark:text-gray-300',
     badgeClass: 'bg-gray-100 text-gray-700 dark:bg-gray-900/50 dark:text-gray-300',
     icon: 'ExternalLink',
-    width: 200,
-    height: 80,
+    width: 160,
+    height: 52,
   },
 }
 
@@ -174,10 +174,10 @@ export const NODE_CHILD_TYPE: Record<NodeType, NodeType | null> = {
 
 export const DAGRE_CONFIG = {
   rankdir: 'TB' as const,
-  nodesep: 50,    // horizontal gap between sibling nodes
-  ranksep: 120,   // vertical gap between hierarchy levels (generous to absorb minHeight overflow)
-  marginx: 60,
-  marginy: 60,
+  nodesep: 30,    // horizontal gap between sibling nodes
+  ranksep: 60,    // vertical gap between hierarchy levels
+  marginx: 30,
+  marginy: 30,
 }
 
 export const STATUS_COLORS = {
