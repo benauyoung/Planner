@@ -32,6 +32,7 @@ import { springLayout } from '@/lib/canvas-physics'
 import { snapToGridPosition, computeSmartGuides, type GuideLine } from '@/lib/canvas-guides'
 import { createSpringSimulation, type SpringSimulation } from '@/lib/canvas-physics-animated'
 import { BulkActionsBar } from './bulk-actions-bar'
+import { PrdBottomStrip } from './prd-bottom-strip'
 import { TerritorySyncPanel } from './territory-sync-panel'
 import type { NodeType } from '@/types/project'
 import type { Node } from '@xyflow/react'
@@ -410,6 +411,7 @@ export function GraphCanvas() {
       {selectedNodeIds.size > 1 && (
         <BulkActionsBar />
       )}
+      <PrdBottomStrip />
       {territorySyncOpen && (
         <TerritorySyncPanel onClose={() => setTerritorySyncOpen(false)} />
       )}
