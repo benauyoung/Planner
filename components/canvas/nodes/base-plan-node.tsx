@@ -1,9 +1,9 @@
 'use client'
 
-import { memo, useMemo, useEffect } from 'react'
+import { memo, useMemo, useEffect, useCallback } from 'react'
 import { Handle, Position, useUpdateNodeInternals } from '@xyflow/react'
 import { cn } from '@/lib/utils'
-import { NODE_CONFIG, STATUS_COLORS } from '@/lib/constants'
+import { NODE_CONFIG } from '@/lib/constants'
 import type { NodeType, NodeStatus } from '@/types/project'
 import { useUIStore } from '@/stores/ui-store'
 import { useProjectStore } from '@/stores/project-store'
@@ -33,6 +33,7 @@ export const BasePlanNode = memo(function BasePlanNode({
   const selectedNodeId = useUIStore((s) => s.selectedNodeId)
   const selectedNodeIds = useUIStore((s) => s.selectedNodeIds)
   const selectNode = useUIStore((s) => s.selectNode)
+  const toggleNodeCollapse = useProjectStore((s) => s.toggleNodeCollapse)
   const isSelected = selectedNodeId === id
   const isInMultiSelect = selectedNodeIds.size > 1 && selectedNodeIds.has(id)
   const lod = useZoomLevel()
@@ -47,6 +48,14 @@ export const BasePlanNode = memo(function BasePlanNode({
     [nodes, id]
   )
 
+  // Click handler: select the node + toggle collapse if it has children
+  const handleClick = useCallback(() => {
+    selectNode(id)
+    if (childCount > 0) {
+      toggleNodeCollapse(id)
+    }
+  }, [id, childCount, selectNode, toggleNodeCollapse])
+
   // ── Dot LOD: tiny colored dot ──
   if (lod === 'dot') {
     return (
@@ -56,7 +65,7 @@ export const BasePlanNode = memo(function BasePlanNode({
           isSelected ? 'ring-2 ring-primary' : isInMultiSelect ? 'ring-2 ring-blue-400/60' : '',
         )}
         style={{ width: 24, height: 24, borderColor: config.color, backgroundColor: `${config.color}30` }}
-        onClick={() => selectNode(id)}
+        onClick={handleClick}
       >
         {data.parentId && (
           <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1 !h-1" />
@@ -84,14 +93,17 @@ export const BasePlanNode = memo(function BasePlanNode({
           borderColor: `${config.color}40`,
           backgroundColor: 'hsl(var(--card))',
         }}
-        onClick={() => selectNode(id)}
+        onClick={handleClick}
       >
         {data.parentId && (
           <Handle type="target" position={Position.Left} className="!bg-muted-foreground !w-1.5 !h-1.5" />
         )}
         <div className="flex items-center gap-1.5 px-2.5">
           <div className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: config.color }} />
-          <span className="text-[10px] font-medium leading-tight truncate max-w-[100px]">{data.label}</span>
+          <span className={cn(
+            'text-[10px] font-medium leading-tight',
+            isSelected ? 'whitespace-nowrap' : 'truncate max-w-[100px]'
+          )}>{data.label}</span>
         </div>
         <Handle type="source" position={Position.Right} className="!bg-muted-foreground !w-1.5 !h-1.5" />
       </div>
@@ -110,13 +122,14 @@ export const BasePlanNode = memo(function BasePlanNode({
             : 'hover:border-opacity-80 hover:shadow-md',
       )}
       style={{
-        width: config.width,
+        minWidth: config.width,
+        width: isSelected ? 'auto' : config.width,
         height: config.height,
         borderColor: isSelected ? config.color : `${config.color}50`,
         backgroundColor: isSelected ? `${config.color}12` : 'hsl(var(--card))',
         boxShadow: isSelected ? `0 0 16px ${config.color}25` : undefined,
       }}
-      onClick={() => selectNode(id)}
+      onClick={handleClick}
       onContextMenu={(e) => e.preventDefault()}
     >
       {data.parentId && (
@@ -135,7 +148,10 @@ export const BasePlanNode = memo(function BasePlanNode({
         />
         {/* Title + type label */}
         <div className="flex flex-col min-w-0 flex-1">
-          <span className="text-[11px] font-semibold leading-tight truncate">
+          <span className={cn(
+            'text-[11px] font-semibold leading-tight',
+            isSelected ? 'whitespace-nowrap' : 'truncate'
+          )}>
             {data.label}
           </span>
           <span
@@ -145,10 +161,13 @@ export const BasePlanNode = memo(function BasePlanNode({
             {config.label}
           </span>
         </div>
-        {/* Children count badge */}
+        {/* Children count badge / collapse indicator */}
         {childCount > 0 && (
           <div
-            className="flex items-center justify-center rounded shrink-0"
+            className={cn(
+              'flex items-center justify-center rounded shrink-0 transition-colors',
+              data.collapsed ? 'opacity-100' : 'opacity-60'
+            )}
             style={{
               width: 18,
               height: 16,
@@ -159,7 +178,7 @@ export const BasePlanNode = memo(function BasePlanNode({
               className="text-[9px] font-semibold"
               style={{ color: config.color }}
             >
-              {childCount}
+              {data.collapsed ? `+${childCount}` : childCount}
             </span>
           </div>
         )}
