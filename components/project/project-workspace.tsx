@@ -494,7 +494,6 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
         <nav aria-label="Project navigation"><ProjectToolbar
           chatOpen={chatOpen}
           onToggleChat={() => setChatOpen((prev) => !prev)}
-          onOpenTeamManager={() => setTeamManagerOpen(true)}
           onOpenSmartSuggestions={() => { setSmartPanelOpen(true); smartAnalyze() }}
           onOpenVersionHistory={() => setVersionHistoryOpen(true)}
           onOpenIntegrations={() => setIntegrationsOpen(true)}

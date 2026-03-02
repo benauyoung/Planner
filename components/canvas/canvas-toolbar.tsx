@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Radar, Package, ListChecks, FolderSync, Map, Grid3x3 } from 'lucide-react'
+import { Maximize2, LayoutGrid, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Package, ListChecks, FolderSync, Map } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -27,16 +27,10 @@ export function CanvasToolbar({ onReLayout, onToggleTerritorySync, territorySync
   const redo = useProjectStore((s) => s.redo)
   const canUndo = useProjectStore((s) => s.canUndo)
   const canRedo = useProjectStore((s) => s.canRedo)
-  const blastRadiusMode = useUIStore((s) => s.blastRadiusMode)
-  const setBlastRadiusMode = useUIStore((s) => s.setBlastRadiusMode)
-  const prdPipelineOpen = useUIStore((s) => s.prdPipelineOpen)
-  const setPrdPipelineOpen = useUIStore((s) => s.setPrdPipelineOpen)
   const minimapOpen = useUIStore((s) => s.minimapOpen)
   const setMinimapOpen = useUIStore((s) => s.setMinimapOpen)
-  const snapToGrid = useUIStore((s) => s.snapToGrid)
-  const setSnapToGrid = useUIStore((s) => s.setSnapToGrid)
 
-  const prdSummary = currentProject ? getProjectPrdSummary(currentProject) : null
+
 
 
 
@@ -173,42 +167,6 @@ export function CanvasToolbar({ onReLayout, onToggleTerritorySync, territorySync
         <LayoutGrid className="h-4 w-4" />
       </Button>
       <Button
-        variant={blastRadiusMode ? 'default' : 'outline'}
-        size="icon"
-        onClick={() => setBlastRadiusMode(!blastRadiusMode)}
-        title={blastRadiusMode ? 'Hide blast radius' : 'Show blast radius'}
-        aria-label={blastRadiusMode ? 'Hide blast radius' : 'Show blast radius'}
-      >
-        <Radar className="h-4 w-4" />
-      </Button>
-      <div className="relative">
-        <Button
-          variant={prdPipelineOpen ? 'default' : 'outline'}
-          size="icon"
-          onClick={() => setPrdPipelineOpen(!prdPipelineOpen)}
-          disabled={!currentProject}
-          title="PRD Pipeline"
-          aria-label="PRD Pipeline"
-        >
-          <ListChecks className="h-4 w-4" />
-        </Button>
-        {prdSummary && prdSummary.actionable > 0 && (
-          <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-primary text-primary-foreground text-[9px] font-bold pointer-events-none">
-            {prdSummary.actionable}
-          </span>
-        )}
-      </div>
-      <Button
-        variant={territorySyncOpen ? 'default' : 'outline'}
-        size="icon"
-        onClick={onToggleTerritorySync}
-        disabled={!currentProject}
-        title="Territory Sync (Markdown files)"
-        aria-label="Territory Sync (Markdown files)"
-      >
-        <FolderSync className="h-4 w-4" />
-      </Button>
-      <Button
         variant={minimapOpen ? 'default' : 'outline'}
         size="icon"
         onClick={() => setMinimapOpen(!minimapOpen)}
@@ -216,15 +174,6 @@ export function CanvasToolbar({ onReLayout, onToggleTerritorySync, territorySync
         aria-label={minimapOpen ? 'Hide minimap' : 'Show minimap'}
       >
         <Map className="h-4 w-4" />
-      </Button>
-      <Button
-        variant={snapToGrid ? 'default' : 'outline'}
-        size="icon"
-        onClick={() => setSnapToGrid(!snapToGrid)}
-        title={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid (Ctrl+G)'}
-        aria-label={snapToGrid ? 'Disable snap to grid' : 'Enable snap to grid (Ctrl+G)'}
-      >
-        <Grid3x3 className="h-4 w-4" />
       </Button>
       <div className="h-px bg-border my-1" />
       <div className="relative" ref={exportRef}>

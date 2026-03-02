@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react'
 import {
   MessageSquare,
   PanelLeftClose,
-  Users,
   Lightbulb,
   History,
   Plug,
@@ -73,7 +72,6 @@ const STATUS_OPTIONS: { value: NodeStatus; label: string; color: string }[] = [
 interface ProjectToolbarProps {
   chatOpen: boolean
   onToggleChat: () => void
-  onOpenTeamManager: () => void
   onOpenSmartSuggestions: () => void
   onOpenVersionHistory: () => void
   onOpenIntegrations: () => void
@@ -84,7 +82,6 @@ type SaveStatus = 'saved' | 'saving' | 'unsaved'
 export function ProjectToolbar({
   chatOpen,
   onToggleChat,
-  onOpenTeamManager,
   onOpenSmartSuggestions,
   onOpenVersionHistory,
   onOpenIntegrations,
@@ -346,9 +343,6 @@ export function ProjectToolbar({
             title={chatOpen ? 'Close chat (Ctrl+J)' : 'Open chat (Ctrl+J)'}
           >
             {chatOpen ? <PanelLeftClose className="h-3.5 w-3.5" /> : <MessageSquare className="h-3.5 w-3.5" />}
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onOpenTeamManager} className="h-7 w-7" title="Team">
-            <Users className="h-3.5 w-3.5" />
           </Button>
           <Button variant="ghost" size="icon" onClick={onOpenSmartSuggestions} className="h-7 w-7" title="AI Suggestions">
             <Lightbulb className="h-3.5 w-3.5" />
