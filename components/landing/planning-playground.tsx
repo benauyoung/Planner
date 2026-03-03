@@ -1223,6 +1223,7 @@ export function PlanningPlayground() {
         <section
             id="planning-playground"
             className="relative pt-24 pb-14 sm:pt-28 sm:pb-20 overflow-hidden"
+            style={{ background: '#F4F0E6' }}
         >
             {/* Background effects */}
             <div className="absolute inset-0 pointer-events-none">
@@ -1230,11 +1231,11 @@ export function PlanningPlayground() {
                     className="absolute inset-0"
                     style={{
                         backgroundImage:
-                            'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(59,130,246,0.06) 0%, transparent 70%)',
+                            'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(139,175,138,0.12) 0%, transparent 70%)',
                     }}
                 />
                 <div
-                    className="absolute inset-0 opacity-[0.025]"
+                    className="absolute inset-0 opacity-[0.06]"
                     style={{
                         backgroundImage:
                             'radial-gradient(circle, rgba(28,36,24,0.04) 1px, transparent 1px)',

@@ -1479,7 +1479,7 @@ export function FeaturesTabs() {
         </AnimatePresence>
 
         {/* Demo area */}
-        <div className="max-w-[56%] mx-auto">
+        <div className="max-w-[56%] mx-auto rounded-2xl border border-[#8BAF8A]/30 bg-white shadow-xl shadow-black/5 p-6 sm:p-8">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
