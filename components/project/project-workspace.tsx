@@ -12,6 +12,7 @@ import { useUIStore } from '@/stores/ui-store'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { NodeDetailPanel } from '@/components/panels/node-detail-panel'
 import { PrdPipelinePanel } from '@/components/panels/prd-pipeline-panel'
+import { QuickQuestionsPanel } from '@/components/panels/quick-questions-panel'
 import { PlanningChat } from '@/components/chat/planning-chat'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ProjectToolbar } from '@/components/project/project-toolbar'
@@ -557,6 +558,9 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
 
           {/* PRD Pipeline Panel */}
           <PrdPipelinePanel />
+
+          {/* Quick Questions Panel */}
+          <QuickQuestionsPanel />
 
           {/* AI Suggestions Panel */}
           {aiPanelOpen && (

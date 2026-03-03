@@ -35,6 +35,7 @@ interface UIState {
   gridSize: number
   showSmartGuides: boolean
   springSimulationRunning: boolean
+  quickQuestionsPanelOpen: boolean
   setTheme: (theme: 'light' | 'dark') => void
   selectNode: (nodeId: string | null) => void
   toggleNodeSelection: (nodeId: string) => void
@@ -66,6 +67,7 @@ interface UIState {
   setGridSize: (size: number) => void
   setShowSmartGuides: (on: boolean) => void
   setSpringSimulationRunning: (running: boolean) => void
+  setQuickQuestionsPanelOpen: (open: boolean) => void
 }
 
 export const useUIStore = create<UIState>((set) => ({
@@ -92,6 +94,7 @@ export const useUIStore = create<UIState>((set) => ({
   gridSize: 20,
   showSmartGuides: true,
   springSimulationRunning: false,
+  quickQuestionsPanelOpen: false,
   setTheme: (theme) => set({ theme }),
   selectNode: (nodeId) =>
     set({ selectedNodeId: nodeId, selectedNodeIds: nodeId ? new Set([nodeId]) : new Set(), detailPanelOpen: nodeId !== null }),
@@ -142,4 +145,5 @@ export const useUIStore = create<UIState>((set) => ({
   setGridSize: (size) => set({ gridSize: size }),
   setShowSmartGuides: (on) => set({ showSmartGuides: on }),
   setSpringSimulationRunning: (running) => set({ springSimulationRunning: running }),
+  setQuickQuestionsPanelOpen: (open) => set({ quickQuestionsPanelOpen: open }),
 }))

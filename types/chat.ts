@@ -4,10 +4,11 @@ export interface OnboardingAnswers {
   description: string
   projectType: string
   features: string[]
-  audience: string
-  timeline: string
-  teamSize: string
-  priorities: string[]
+  audience?: string
+  timeline?: string
+  teamSize?: string
+  priorities?: string[]
+  dynamicAnswers?: Record<string, string | string[]>
 }
 
 export interface ChatMessage {

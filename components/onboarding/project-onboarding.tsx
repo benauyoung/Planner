@@ -34,11 +34,30 @@ import {
   Plus,
   X,
   Check,
+  Shield,
+  Lock,
+  Cloud,
+  Database,
+  Code,
+  Palette,
+  Layout,
+  MessageSquare,
+  Bell,
+  Settings,
+  Target,
+  Award,
+  Layers,
+  Package,
+  Plug,
+  Cpu,
+  Wifi,
+  Map,
   type LucideIcon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { ONBOARDING_STEPS } from '@/lib/onboarding-config'
+import type { DynamicOnboardingQuestion } from '@/lib/onboarding-config'
 import type { OnboardingAnswers } from '@/types/chat'
 import { authFetch } from '@/lib/auth-fetch'
 
@@ -48,9 +67,10 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Zap, Calendar, CalendarRange, CalendarClock, Infinity,
   Users, UsersRound, Building2,
   ShieldCheck, BookOpen, Heart, TrendingUp,
+  Shield, Lock, Cloud, Database, Code, Palette, Layout,
+  MessageSquare, Bell, Settings, Target, Award, Layers,
+  Package, Plug, Cpu, Wifi, Map,
 }
-
-const TOTAL_STEPS = ONBOARDING_STEPS.length + 1 // +1 for summary
 
 interface ProjectOnboardingProps {
   onComplete: (answers: OnboardingAnswers) => void
@@ -60,10 +80,6 @@ const emptyAnswers: OnboardingAnswers = {
   description: '',
   projectType: '',
   features: [],
-  audience: '',
-  timeline: '',
-  teamSize: '',
-  priorities: [],
 }
 
 export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
@@ -74,12 +90,21 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
   const [suggestedFeatures, setSuggestedFeatures] = useState<string[]>([])
   const [featuresLoading, setFeaturesLoading] = useState(false)
   const [customFeature, setCustomFeature] = useState('')
+  const [skippedSteps, setSkippedSteps] = useState<Set<string>>(new Set())
+  const [dynamicQuestions, setDynamicQuestions] = useState<DynamicOnboardingQuestion[]>([])
   const featuresFetchedRef = useRef(false)
 
-  const step = ONBOARDING_STEPS[currentStep] as (typeof ONBOARDING_STEPS)[number] | undefined
-  const isSummary = currentStep === ONBOARDING_STEPS.length
+  const FIXED_STEPS = ONBOARDING_STEPS.length // 3
+  const TOTAL_STEPS = FIXED_STEPS + dynamicQuestions.length + 1 // +1 for summary
 
-  // Fetch AI feature suggestions once description + projectType are filled
+  const isFixedStep = currentStep < FIXED_STEPS
+  const isDynamicStep = currentStep >= FIXED_STEPS && currentStep < FIXED_STEPS + dynamicQuestions.length
+  const isSummary = currentStep === TOTAL_STEPS - 1
+
+  const step = isFixedStep ? ONBOARDING_STEPS[currentStep] : undefined
+  const dynamicStep = isDynamicStep ? dynamicQuestions[currentStep - FIXED_STEPS] : undefined
+
+  // Fetch AI feature suggestions + dynamic questions once description + projectType are filled
   useEffect(() => {
     if (
       answers.description.trim() &&
@@ -99,6 +124,7 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
         .then((res) => res.json())
         .then((data) => {
           if (data.features) setSuggestedFeatures(data.features)
+          if (data.tailoredQuestions) setDynamicQuestions(data.tailoredQuestions)
         })
         .catch(() => {})
         .finally(() => setFeaturesLoading(false))
@@ -107,11 +133,16 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
 
   const canContinue = () => {
     if (isSummary) return true
+    if (isDynamicStep && dynamicStep) {
+      const val = answers.dynamicAnswers?.[dynamicStep.question]
+      if (dynamicStep.type === 'multi') return Array.isArray(val) && val.length > 0
+      return typeof val === 'string' && val.length > 0
+    }
     if (!step) return false
     const value = answers[step.id]
     if (step.type === 'textarea') return (value as string).trim().length > 0
     if (step.type === 'multi') return (value as string[]).length > 0
-    if (step.type === 'features') return true // features are optional
+    if (step.type === 'features') return true
     return (value as string).length > 0
   }
 
@@ -120,7 +151,7 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
       setDirection(1)
       setCurrentStep((s) => s + 1)
     }
-  }, [currentStep])
+  }, [currentStep, TOTAL_STEPS])
 
   const goBack = useCallback(() => {
     if (currentStep > 0) {
@@ -134,24 +165,92 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
     setCurrentStep(idx)
   }, [currentStep])
 
+  const handleSkip = useCallback(() => {
+    if (isDynamicStep && dynamicStep) {
+      // Clear dynamic answer
+      setAnswers((prev) => {
+        const da = { ...(prev.dynamicAnswers || {}) }
+        delete da[dynamicStep.question]
+        return { ...prev, dynamicAnswers: da }
+      })
+      setSkippedSteps((prev) => new Set(prev).add(`dynamic:${dynamicStep.id}`))
+      goNext()
+      return
+    }
+    if (!step) return
+    if (step.type === 'multi' || step.type === 'features') {
+      setAnswers((prev) => ({ ...prev, [step.id]: [] }))
+    } else {
+      setAnswers((prev) => ({ ...prev, [step.id]: '' }))
+    }
+    setSkippedSteps((prev) => new Set(prev).add(step.id))
+    goNext()
+  }, [step, dynamicStep, isDynamicStep, goNext])
+
   const setSingleAnswer = (key: keyof OnboardingAnswers, value: string) => {
     setAnswers((prev) => ({ ...prev, [key]: value }))
+    setSkippedSteps((prev) => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
   }
 
   const toggleMultiAnswer = (key: keyof OnboardingAnswers, value: string) => {
     setAnswers((prev) => {
-      const arr = prev[key] as string[]
+      const arr = (prev[key] as string[]) || []
       return {
         ...prev,
         [key]: arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value],
       }
+    })
+    setSkippedSteps((prev) => {
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
+  }
+
+  // Dynamic question answer handlers
+  const setDynamicSingleAnswer = (question: string, qId: string, value: string) => {
+    setAnswers((prev) => ({
+      ...prev,
+      dynamicAnswers: { ...(prev.dynamicAnswers || {}), [question]: value },
+    }))
+    setSkippedSteps((prev) => {
+      const key = `dynamic:${qId}`
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
+    })
+  }
+
+  const toggleDynamicMultiAnswer = (question: string, qId: string, value: string) => {
+    setAnswers((prev) => {
+      const existing = (prev.dynamicAnswers?.[question] as string[]) || []
+      const updated = existing.includes(value)
+        ? existing.filter((v) => v !== value)
+        : [...existing, value]
+      return {
+        ...prev,
+        dynamicAnswers: { ...(prev.dynamicAnswers || {}), [question]: updated },
+      }
+    })
+    setSkippedSteps((prev) => {
+      const key = `dynamic:${qId}`
+      if (!prev.has(key)) return prev
+      const next = new Set(prev)
+      next.delete(key)
+      return next
     })
   }
 
   const handleOptionClick = (label: string) => {
     if (!step) return
     if (label === 'Other') {
-      // When "Other" is clicked, set it as selected but don't auto-advance
       setSingleAnswer(step.id, customInputs[step.id] || 'Other')
       return
     }
@@ -159,7 +258,15 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
       toggleMultiAnswer(step.id, label)
     } else {
       setSingleAnswer(step.id, label)
-      // Auto-advance on single select (small delay for visual feedback)
+      setTimeout(goNext, 200)
+    }
+  }
+
+  const handleDynamicOptionClick = (dq: DynamicOnboardingQuestion, label: string) => {
+    if (dq.type === 'multi') {
+      toggleDynamicMultiAnswer(dq.question, dq.id, label)
+    } else {
+      setDynamicSingleAnswer(dq.question, dq.id, label)
       setTimeout(goNext, 200)
     }
   }
@@ -180,11 +287,38 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
     return value === label
   }
 
+  const isDynamicSelected = (dq: DynamicOnboardingQuestion, label: string): boolean => {
+    const val = answers.dynamicAnswers?.[dq.question]
+    if (dq.type === 'multi') return Array.isArray(val) && val.includes(label)
+    return val === label
+  }
+
   const slideVariants = {
     enter: (d: number) => ({ x: d > 0 ? 80 : -80, opacity: 0 }),
     center: { x: 0, opacity: 1 },
     exit: (d: number) => ({ x: d > 0 ? -80 : 80, opacity: 0 }),
   }
+
+  // Build summary items for display
+  const summaryItems: { key: string; question: string; display: string | null; stepIndex: number }[] = []
+  ONBOARDING_STEPS.forEach((s, i) => {
+    const value = answers[s.id]
+    const isEmpty = Array.isArray(value) ? value.length === 0 : !value
+    const isSkipped = skippedSteps.has(s.id)
+    const display = isSkipped || isEmpty
+      ? null
+      : Array.isArray(value) ? value.join(', ') : (value as string)
+    summaryItems.push({ key: s.id, question: s.question, display, stepIndex: i })
+  })
+  dynamicQuestions.forEach((dq, i) => {
+    const val = answers.dynamicAnswers?.[dq.question]
+    const isEmpty = !val || (Array.isArray(val) && val.length === 0)
+    const isSkipped = skippedSteps.has(`dynamic:${dq.id}`)
+    const display = isSkipped || isEmpty
+      ? null
+      : Array.isArray(val) ? val.join(', ') : (val as string)
+    summaryItems.push({ key: `dq-${dq.id}`, question: dq.question, display, stepIndex: FIXED_STEPS + i })
+  })
 
   return (
     <div className="h-full flex flex-col items-center bg-background p-6 overflow-y-auto">
@@ -231,25 +365,69 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
               </div>
 
               <div className="space-y-3">
-                {ONBOARDING_STEPS.map((s, i) => {
-                  const value = answers[s.id]
-                  const display = Array.isArray(value) ? value.join(', ') : value
+                {summaryItems.map((item) => (
+                  <button
+                    key={item.key}
+                    onClick={() => goToStep(item.stepIndex)}
+                    className="w-full flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-accent/50 transition-colors text-left group"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm text-muted-foreground">{item.question}</p>
+                      {item.display ? (
+                        <p className="font-medium truncate">{item.display}</p>
+                      ) : (
+                        <p className="text-sm text-muted-foreground/60 italic">Skipped</p>
+                      )}
+                    </div>
+                    <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3" />
+                  </button>
+                ))}
+              </div>
+
+            </motion.div>
+          ) : isDynamicStep && dynamicStep ? (
+            <motion.div
+              key={`dq-${dynamicStep.id}`}
+              custom={direction}
+              variants={slideVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="space-y-6"
+            >
+              <div className="text-center">
+                <h1 className="text-3xl font-bold tracking-tight">{dynamicStep.question}</h1>
+                <p className="text-muted-foreground mt-2">{dynamicStep.subtitle}</p>
+              </div>
+
+              <div className={cn(
+                'grid gap-3',
+                dynamicStep.options.length <= 4 ? 'grid-cols-2' : 'grid-cols-2 sm:grid-cols-3'
+              )}>
+                {dynamicStep.options.map((opt) => {
+                  const Icon = ICON_MAP[opt.icon]
+                  const selected = isDynamicSelected(dynamicStep, opt.label)
                   return (
                     <button
-                      key={s.id}
-                      onClick={() => goToStep(i)}
-                      className="w-full flex items-center justify-between p-4 rounded-xl border bg-card hover:bg-accent/50 transition-colors text-left group"
+                      key={opt.label}
+                      onClick={() => handleDynamicOptionClick(dynamicStep, opt.label)}
+                      className={cn(
+                        'flex flex-col items-center gap-3 p-5 rounded-xl border-2 transition-all duration-150',
+                        'hover:border-primary/50 hover:bg-primary/5',
+                        selected
+                          ? 'border-primary bg-primary/10'
+                          : 'border-border bg-card'
+                      )}
                     >
-                      <div className="min-w-0">
-                        <p className="text-sm text-muted-foreground">{s.question}</p>
-                        <p className="font-medium truncate">{display || '—'}</p>
-                      </div>
-                      <Pencil className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-3" />
+                      {Icon && <Icon className={cn('h-6 w-6', selected ? 'text-primary' : 'text-muted-foreground')} />}
+                      <span className={cn('font-medium text-sm', selected ? 'text-primary' : 'text-foreground')}>
+                        {opt.label}
+                      </span>
                     </button>
                   )
                 })}
               </div>
-
             </motion.div>
           ) : step ? (
             <motion.div
@@ -455,9 +633,19 @@ export function ProjectOnboarding({ onComplete }: ProjectOnboardingProps) {
             <ArrowLeft className="h-4 w-4" />
             Back
           </Button>
-          <span className="text-sm text-muted-foreground">
-            {currentStep + 1} of {ONBOARDING_STEPS.length}
-          </span>
+          <div className="flex items-center gap-3">
+            {currentStep > 0 && (
+              <button
+                onClick={handleSkip}
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Skip
+              </button>
+            )}
+            <span className="text-sm text-muted-foreground">
+              {currentStep + 1} of {TOTAL_STEPS - 1}
+            </span>
+          </div>
           <Button
             onClick={goNext}
             disabled={!canContinue()}

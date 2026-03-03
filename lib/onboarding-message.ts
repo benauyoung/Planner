@@ -10,10 +10,27 @@ export function formatOnboardingMessage(answers: OnboardingAnswers): string {
   if (answers.features.length > 0) {
     lines.push(`**Requested features:** ${answers.features.join(', ')}`)
   }
-  lines.push(`**Audience:** ${answers.audience}`)
-  lines.push(`**Timeline:** ${answers.timeline}`)
-  lines.push(`**Team size:** ${answers.teamSize}`)
-  lines.push(`**Priorities:** ${answers.priorities.join(', ')}`)
+  if (answers.audience) {
+    lines.push(`**Audience:** ${answers.audience}`)
+  }
+  if (answers.timeline) {
+    lines.push(`**Timeline:** ${answers.timeline}`)
+  }
+  if (answers.teamSize) {
+    lines.push(`**Team size:** ${answers.teamSize}`)
+  }
+  if (answers.priorities && answers.priorities.length > 0) {
+    lines.push(`**Priorities:** ${answers.priorities.join(', ')}`)
+  }
+
+  // Dynamic answers from AI-generated questions
+  if (answers.dynamicAnswers) {
+    for (const [question, answer] of Object.entries(answers.dynamicAnswers)) {
+      if (!answer || (Array.isArray(answer) && answer.length === 0)) continue
+      const display = Array.isArray(answer) ? answer.join(', ') : answer
+      lines.push(`**${question}:** ${display}`)
+    }
+  }
 
   return lines.join('\n')
 }

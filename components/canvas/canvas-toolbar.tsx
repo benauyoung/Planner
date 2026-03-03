@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useReactFlow } from '@xyflow/react'
-import { Maximize2, LayoutGrid, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Package, ListChecks, FolderSync, Map } from 'lucide-react'
+import { Maximize2, LayoutGrid, Undo2, Redo2, Download, FileJson, FileText, FileCode, ClipboardCopy, Package, ListChecks, FolderSync, Map, HelpCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useProjectStore } from '@/stores/project-store'
 import { useUIStore } from '@/stores/ui-store'
@@ -29,6 +29,15 @@ export function CanvasToolbar({ onReLayout, onToggleTerritorySync, territorySync
   const canRedo = useProjectStore((s) => s.canRedo)
   const minimapOpen = useUIStore((s) => s.minimapOpen)
   const setMinimapOpen = useUIStore((s) => s.setMinimapOpen)
+  const quickQuestionsPanelOpen = useUIStore((s) => s.quickQuestionsPanelOpen)
+  const setQuickQuestionsPanelOpen = useUIStore((s) => s.setQuickQuestionsPanelOpen)
+
+  const unansweredCount = useMemo(() => {
+    if (!currentProject) return 0
+    return currentProject.nodes.reduce((count, node) => {
+      return count + node.questions.filter((q) => !(q.answer ?? '').trim()).length
+    }, 0)
+  }, [currentProject])
 
 
 
@@ -175,6 +184,22 @@ export function CanvasToolbar({ onReLayout, onToggleTerritorySync, territorySync
       >
         <Map className="h-4 w-4" />
       </Button>
+      <div className="relative">
+        <Button
+          variant={quickQuestionsPanelOpen ? 'default' : 'outline'}
+          size="icon"
+          onClick={() => setQuickQuestionsPanelOpen(!quickQuestionsPanelOpen)}
+          title="Quick questions"
+          aria-label="Quick questions"
+        >
+          <HelpCircle className="h-4 w-4" />
+        </Button>
+        {unansweredCount > 0 && !quickQuestionsPanelOpen && (
+          <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[16px] h-4 px-1 rounded-full bg-primary text-primary-foreground text-[9px] font-bold pointer-events-none">
+            {unansweredCount > 99 ? '99+' : unansweredCount}
+          </span>
+        )}
+      </div>
       <div className="h-px bg-border my-1" />
       <div className="relative" ref={exportRef}>
         <Button
