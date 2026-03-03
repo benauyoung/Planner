@@ -112,9 +112,11 @@
 ## Phase 5: AI Integration ✅
 
 ### 5.1 Onboarding
-- [x] `project-onboarding.tsx` — 7-step questionnaire
-- [x] AI feature suggestions via `/api/ai/suggest-features`
-- [x] Summary page with "Start Planning" button
+- [x] `project-onboarding.tsx` — 3 fixed steps (description, type, features) + 2-4 AI-generated dynamic questions
+- [x] AI feature suggestions + tailored questions via `/api/ai/suggest-features` (single API call)
+- [x] Skip button on all steps except description
+- [x] Dynamic answers stored in `OnboardingAnswers.dynamicAnswers`
+- [x] Summary page with "Start Planning" button, skipped answers shown as "Skipped"
 
 ### 5.2 Chat Planning
 - [x] `planning-chat.tsx` — Full chat interface
@@ -371,6 +373,40 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 ### 16.4 Bug Fixes
 - [x] SVG zoom fix — `preserveAspectRatio="xMidYMid meet"` replaces overflow scrolling
 - [x] Baguette image — Committed to git, added `unoptimized` prop
+
+---
+
+## Phase 17: Smart Onboarding & Quick Questions ✅
+
+### 17.1 Skip Button
+- [x] Skip link between Back and Continue on all onboarding steps except description
+- [x] Skipping clears step value and advances
+- [x] Summary page shows "Skipped" in muted italic for skipped/empty answers
+- [x] Skipped state clears if user revisits step and provides answer
+- [x] `onboarding-message.ts` only includes non-empty answers
+
+### 17.2 Dynamic AI-Generated Questions
+- [x] Removed fixed steps 4-7 (audience, timeline, teamSize, priorities) from `onboarding-config.ts`
+- [x] Added `DynamicOnboardingQuestion` interface to `onboarding-config.ts`
+- [x] Made `audience`, `timeline`, `teamSize`, `priorities` optional in `OnboardingAnswers`
+- [x] Added `dynamicAnswers?: Record<string, string | string[]>` to `OnboardingAnswers`
+- [x] Extended `featureSuggestionsSchema` with `tailoredQuestions` array (id, question, subtitle, type, options)
+- [x] Updated `/api/ai/suggest-features` prompt to generate 2-4 tailored domain-specific questions
+- [x] Single API call returns both features and questions -- no extra latency
+- [x] Dynamic questions render as additional steps after features with existing option grid UI
+- [x] Summary page shows all steps (fixed + dynamic)
+- [x] `onboarding-message.ts` formats dynamic answers
+
+### 17.3 Quick Questions Panel
+- [x] `components/panels/quick-questions-panel.tsx` -- slide-in panel from right (w-80)
+- [x] Progress bar: "X/Y questions answered" with percentage
+- [x] Nodes with unanswered questions grouped by node (type badge + title)
+- [x] Expandable groups with inline option buttons for answering
+- [x] "Generate questions" button for nodes without any (calls `/api/ai/generate-questions`)
+- [x] `quickQuestionsPanelOpen` state in `ui-store.ts`
+- [x] HelpCircle button with unanswered count badge in `canvas-toolbar.tsx`
+- [x] Panel rendered in `project-workspace.tsx`
+- [x] Extended ICON_MAP with 15+ additional Lucide icons for AI-generated question options
 
 ---
 

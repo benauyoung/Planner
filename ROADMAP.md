@@ -292,6 +292,20 @@
 
 ---
 
+### M17.6: Smart Onboarding & Quick Questions ✅
+**Status**: Complete
+
+**Delivered** (Mar 3, 2026):
+- **Skip button** on all onboarding steps (except description) -- skips and advances, shows "Skipped" on summary
+- **Dynamic AI-generated onboarding questions** -- removed fixed audience/timeline/teamSize/priorities steps, replaced with 2-4 tailored questions from Gemini (returned alongside feature suggestions in single API call)
+- **Quick Questions panel** -- slide-in panel listing all nodes with unanswered questions, grouped by node, inline answering with option buttons
+- **Quick Questions toolbar button** -- HelpCircle icon with unanswered count badge in canvas toolbar
+- **Auto-generate questions** for nodes without any (calls `/api/ai/generate-questions`)
+- Updated `OnboardingAnswers` type: `dynamicAnswers?: Record<string, string | string[]>`, old fields made optional
+- Updated `onboarding-message.ts` to only include non-empty answers + format dynamic answers
+
+---
+
 ### M17.5: Landing Page Refinement ✅
 **Status**: Complete
 
@@ -442,7 +456,7 @@
 - Agent drag-and-drop onto Design canvas pages (injects chat widget HTML)
 - LOD edge routing fix, canvas layout TB, Firestore fallback UX
 
-### v0.9.10 - Landing Refinement ✅ (Current)
+### v0.9.10 - Landing Refinement ✅
 - Canvas toolbar cleanup (6 buttons removed) + Team button removed
 - Node interactions: click-to-expand/collapse, full titles, wider nodes
 - Subtree background coloring for visual grouping
@@ -451,6 +465,12 @@
 - All French content → English, FR/EN toggle in nav
 - Baguette footer with large logo asset
 - SVG zoom fix (fit-to-view)
+
+### v0.9.11 - Smart Onboarding & Quick Questions ✅ (Current)
+- Skip button on all onboarding steps except description
+- Dynamic AI-generated onboarding questions (replaces fixed audience/timeline/team/priorities)
+- Quick Questions panel for answering node questions across the project
+- Auto-generate questions for nodes without any
 
 ### v1.0.0 - Launch (Planned)
 - Legacy code cleanup (remove WebContainer files, unused deps)
@@ -513,4 +533,5 @@
 | 2026-02-23 | Added M20 (Design Tab Deepening) and M21 (Agent System Expansion) to roadmap |
 | 2026-02-23 | Three Pillars framing added to all documentation |
 | 2026-03-02 | M17.5: Landing Page Refinement — playground as hero, parchment theme, English translation, FR/EN toggle, baguette footer, SVG zoom fix |
-| 2026-03-03 | v0.9.10: Documentation update — ROADMAP, PLAN, session log |
+| 2026-03-03 | v0.9.10: Documentation update -- ROADMAP, PLAN, session log |
+| 2026-03-03 | M17.6: Smart Onboarding & Quick Questions -- skip button, dynamic AI questions, quick questions panel |
