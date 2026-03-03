@@ -1,6 +1,6 @@
 # TinyBaguette Implementation Plan
 
-> Living checklist reflecting actual implementation status as of February 22, 2026.
+> Living checklist reflecting actual implementation status as of March 3, 2026.
 
 ---
 
@@ -340,6 +340,37 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 - [x] `canvas-toolbar.tsx` — FolderSync icon button toggles territory sync panel
 - [x] `project-workspace.tsx` — `Ctrl+T` keyboard shortcut for territory sync panel
 - [x] TypeScript compiles clean
+
+---
+
+## Phase 16: Landing Page Refinement ✅
+
+### 16.1 Canvas Toolbar & Node Cleanup
+- [x] Remove Expand/Collapse all, Spring layout, Animated spring layout from `canvas-toolbar.tsx`
+- [x] Remove Snap to grid, Blast radius from canvas toolbar
+- [x] Remove Team button from `project-toolbar.tsx`
+- [x] Click-to-expand/collapse child nodes in `base-plan-node.tsx`
+- [x] Full title display on node selection
+- [x] Start all nodes expanded by default
+- [x] Widen nodes for longer titles (`constants.ts`)
+- [x] Subtree background coloring (`subtree-backgrounds.tsx` + `graph-canvas.tsx` integration)
+
+### 16.2 Planning Playground Theme Migration
+- [x] Migrate `planning-playground.tsx` from dark theme to french-editorial parchment palette
+- [x] Replace all 22 blue accent references with sage green (`#4A7459`, `#8BAF8A`, `#3a5e47`)
+- [x] Remove `features-dark-override` CSS class
+- [x] Update node fills, text colors, edges, dot grid, sidebar, email gate, all phases
+
+### 16.3 Page Structure & Content
+- [x] `page.tsx` — PlanningPlayground as hero (first section), HeroConversion removed from flow
+- [x] `hero-conversion.tsx` — All French text translated to English
+- [x] `nav-bar.tsx` — FR/EN language toggle button (desktop + mobile)
+- [x] `features-tabs.tsx` + `interactive-showcase.tsx` — Tagline → "Plan your project in minutes."
+- [x] `baguette-footer.tsx` — New footer component with large `Baguettepng.png` logo
+
+### 16.4 Bug Fixes
+- [x] SVG zoom fix — `preserveAspectRatio="xMidYMid meet"` replaces overflow scrolling
+- [x] Baguette image — Committed to git, added `unoptimized` prop
 
 ---
 

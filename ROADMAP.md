@@ -1,6 +1,6 @@
 # TinyBaguette Roadmap
 
-> Milestone tracking. Updated February 23, 2026 to reflect actual progress.
+> Milestone tracking. Updated March 3, 2026 to reflect actual progress.
 
 ---
 
@@ -292,6 +292,23 @@
 
 ---
 
+### M17.5: Landing Page Refinement ✅
+**Status**: Complete
+
+**Delivered** (Mar 2, 2026):
+- **Canvas toolbar cleanup** — Removed Expand/Collapse all, Spring/Animated spring layout, Snap to grid, Blast radius, Team button
+- **Node interaction improvements** — Click-to-expand/collapse children, full title display, nodes start expanded, wider nodes, collapse button
+- **Subtree background coloring** — Colored background rects behind same-path nodes for visual grouping
+- **Parchment theme migration** — Migrated PlanningPlayground from dark theme to french-editorial parchment palette (22 blue→sage green replacements)
+- **Page restructure** — PlanningPlayground promoted to hero (first section), HeroConversion removed from page flow
+- **English translation** — All French content translated (headlines, subtext, email form, CTA, error messages)
+- **FR/EN toggle** — Language toggle button added to nav bar (desktop + mobile)
+- **Baguette footer** — New BaguetteFooter component with large logo image, tagline, copyright
+- **Tagline update** — "Create your website or mobile application..." → "Plan your project in minutes."
+- **SVG zoom fix** — Canvas fits within container using `preserveAspectRatio` instead of scrolling overflow
+
+---
+
 ### M18: Real-Time Collaboration (Production) 🔴
 **Status**: Planned
 
@@ -425,6 +442,16 @@
 - Agent drag-and-drop onto Design canvas pages (injects chat widget HTML)
 - LOD edge routing fix, canvas layout TB, Firestore fallback UX
 
+### v0.9.10 - Landing Refinement ✅ (Current)
+- Canvas toolbar cleanup (6 buttons removed) + Team button removed
+- Node interactions: click-to-expand/collapse, full titles, wider nodes
+- Subtree background coloring for visual grouping
+- Parchment theme: 22 blue→sage green replacements
+- PlanningPlayground promoted to hero section
+- All French content → English, FR/EN toggle in nav
+- Baguette footer with large logo asset
+- SVG zoom fix (fit-to-view)
+
 ### v1.0.0 - Launch (Planned)
 - Legacy code cleanup (remove WebContainer files, unused deps)
 - Performance + accessibility audit
@@ -485,3 +512,5 @@
 | 2026-02-22 | v0.9.9: Current version — Design tab + agent integration milestone |
 | 2026-02-23 | Added M20 (Design Tab Deepening) and M21 (Agent System Expansion) to roadmap |
 | 2026-02-23 | Three Pillars framing added to all documentation |
+| 2026-03-02 | M17.5: Landing Page Refinement — playground as hero, parchment theme, English translation, FR/EN toggle, baguette footer, SVG zoom fix |
+| 2026-03-03 | v0.9.10: Documentation update — ROADMAP, PLAN, session log |
