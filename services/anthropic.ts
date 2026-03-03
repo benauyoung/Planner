@@ -11,4 +11,9 @@ export function getAnthropicClient(): Anthropic {
     return client
 }
 
-export const CLAUDE_MODEL = 'claude-opus-4-6-20260205'
+export const CLAUDE_MODEL = 'claude-opus-4-6'
+
+/** Check if Anthropic is configured (key is present) */
+export function isAnthropicConfigured(): boolean {
+    return !!process.env.NEXT_PUBLIC_ANTHROPIC_API_KEY
+}
