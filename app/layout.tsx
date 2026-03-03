@@ -9,15 +9,15 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
-  description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
+  title: 'TinyBaguette - Your Developer Planning Tool',
+  description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
   metadataBase: new URL('https://tinybaguette.com'),
   icons: {
     icon: '/Logo.png',
   },
   openGraph: {
-    title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
-    description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
+    title: 'TinyBaguette - Your Developer Planning Tool',
+    description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
     url: 'https://tinybaguette.com',
     siteName: 'TinyBaguette',
     images: [
@@ -25,15 +25,15 @@ export const metadata: Metadata = {
         url: '/api/og',
         width: 1200,
         height: 630,
-        alt: 'TinyBaguette — Vibe Code Your Personal Website with AI',
+        alt: 'TinyBaguette - Your Developer Planning Tool',
       },
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TinyBaguette — Vibe Code Your Personal Website with AI',
-    description: 'The first in-browser coding and planning assistant built for personal websites. Describe your idea and ship it with AI.',
+    title: 'TinyBaguette - Your Developer Planning Tool',
+    description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
     images: ['/api/og'],
   },
 }
