@@ -10,7 +10,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: {
-    default: 'TinyBaguette — Plan to Product in Minutes',
+    default: 'TinyBaguette - Your Perfect Planning Tool',
     template: '%s | TinyBaguette',
   },
   description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor, Claude Code, or Windsurf.',
@@ -40,8 +40,8 @@ export const metadata: Metadata = {
     apple: '/Logo.png',
   },
   openGraph: {
-    title: 'TinyBaguette — Plan to Product in Minutes',
-    description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor or Claude Code.',
+    title: 'TinyBaguette - Your Perfect Planning Tool',
+    description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor, Claude Code, or Windsurf.',
     url: 'https://tinybaguette.com',
     siteName: 'TinyBaguette',
     locale: 'en_US',
@@ -57,8 +57,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TinyBaguette — Plan to Product in Minutes',
-    description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, and embed AI agents.',
+    title: 'TinyBaguette - Your Perfect Planning Tool',
+    description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor, Claude Code, or Windsurf.',
     images: ['/og/og-image.png'],
     creator: '@tinybaguette',
   },
