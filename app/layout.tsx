@@ -22,10 +22,10 @@ export const metadata: Metadata = {
     siteName: 'TinyBaguette',
     images: [
       {
-        url: '/api/og',
+        url: '/og/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'TinyBaguette - Your Developer Planning Tool',
+        alt: 'TinyBaguette - Big Ideas. TinyBaguette.',
       },
     ],
     type: 'website',
@@ -34,7 +34,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TinyBaguette - Your Developer Planning Tool',
     description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
-    images: ['/api/og'],
+    images: ['/og/og-image.png'],
   },
 }
 

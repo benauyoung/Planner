@@ -25,6 +25,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { track } from '@vercel/analytics'
+import { useLang } from '@/lib/landing-lang-context'
+import { t, type Lang } from '@/lib/landing-i18n'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -53,28 +55,34 @@ interface LayoutNode extends PlanNode {
 
 const ACTION_LIMIT = 10
 
-const PLACEHOLDER_IDEAS = [
-    'A recipe sharing platform with AI meal planning...',
-    'An online marketplace for handmade crafts...',
-    'A fitness app that tracks workouts and nutrition...',
-    'A community platform for language learners...',
-    'A portfolio builder for creative professionals...',
-]
+function getPlaceholderIdeas(lang: Lang) {
+    return [
+        t(lang, 'ppPlaceholder1'),
+        t(lang, 'ppPlaceholder2'),
+        t(lang, 'ppPlaceholder3'),
+        t(lang, 'ppPlaceholder4'),
+        t(lang, 'ppPlaceholder5'),
+    ]
+}
 
-const EXAMPLE_CHIPS = [
-    'Online Boutique',
-    'Fitness App',
-    'Recipe Platform',
-    'Portfolio Site',
-    'Learning Hub',
-]
+function getExampleChips(lang: Lang) {
+    return [
+        t(lang, 'ppChip1'),
+        t(lang, 'ppChip2'),
+        t(lang, 'ppChip3'),
+        t(lang, 'ppChip4'),
+        t(lang, 'ppChip5'),
+    ]
+}
 
-const LOADING_STEPS = [
-    'Analyzing your idea…',
-    'Designing the structure…',
-    'Building your plan…',
-    'Organizing nodes…',
-]
+function getLoadingSteps(lang: Lang) {
+    return [
+        t(lang, 'ppLoadingStep1'),
+        t(lang, 'ppLoadingStep2'),
+        t(lang, 'ppLoadingStep3'),
+        t(lang, 'ppLoadingStep4'),
+    ]
+}
 
 const TYPE_ICONS: Record<string, typeof Target> = {
     goal: Target,
@@ -90,11 +98,13 @@ const TYPE_COLORS: Record<string, string> = {
     task: '#8b5cf6',
 }
 
-const TYPE_LABELS: Record<string, string> = {
-    goal: 'Goal',
-    subgoal: 'Subgoal',
-    feature: 'Feature',
-    task: 'Task',
+function getTypeLabels(lang: Lang): Record<string, string> {
+    return {
+        goal: t(lang, 'ppGoal'),
+        subgoal: t(lang, 'ppSubgoal'),
+        feature: t(lang, 'ppFeature'),
+        task: t(lang, 'ppTask'),
+    }
 }
 
 const CHILD_TYPE: Record<string, PlanNode['type']> = {
@@ -104,10 +114,12 @@ const CHILD_TYPE: Record<string, PlanNode['type']> = {
     task: 'task',
 }
 
-const STATUS_CONFIG: Record<NodeStatus, { color: string; label: string }> = {
-    not_started: { color: 'rgba(28,36,24,0.25)', label: 'Not started' },
-    in_progress: { color: '#3b82f6', label: 'In progress' },
-    completed: { color: '#22c55e', label: 'Completed' },
+function getStatusConfig(lang: Lang): Record<NodeStatus, { color: string; label: string }> {
+    return {
+        not_started: { color: 'rgba(28,36,24,0.25)', label: t(lang, 'ppNotStarted') },
+        in_progress: { color: '#3b82f6', label: t(lang, 'ppInProgress') },
+        completed: { color: '#22c55e', label: t(lang, 'ppCompleted') },
+    }
 }
 
 const STATUS_ORDER: NodeStatus[] = ['not_started', 'in_progress', 'completed']
@@ -206,15 +218,16 @@ let nextNodeId = 1000
 
 // ─── Loading Animation ───────────────────────────────────────
 
-function LoadingPhase() {
+function LoadingPhase({ lang }: { lang: Lang }) {
     const [step, setStep] = useState(0)
+    const steps = getLoadingSteps(lang)
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setStep((prev) => Math.min(prev + 1, LOADING_STEPS.length - 1))
+            setStep((prev) => Math.min(prev + 1, steps.length - 1))
         }, 1800)
         return () => clearInterval(interval)
-    }, [])
+    }, [steps.length])
 
     return (
         <div className="flex flex-col items-center justify-center py-24 gap-8">
@@ -239,10 +252,10 @@ function LoadingPhase() {
                         transition={{ duration: 0.3 }}
                         className="text-base font-semibold text-[hsl(103,18%,12%)]"
                     >
-                        {LOADING_STEPS[step]}
+                        {steps[step]}
                     </motion.p>
                 </AnimatePresence>
-                <p className="text-xs text-[hsl(100,10%,38%)] mt-2">Building your project plan…</p>
+                <p className="text-xs text-[hsl(100,10%,38%)] mt-2">{t(lang, 'ppBuildingPlan')}</p>
             </div>
             <div className="w-72 h-1.5 rounded-full bg-[hsl(40,18%,85%)] overflow-hidden">
                 <motion.div
@@ -258,7 +271,8 @@ function LoadingPhase() {
 
 // ─── Stats Strip ────────────────────────────────────────────
 
-function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
+function StatsStrip({ nodes, lang }: { nodes: PlanNode[]; lang: Lang }) {
+    const typeLabels = getTypeLabels(lang)
     const counts = useMemo(() => {
         const c = { goal: 0, subgoal: 0, feature: 0, task: 0 }
         for (const n of nodes) c[n.type]++
@@ -267,7 +281,7 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
 
     return (
         <div className="flex items-center gap-4 px-4 py-2.5 rounded-xl bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)]">
-            <span className="text-[11px] font-semibold text-[hsl(100,10%,38%)]">{nodes.length} nodes</span>
+            <span className="text-[11px] font-semibold text-[hsl(100,10%,38%)]">{nodes.length} {t(lang, 'ppNodes')}</span>
             <div className="w-px h-3 bg-[hsl(40,20%,80%)]" />
             {(['goal', 'subgoal', 'feature', 'task'] as const).map((type) =>
                 counts[type] > 0 ? (
@@ -277,7 +291,7 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
                             style={{ backgroundColor: TYPE_COLORS[type] }}
                         />
                         <span className="text-[11px] text-[hsl(100,10%,38%)]">
-                            {counts[type]} {TYPE_LABELS[type]}{counts[type] > 1 ? 's' : ''}
+                            {counts[type]} {typeLabels[type]}{counts[type] > 1 && lang === 'en' ? 's' : ''}
                         </span>
                     </div>
                 ) : null
@@ -288,12 +302,12 @@ function StatsStrip({ nodes }: { nodes: PlanNode[] }) {
 
 // ─── Progress Bar ───────────────────────────────────────────
 
-function ActionProgress({ count, limit }: { count: number; limit: number }) {
+function ActionProgress({ count, limit, lang }: { count: number; limit: number; lang: Lang }) {
     const pct = Math.min((count / limit) * 100, 100)
     return (
         <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)]">
             <span className="text-[11px] font-semibold text-[hsl(100,10%,38%)]">
-                {count}/{limit} actions
+                {count}/{limit} {t(lang, 'ppActions')}
             </span>
             <div className="w-24 h-1.5 rounded-full bg-[hsl(40,18%,85%)] overflow-hidden">
                 <motion.div
@@ -321,6 +335,7 @@ function DetailSidebar({
     onEditTitle,
     onDeleteNode,
     gated,
+    lang,
 }: {
     node: LayoutNode
     allNodes: LayoutNode[]
@@ -334,13 +349,16 @@ function DetailSidebar({
     onEditTitle: (nodeId: string, newTitle: string) => void
     onDeleteNode: (nodeId: string) => void
     gated: boolean
+    lang: Lang
 }) {
     const Icon = TYPE_ICONS[node.type] || Target
+    const typeLabels = getTypeLabels(lang)
+    const statusConfig = getStatusConfig(lang)
     const parent = node.parentId ? allNodes.find((n) => n.id === node.parentId) : null
     const children = allNodes.filter((n) => n.parentId === node.id)
     const questions = node.questions || []
     const status = nodeStatuses[node.id] || 'not_started'
-    const statusCfg = STATUS_CONFIG[status]
+    const statusCfg = statusConfig[status]
 
     const [editingTitle, setEditingTitle] = useState(false)
     const [titleDraft, setTitleDraft] = useState(node.title)
@@ -398,7 +416,7 @@ function DetailSidebar({
                             style={{ backgroundColor: TYPE_COLORS[node.type] + '30', color: TYPE_COLORS[node.type] }}
                         >
                             <Icon className="h-3 w-3" />
-                            {TYPE_LABELS[node.type]}
+                            {typeLabels[node.type]}
                         </span>
                         {/* Status toggle */}
                         <button
@@ -469,7 +487,7 @@ function DetailSidebar({
                 {/* Parent */}
                 {parent && (
                     <div>
-                        <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold mb-2">Parent</h4>
+                        <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold mb-2">{t(lang, 'ppParent')}</h4>
                         <button
                             onClick={() => onSelectNode(parent.id)}
                             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg bg-[hsl(40,18%,85%)]/40 border border-[hsl(40,20%,80%)] hover:bg-[hsl(40,18%,85%)]/70 transition-colors text-left"
@@ -488,7 +506,7 @@ function DetailSidebar({
                 <div>
                     <div className="flex items-center justify-between mb-2">
                         <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold">
-                            Children {children.length > 0 && `(${children.length})`}
+                            {t(lang, 'ppChildren')} {children.length > 0 && `(${children.length})`}
                         </h4>
                         {!gated && (
                             <button
@@ -497,7 +515,7 @@ function DetailSidebar({
                                 title="Add child node"
                             >
                                 <Plus className="h-3 w-3" />
-                                Add
+                                {t(lang, 'ppAdd')}
                             </button>
                         )}
                     </div>
@@ -564,7 +582,7 @@ function DetailSidebar({
                     <div>
                         <h4 className="text-[10px] uppercase tracking-wider text-[hsl(100,10%,38%)]/60 font-semibold mb-2 flex items-center gap-1.5">
                             <HelpCircle className="h-3 w-3" />
-                            Planning Questions
+                            {t(lang, 'ppPlanningQuestions')}
                         </h4>
                         <div className="space-y-3">
                             {questions.slice(0, 3).map((q) => {
@@ -629,7 +647,7 @@ function DetailSidebar({
                                                 className="flex items-center gap-1 mt-2 text-[9px] text-green-400/70"
                                             >
                                                 <Check className="h-2.5 w-2.5" />
-                                                Answer saved
+                                                {t(lang, 'ppAnswerSaved')}
                                             </motion.div>
                                         )}
                                     </div>
@@ -644,9 +662,9 @@ function DetailSidebar({
                     <div className="flex items-start gap-2.5">
                         <Lightbulb className="h-4 w-4 text-[#8BAF8A] shrink-0 mt-0.5" />
                         <div>
-                            <p className="text-[11px] text-[hsl(103,18%,12%)]/70 font-medium mb-1">Want to refine this plan?</p>
+                            <p className="text-[11px] text-[hsl(103,18%,12%)]/70 font-medium mb-1">{t(lang, 'ppWantToRefine')}</p>
                             <p className="text-[10px] text-[hsl(100,10%,38%)] leading-relaxed">
-                                Sign up to get AI-powered suggestions, drag-and-drop editing, and PRD generation.
+                                {t(lang, 'ppSignUpHint')}
                             </p>
                         </div>
                     </div>
@@ -662,10 +680,12 @@ function EmailGateOverlay({
     onSubmitEmail,
     emailSubmitting,
     appTitle,
+    lang,
 }: {
     onSubmitEmail: (email: string) => void
     emailSubmitting: boolean
     appTitle: string
+    lang: Lang
 }) {
     const [email, setEmail] = useState('')
 
@@ -688,10 +708,10 @@ function EmailGateOverlay({
                 <div className="w-14 h-14 rounded-2xl bg-[#4A7459]/10 flex items-center justify-center mx-auto mb-5">
                     <Sparkles className="h-7 w-7 text-[#8BAF8A]" />
                 </div>
-                <h3 className="text-xl font-bold text-[hsl(103,18%,12%)] mb-2">You&apos;re on a roll!</h3>
+                <h3 className="text-xl font-bold text-[hsl(103,18%,12%)] mb-2">{t(lang, 'ppYoureOnARoll')}</h3>
                 <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
-                    Enter your email to keep building{' '}
-                    <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> with the full planning canvas, AI tools, and more.
+                    {t(lang, 'ppEnterEmailKeepBuilding')}{' '}
+                    <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> {t(lang, 'ppWithFullCanvas')}
                 </p>
 
                 <div className="space-y-3">
@@ -714,11 +734,11 @@ function EmailGateOverlay({
                         ) : (
                             <Mail className="h-4 w-4" />
                         )}
-                        {emailSubmitting ? 'Joining…' : 'Continue Planning'}
+                        {emailSubmitting ? t(lang, 'ppJoiningEllipsis') : t(lang, 'ppContinuePlanningBtn')}
                     </button>
                 </div>
                 <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-4">
-                    No credit card required
+                    {t(lang, 'ppNoCreditCard')}
                 </p>
             </motion.div>
         </motion.div>
@@ -744,6 +764,7 @@ function InteractiveCanvas({
     onSubmitEmail,
     emailSubmitting,
     appTitle,
+    lang,
 }: {
     nodes: PlanNode[]
     setNodes: React.Dispatch<React.SetStateAction<PlanNode[]>>
@@ -761,10 +782,13 @@ function InteractiveCanvas({
     onSubmitEmail: (email: string) => void
     emailSubmitting: boolean
     appTitle: string
+    lang: Lang
 }) {
     const [selectedId, setSelectedId] = useState<string | null>(null)
     const svgRef = useRef<HTMLDivElement>(null)
 
+    const typeLabels = getTypeLabels(lang)
+    const statusConfig = getStatusConfig(lang)
     const { laid, width, height } = useMemo(() => layoutTree(nodes), [nodes])
     const selectedNode = selectedId ? laid.find((n) => n.id === selectedId) || null : null
 
@@ -797,8 +821,8 @@ function InteractiveCanvas({
             {/* Header row */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div className="flex items-center gap-3 flex-wrap">
-                    <StatsStrip nodes={nodes} />
-                    <ActionProgress count={actionCount} limit={ACTION_LIMIT} />
+                    <StatsStrip nodes={nodes} lang={lang} />
+                    <ActionProgress count={actionCount} limit={ACTION_LIMIT} lang={lang} />
                 </div>
                 <motion.button
                     initial={{ opacity: 0, y: 8 }}
@@ -807,7 +831,7 @@ function InteractiveCanvas({
                     onClick={onContinue}
                     className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] transition-all shadow-lg shadow-[#4A7459]/25 hover:shadow-xl hover:shadow-[#4A7459]/30 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                    Continue Planning
+                    {t(lang, 'ppContinuePlanning')}
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-0.5 transition-transform" />
                 </motion.button>
             </div>
@@ -863,7 +887,7 @@ function InteractiveCanvas({
                             const isSelected = selectedId === node.id
                             const color = TYPE_COLORS[node.type]
                             const status = nodeStatuses[node.id] || 'not_started'
-                            const statusColor = STATUS_CONFIG[status].color
+                            const statusColor = statusConfig[status].color
                             const hasAnswers = (node.questions || []).some(
                                 q => answeredQuestions[`${node.id}:${q.id}`]
                             )
@@ -956,7 +980,7 @@ function InteractiveCanvas({
                                         fontFamily="system-ui, -apple-system, sans-serif"
                                         opacity={0.7}
                                     >
-                                        {TYPE_LABELS[node.type]}
+                                        {typeLabels[node.type]}
                                     </text>
 
                                     {/* Children count badge */}
@@ -1013,6 +1037,7 @@ function InteractiveCanvas({
                                 onEditTitle={onEditTitle}
                                 onDeleteNode={onDeleteNode}
                                 gated={gated}
+                                lang={lang}
                             />
                         </motion.div>
                     )}
@@ -1025,6 +1050,7 @@ function InteractiveCanvas({
                             onSubmitEmail={onSubmitEmail}
                             emailSubmitting={emailSubmitting}
                             appTitle={appTitle}
+                            lang={lang}
                         />
                     )}
                 </AnimatePresence>
@@ -1037,7 +1063,7 @@ function InteractiveCanvas({
                 transition={{ delay: 1.2 }}
                 className="text-center text-xs text-white/30"
             >
-                Click any node to explore · Answer questions and add nodes to build your plan
+                {t(lang, 'ppClickNodeExplore')}
             </motion.p>
         </motion.div>
     )
@@ -1046,6 +1072,7 @@ function InteractiveCanvas({
 // ─── Main Component ──────────────────────────────────────────
 
 export function PlanningPlayground() {
+    const { lang } = useLang()
     const [phase, setPhase] = useState<Phase>('input')
     const [prompt, setPrompt] = useState('')
     const [placeholderIdx, setPlaceholderIdx] = useState(0)
@@ -1062,13 +1089,16 @@ export function PlanningPlayground() {
     const [nodeStatuses, setNodeStatuses] = useState<Record<string, NodeStatus>>({})
     const [gated, setGated] = useState(false)
 
+    const placeholderIdeas = getPlaceholderIdeas(lang)
+    const exampleChips = getExampleChips(lang)
+
     // Rotate placeholder
     useEffect(() => {
         const interval = setInterval(() => {
-            setPlaceholderIdx((prev) => (prev + 1) % PLACEHOLDER_IDEAS.length)
+            setPlaceholderIdx((prev) => (prev + 1) % placeholderIdeas.length)
         }, 3200)
         return () => clearInterval(interval)
-    }, [])
+    }, [placeholderIdeas.length])
 
     // ─── Action tracking ────────────────────────────────────────
 
@@ -1193,7 +1223,7 @@ export function PlanningPlayground() {
     }
 
     function handleChipClick(chip: string) {
-        setPrompt(`Build a ${chip.toLowerCase()} with user accounts, a dashboard, and core features.`)
+        setPrompt(t(lang, 'ppChipPrompt').replace('{chip}', chip.toLowerCase()))
         textareaRef.current?.focus()
     }
 
@@ -1223,22 +1253,32 @@ export function PlanningPlayground() {
         <section
             id="planning-playground"
             className="relative pt-24 pb-14 sm:pt-28 sm:pb-20 overflow-hidden"
-            style={{ background: '#F4F0E6' }}
+            style={{ background: 'linear-gradient(180deg, #F5F1E8 0%, #EDE8DA 40%, #E4DFCF 100%)' }}
         >
             {/* Background effects */}
             <div className="absolute inset-0 pointer-events-none">
+                {/* Warm green glow top-center */}
                 <div
                     className="absolute inset-0"
                     style={{
                         backgroundImage:
-                            'radial-gradient(ellipse 80% 50% at 50% 30%, rgba(139,175,138,0.12) 0%, transparent 70%)',
+                            'radial-gradient(ellipse 70% 45% at 50% 15%, rgba(74,116,89,0.14) 0%, transparent 70%)',
                     }}
                 />
+                {/* Soft rose accent bottom-right */}
                 <div
-                    className="absolute inset-0 opacity-[0.06]"
+                    className="absolute inset-0"
                     style={{
                         backgroundImage:
-                            'radial-gradient(circle, rgba(28,36,24,0.04) 1px, transparent 1px)',
+                            'radial-gradient(ellipse 50% 40% at 80% 85%, rgba(200,140,130,0.08) 0%, transparent 65%)',
+                    }}
+                />
+                {/* Dot grid */}
+                <div
+                    className="absolute inset-0 opacity-[0.08]"
+                    style={{
+                        backgroundImage:
+                            'radial-gradient(circle, rgba(28,36,24,0.06) 1px, transparent 1px)',
                         backgroundSize: '32px 32px',
                     }}
                 />
@@ -1263,16 +1303,16 @@ export function PlanningPlayground() {
                                     className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#4A7459]/20 bg-[#4A7459]/10 text-xs font-medium text-[#4A7459] mb-5"
                                 >
                                     <Sparkles className="h-3.5 w-3.5" />
-                                    Try it now -- free
+                                    {t(lang, 'ppTryItNow')}
                                 </motion.div>
                                 <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-[hsl(103,18%,12%)] mb-4">
-                                    Start planning{' '}
+                                    {t(lang, 'ppStartPlanning')}{' '}
                                     <span className="italic" style={{ color: '#4A7459' }}>
-                                        your project
+                                        {t(lang, 'ppYourProject')}
                                     </span>
                                 </h2>
                                 <p className="text-base sm:text-lg text-[hsl(100,10%,38%)] max-w-xl mx-auto">
-                                    Describe your idea and watch it transform into an interactive project plan.
+                                    {t(lang, 'ppDescribeIdea')}
                                 </p>
                             </div>
 
@@ -1286,14 +1326,14 @@ export function PlanningPlayground() {
                                             value={prompt}
                                             onChange={(e) => setPrompt(e.target.value)}
                                             onKeyDown={handleKeyDown}
-                                            placeholder={PLACEHOLDER_IDEAS[placeholderIdx]}
+                                            placeholder={placeholderIdeas[placeholderIdx]}
                                             rows={4}
                                             className="w-full bg-transparent text-base sm:text-lg resize-none focus:outline-none placeholder:text-[hsl(100,10%,38%)]/40 text-[hsl(103,18%,12%)] leading-relaxed"
                                         />
 
                                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(40,20%,80%)]">
                                             <div className="flex items-center gap-2 flex-wrap">
-                                                {EXAMPLE_CHIPS.map((chip) => (
+                                                {exampleChips.map((chip) => (
                                                     <button
                                                         key={chip}
                                                         onClick={() => handleChipClick(chip)}
@@ -1309,7 +1349,7 @@ export function PlanningPlayground() {
                                                 disabled={!prompt.trim()}
                                                 className="shrink-0 ml-3 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#4A7459]/20"
                                             >
-                                                Plan
+                                                {t(lang, 'ppPlan')}
                                                 <ArrowRight className="h-4 w-4" />
                                             </button>
                                         </div>
@@ -1321,15 +1361,14 @@ export function PlanningPlayground() {
                                 )}
 
                                 <p className="text-center text-xs text-[hsl(100,10%,38%)]/50 mt-4">
-                                    Press{' '}
                                     <kbd className="px-1.5 py-0.5 rounded border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-[10px] font-mono text-[hsl(100,10%,38%)]">
                                         Enter
                                     </kbd>{' '}
-                                    to plan ·{' '}
+                                    {t(lang, 'ppPressEnterToPlan')} ·{' '}
                                     <kbd className="px-1.5 py-0.5 rounded border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-[10px] font-mono text-[hsl(100,10%,38%)]">
                                         Shift+Enter
                                     </kbd>{' '}
-                                    for new line
+                                    {t(lang, 'ppShiftEnterNewLine')}
                                 </p>
                             </div>
                         </motion.div>
@@ -1344,7 +1383,7 @@ export function PlanningPlayground() {
                             exit={{ opacity: 0, y: -20 }}
                             transition={{ duration: 0.4 }}
                         >
-                            <LoadingPhase />
+                            <LoadingPhase lang={lang} />
                         </motion.div>
                     )}
 
@@ -1371,13 +1410,13 @@ export function PlanningPlayground() {
                                     >
                                         <Check className="h-3.5 w-3.5" />
                                     </motion.div>
-                                    Plan Generated
+                                    {t(lang, 'ppPlanGenerated')}
                                 </div>
                                 <h2 className="text-2xl sm:text-3xl font-bold text-[hsl(103,18%,12%)] mb-2 tracking-tight">
                                     {appTitle}
                                 </h2>
                                 <p className="text-sm text-[hsl(100,10%,38%)] max-w-md mx-auto">
-                                    Explore your plan. Click nodes, answer questions, and add new items to build it out.
+                                    {t(lang, 'ppExploreYourPlan')}
                                 </p>
                             </motion.div>
 
@@ -1398,6 +1437,7 @@ export function PlanningPlayground() {
                                 onSubmitEmail={handleEmailSubmit}
                                 emailSubmitting={emailSubmitting}
                                 appTitle={appTitle}
+                                lang={lang}
                             />
                         </motion.div>
                     )}
@@ -1416,11 +1456,10 @@ export function PlanningPlayground() {
                                         <div className="w-14 h-14 rounded-2xl bg-[#4A7459]/10 flex items-center justify-center mx-auto mb-5">
                                             <Sparkles className="h-7 w-7 text-[#8BAF8A]" />
                                         </div>
-                                        <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">Keep building!</h2>
+                                        <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">{t(lang, 'ppKeepBuilding')}</h2>
                                         <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
-                                            Enter your email to access the full canvas for{' '}
-                                            <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> with AI tools,
-                                            drag-and-drop editing, and more.
+                                            {t(lang, 'ppEnterEmailAccess')}{' '}
+                                            <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> {t(lang, 'ppWithAiTools')}
                                         </p>
 
                                         <div className="space-y-3">
@@ -1454,19 +1493,19 @@ export function PlanningPlayground() {
                                                 ) : (
                                                     <Mail className="h-4 w-4" />
                                                 )}
-                                                {emailSubmitting ? 'Joining…' : 'Get Started Free'}
+                                                {emailSubmitting ? t(lang, 'ppJoiningEllipsis') : t(lang, 'ppGetStartedFree')}
                                             </button>
                                         </div>
 
                                         <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-4">
-                                            No credit card required
+                                            {t(lang, 'ppNoCreditCard')}
                                         </p>
 
                                         <button
                                             onClick={() => setPhase('canvas')}
                                             className="mt-4 text-xs text-[hsl(100,10%,38%)] hover:text-[hsl(103,18%,12%)] transition-colors"
                                         >
-                                            ← Back to plan
+                                            ← {t(lang, 'ppBackToPlan')}
                                         </button>
                                     </div>
                                 ) : (
@@ -1478,10 +1517,10 @@ export function PlanningPlayground() {
                                         <div className="w-14 h-14 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-5">
                                             <Check className="h-7 w-7 text-green-500" />
                                         </div>
-                                        <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">You&apos;re in!</h2>
+                                        <h2 className="text-2xl font-bold text-[hsl(103,18%,12%)] mb-2">{t(lang, 'ppYoureIn')}</h2>
                                         <p className="text-sm text-[hsl(100,10%,38%)] mb-6">
-                                            We&apos;ll send you access to continue building{' '}
-                                            <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> with the full planning canvas.
+                                            {t(lang, 'ppWellSendAccess')}{' '}
+                                            <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> {t(lang, 'ppWithFullPlanningCanvas')}
                                         </p>
                                         <button
                                             onClick={() => {
@@ -1496,7 +1535,7 @@ export function PlanningPlayground() {
                                             }}
                                             className="text-sm text-[#4A7459] hover:text-[#3a5e47] font-medium transition-colors"
                                         >
-                                            Plan another project →
+                                            {t(lang, 'ppPlanAnother')} →
                                         </button>
                                     </motion.div>
                                 )}

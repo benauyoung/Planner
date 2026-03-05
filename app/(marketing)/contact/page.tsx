@@ -2,8 +2,12 @@
 
 import { motion } from 'framer-motion'
 import { Mail } from 'lucide-react'
+import { useLang } from '@/lib/landing-lang-context'
+import { t } from '@/lib/landing-i18n'
 
 export default function ContactPage() {
+  const { lang } = useLang()
+
   return (
     <section className="relative min-h-screen pt-32 pb-20 flex items-center justify-center">
       {/* Background */}
@@ -28,19 +32,19 @@ export default function ContactPage() {
           </div>
 
           <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-4">
-            Get in Touch
+            {t(lang, 'contactTitle')}
           </h1>
 
           <p className="text-lg text-muted-foreground mb-8">
-            Have a question, feedback, or just want to say hi? Drop us an email.
+            {t(lang, 'contactSubtext')}
           </p>
 
           <a
-            href="mailto:hello@tinybaguette.com"
+            href="mailto:ben@tinybaguette.com"
             className="inline-flex items-center gap-2 px-8 py-4 rounded-2xl bg-primary text-primary-foreground text-lg font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/25 hover:scale-[1.02] active:scale-[0.98]"
           >
             <Mail className="h-5 w-5" />
-            hello@tinybaguette.com
+            ben@tinybaguette.com
           </a>
         </motion.div>
       </div>

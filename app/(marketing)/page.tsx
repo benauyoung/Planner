@@ -8,7 +8,21 @@ export default function LandingPage() {
     <div className="french-editorial">
       <PlanningPlayground />
       <SocialProofStrip />
+      {/* Transition: parchment to dark */}
+      <div
+        className="h-20 sm:h-28"
+        style={{
+          background: 'linear-gradient(180deg, #3D5C45 0%, #1A2E1F 100%)',
+        }}
+      />
       <FeaturesTabs />
+      {/* Transition: dark to parchment */}
+      <div
+        className="h-20 sm:h-28"
+        style={{
+          background: 'linear-gradient(180deg, #1A2E1F 0%, #EBE7DC 100%)',
+        }}
+      />
       <BaguetteFooter />
     </div>
   )

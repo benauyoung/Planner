@@ -171,3 +171,24 @@
   background-color: #EBE7DC;
   color: #1C2418;
 }
+
+/* Dark forest section inside French editorial (features area) */
+.french-editorial .section-dark {
+  --background: 150 18% 10%;
+  --foreground: 90 10% 90%;
+  --primary: 149 35% 50%;
+  --primary-foreground: 150 18% 8%;
+  --muted: 150 12% 16%;
+  --muted-foreground: 100 8% 60%;
+  --border: 150 10% 20%;
+  --accent: 150 12% 16%;
+  --accent-foreground: 90 10% 88%;
+  --card: 150 14% 13%;
+  --card-foreground: 90 10% 90%;
+  color: hsl(90 10% 90%);
+}
+
+/* Ensure bg-background resolves to transparent so parent bg shows */
+.french-editorial .section-dark section {
+  background: transparent !important;
+}

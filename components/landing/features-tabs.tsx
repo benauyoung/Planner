@@ -21,37 +21,41 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { WaitlistCapture } from '@/components/landing/waitlist-capture'
+import { useLang } from '@/lib/landing-lang-context'
+import { t, type Lang } from '@/lib/landing-i18n'
 
 // ─── Types ───────────────────────────────────────────────────
 
 type FeatureTab = 'planning' | 'design' | 'agents' | 'integrations'
 
-const TABS: { key: FeatureTab; label: string; icon: typeof Workflow; description: string }[] = [
-  {
-    key: 'planning',
-    label: 'Planning',
-    icon: Workflow,
-    description: 'Visual project planning with an interactive canvas.',
-  },
-  {
-    key: 'design',
-    label: 'Design',
-    icon: FileText,
-    description: 'Design and preview your application pages. Edit content and layout visually.',
-  },
-  {
-    key: 'agents',
-    label: 'Agents',
-    icon: Bot,
-    description: 'Create, teach, and deploy an AI chatbot to your website in seconds.',
-  },
-  {
-    key: 'integrations',
-    label: 'Integrations',
-    icon: Plug,
-    description: 'Connect your favorite tools in one click. Supabase, GitHub, and more.',
-  },
-]
+function getTabs(lang: Lang) {
+  return [
+    {
+      key: 'planning' as FeatureTab,
+      label: t(lang, 'featureTabPlanning'),
+      icon: Workflow,
+      description: t(lang, 'featureDescPlanning'),
+    },
+    {
+      key: 'design' as FeatureTab,
+      label: t(lang, 'featureTabDesign'),
+      icon: FileText,
+      description: t(lang, 'featureDescDesign'),
+    },
+    {
+      key: 'agents' as FeatureTab,
+      label: t(lang, 'featureTabAgents'),
+      icon: Bot,
+      description: t(lang, 'featureDescAgents'),
+    },
+    {
+      key: 'integrations' as FeatureTab,
+      label: t(lang, 'featureTabIntegrations'),
+      icon: Plug,
+      description: t(lang, 'featureDescIntegrations'),
+    },
+  ]
+}
 
 // ─── Planning Demo ──────────────────────────────────────────
 
@@ -100,7 +104,7 @@ const PLANNING_CHAT: ChatMsg[] = [
   { role: 'ai', text: 'Added Photo Wall and Friend Meetups. I\'ll also add a Live Chat for real-time messaging.', step: 4 },
 ]
 
-function PlanningDemo() {
+function PlanningDemo({ lang }: { lang: Lang }) {
   const nodeMap = Object.fromEntries(PLAN_NODES.map((n) => [n.id, n]))
   const [visibleStep, setVisibleStep] = useState(-1)
   const [visibleMsgs, setVisibleMsgs] = useState(0)
@@ -232,7 +236,7 @@ function PlanningDemo() {
       <div className="w-52 border-l bg-muted/10 flex flex-col shrink-0">
         <div className="px-3 py-2 border-b flex items-center gap-1.5">
           <MessageSquare className="h-3.5 w-3.5 text-primary" />
-          <span className="text-[10px] font-semibold">AI Planner</span>
+          <span className="text-[10px] font-semibold">{t(lang, 'ftAiPlanner')}</span>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
           <AnimatePresence>
@@ -291,7 +295,7 @@ function PlanningDemo() {
         {/* Input mock */}
         <div className="px-2 py-2 border-t">
           <div className="flex items-center gap-1 rounded-md border bg-muted/20 px-2 py-1">
-            <span className="flex-1 text-[8px] text-muted-foreground/50">Ask the AI planner...</span>
+            <span className="flex-1 text-[8px] text-muted-foreground/50">{t(lang, 'ftAskAiPlanner')}</span>
             <Send className="h-2.5 w-2.5 text-muted-foreground/30" />
           </div>
         </div>
@@ -336,7 +340,7 @@ const PAGE_CONNECTIONS = [
   { from: 'lineup', to: 'feed' },
 ]
 
-function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverride, showLineupImage }: {
+function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverride, showLineupImage, lang }: {
   page: MiniPage
   isSelected: boolean
   isEditing: boolean
@@ -344,6 +348,7 @@ function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverri
   delay: number
   accentOverride?: string | null
   showLineupImage?: boolean
+  lang: Lang
 }) {
   const accent = accentOverride || page.accent
   return (
@@ -400,7 +405,7 @@ function MiniWebpage({ page, isSelected, isEditing, onClick, delay, accentOverri
         </div>
         {isEditing && (
           <span className="text-[7px] text-primary font-medium flex items-center gap-0.5">
-            <Pencil className="h-2 w-2" /> Editing
+            <Pencil className="h-2 w-2" /> {t(lang, 'ftEditing')}
           </span>
         )}
       </div>
@@ -648,7 +653,7 @@ const PAGES_CHAT_SEQUENCE: { msg: PagesChatMsg; delayAfter: number; action?: 'ch
   { msg: { role: 'ai', text: 'Done! Added a headliner banner to the Lineup page.' }, delayAfter: 0 },
 ]
 
-function PagesDemo() {
+function PagesDemo({ lang }: { lang: Lang }) {
   const [selectedPage, setSelectedPage] = useState<string | null>(null)
   const [accentOverride, setAccentOverride] = useState<string | null>(null)
   const [showLineupImage, setShowLineupImage] = useState(false)
@@ -752,6 +757,7 @@ function PagesDemo() {
             delay={i * 0.08}
             accentOverride={accentOverride}
             showLineupImage={page.id === 'lineup' ? showLineupImage : undefined}
+            lang={lang}
           />
         ))}
       </div>
@@ -814,7 +820,7 @@ function PagesDemo() {
             {/* Input bar */}
             <div className="px-4 py-2 border-t">
               <div className="flex items-center gap-2 rounded-lg border bg-muted/20 px-3 py-1.5">
-                <span className="flex-1 text-[10px] text-muted-foreground/50">Ask AI to edit your pages...</span>
+                <span className="flex-1 text-[10px] text-muted-foreground/50">{t(lang, 'ftAskAiEditPages')}</span>
                 <Send className="h-3 w-3 text-muted-foreground/30" />
               </div>
             </div>
@@ -827,7 +833,7 @@ function PagesDemo() {
 
 // ─── Agents Demo ─────────────────────────────────────────────
 
-function AgentsDemo() {
+function AgentsDemo({ lang }: { lang: Lang }) {
   const [botName, setBotName] = useState('')
   const [greeting, setGreeting] = useState('')
   const [phase, setPhase] = useState<'typing-name' | 'typing-greeting' | 'deploying' | 'live' | 'chatting'>('typing-name')
@@ -902,7 +908,7 @@ function AgentsDemo() {
         <div className="px-3 py-2 border-b flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bot className="h-3.5 w-3.5 text-primary" />
-            <span className="text-[10px] font-semibold">Agent Builder</span>
+            <span className="text-[10px] font-semibold">{t(lang, 'ftAgentBuilder')}</span>
           </div>
           {isLiveOrLater && (
             <motion.span
@@ -911,7 +917,7 @@ function AgentsDemo() {
               className="text-[7px] font-bold px-1.5 py-0.5 rounded-full bg-green-500/15 text-green-500 flex items-center gap-1"
             >
               <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-              Live
+              {t(lang, 'ftLive')}
             </motion.span>
           )}
         </div>
@@ -919,31 +925,31 @@ function AgentsDemo() {
         <div className="flex-1 p-3 space-y-2.5 overflow-hidden">
           {/* Name field */}
           <div>
-            <div className="text-[8px] font-medium text-muted-foreground mb-0.5">Name</div>
+            <div className="text-[8px] font-medium text-muted-foreground mb-0.5">{t(lang, 'ftName')}</div>
             <div className={cn(
               'px-2 py-1 rounded border text-[9px] transition-colors',
               isTypingName ? 'border-primary bg-primary/5' : 'bg-muted/20'
             )}>
-              {botName || <span className="text-muted-foreground/40">Enter bot name...</span>}
+              {botName || <span className="text-muted-foreground/40">{t(lang, 'ftEnterBotName')}</span>}
               {isTypingName && <span className="animate-pulse text-primary">|</span>}
             </div>
           </div>
 
           {/* Greeting field */}
           <div>
-            <div className="text-[8px] font-medium text-muted-foreground mb-0.5">Greeting</div>
+            <div className="text-[8px] font-medium text-muted-foreground mb-0.5">{t(lang, 'ftGreeting')}</div>
             <div className={cn(
               'px-2 py-1 rounded border text-[9px] min-h-[32px] transition-colors',
               isTypingGreeting ? 'border-primary bg-primary/5' : 'bg-muted/20'
             )}>
-              {greeting || <span className="text-muted-foreground/40">Enter greeting message...</span>}
+              {greeting || <span className="text-muted-foreground/40">{t(lang, 'ftEnterGreeting')}</span>}
               {isTypingGreeting && <span className="animate-pulse text-primary">|</span>}
             </div>
           </div>
 
           {/* Knowledge section */}
           <div>
-            <div className="text-[8px] font-medium text-muted-foreground mb-1">Knowledge</div>
+            <div className="text-[8px] font-medium text-muted-foreground mb-1">{t(lang, 'ftKnowledge')}</div>
             <div className="space-y-1">
               {[
                 { type: 'FAQ', title: 'Festival schedule & stages' },
@@ -976,7 +982,7 @@ function AgentsDemo() {
                 className="space-y-1"
               >
                 <div className="flex items-center justify-between text-[8px]">
-                  <span className="text-muted-foreground">Deploying to website...</span>
+                  <span className="text-muted-foreground">{t(lang, 'ftDeployingToWebsite')}</span>
                   <span className="font-medium text-primary">{deployProgress}%</span>
                 </div>
                 <div className="h-1 rounded-full bg-muted/30 overflow-hidden">
@@ -994,7 +1000,7 @@ function AgentsDemo() {
                 className="flex items-center gap-1.5 text-[8px] text-green-500 font-medium"
               >
                 <Globe className="h-3 w-3" />
-                Deployed to vibefest.com
+                {t(lang, 'ftDeployedTo')}
               </motion.div>
             ) : (
               <div className={cn(
@@ -1004,7 +1010,7 @@ function AgentsDemo() {
                   : 'bg-muted/30 text-muted-foreground/50'
               )}>
                 <Globe className="h-3 w-3" />
-                Deploy to Website
+                {t(lang, 'ftDeployToWebsite')}
               </div>
             )}
           </div>
@@ -1088,10 +1094,10 @@ function AgentsDemo() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="text-[8px] font-semibold text-white truncate">
-                      {botName || <span className="text-white/40">Bot Name</span>}
+                      {botName || <span className="text-white/40">{t(lang, 'ftBotName')}</span>}
                     </div>
                     <div className="text-[6px] text-white/60">
-                      {isLiveOrLater ? 'Online' : 'Preview'}
+                      {isLiveOrLater ? t(lang, 'ftOnline') : t(lang, 'ftPreview')}
                     </div>
                   </div>
                   <div className="w-3 h-3 rounded-full bg-white/10 flex items-center justify-center">
@@ -1163,7 +1169,7 @@ function AgentsDemo() {
                 {/* Input */}
                 <div className="px-1.5 py-1.5 border-t shrink-0">
                   <div className="flex items-center gap-1 rounded-full border bg-muted/20 px-2 py-0.5">
-                    <span className="flex-1 text-[7px] text-muted-foreground/50">Type a message...</span>
+                    <span className="flex-1 text-[7px] text-muted-foreground/50">{t(lang, 'ftTypeMessage')}</span>
                     <div className="w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
                       <Send className="h-1.5 w-1.5 text-white" />
                     </div>
@@ -1226,7 +1232,7 @@ const INTEGRATIONS = [
   },
 ]
 
-function IntegrationsDemo() {
+function IntegrationsDemo({ lang }: { lang: Lang }) {
   const [connectedIds, setConnectedIds] = useState<string[]>([])
   const [connectingId, setConnectingId] = useState<string | null>(null)
   const [syncedItems, setSyncedItems] = useState<Record<string, number>>({})
@@ -1267,8 +1273,8 @@ function IntegrationsDemo() {
       <div className="flex-1 border-r flex flex-col overflow-hidden">
         <div className="px-3 py-2 border-b flex items-center gap-2">
           <Plug className="h-3.5 w-3.5 text-primary" />
-          <span className="text-[10px] font-semibold">Integrations</span>
-          <span className="ml-auto text-[8px] text-muted-foreground">{connectedIds.length} connected</span>
+          <span className="text-[10px] font-semibold">{t(lang, 'ftIntegrations')}</span>
+          <span className="ml-auto text-[8px] text-muted-foreground">{connectedIds.length} {t(lang, 'ftConnected')}</span>
         </div>
 
         <div className="flex-1 p-3 space-y-3 overflow-hidden">
@@ -1316,7 +1322,7 @@ function IntegrationsDemo() {
                     </motion.div>
                   ) : (
                     <div className="px-2 py-0.5 rounded text-[7px] font-medium bg-muted/30 text-muted-foreground">
-                      Connect
+                      {t(lang, 'ftConnect')}
                     </div>
                   )}
                 </div>
@@ -1363,7 +1369,7 @@ function IntegrationsDemo() {
       <div className="w-56 flex flex-col shrink-0">
         <div className="px-3 py-2 border-b flex items-center gap-2">
           <RefreshCw className="h-3 w-3 text-primary" />
-          <span className="text-[10px] font-semibold">Sync Activity</span>
+          <span className="text-[10px] font-semibold">{t(lang, 'ftSyncActivity')}</span>
         </div>
 
         <div className="flex-1 overflow-hidden p-2 space-y-1.5">
@@ -1377,7 +1383,7 @@ function IntegrationsDemo() {
             { icon: GitBranch, text: 'Webhook configured for pushes', color: 'text-violet-500', delay: 5.9 },
             { icon: GitBranch, text: 'Branch protection rules synced', color: 'text-violet-500', delay: 6.3 },
           ].map((item, i) => (
-            <SyncFeedItem key={i} icon={item.icon} text={item.text} color={item.color} delay={item.delay} />
+            <SyncFeedItem key={i} icon={item.icon} text={item.text} color={item.color} delay={item.delay} lang={lang} />
           ))}
         </div>
 
@@ -1388,7 +1394,7 @@ function IntegrationsDemo() {
               'w-1.5 h-1.5 rounded-full',
               connectedIds.length === 2 ? 'bg-green-500 animate-pulse' : 'bg-muted-foreground/30'
             )} />
-            {connectedIds.length === 2 ? 'All integrations synced' : connectedIds.length === 1 ? '1 integration connected' : 'Waiting for connections...'}
+            {connectedIds.length === 2 ? t(lang, 'ftAllSynced') : connectedIds.length === 1 ? t(lang, 'ftOneConnected') : t(lang, 'ftWaitingConnections')}
           </div>
         </div>
       </div>
@@ -1396,7 +1402,7 @@ function IntegrationsDemo() {
   )
 }
 
-function SyncFeedItem({ icon: Icon, text, color, delay }: { icon: typeof Database; text: string; color: string; delay: number }) {
+function SyncFeedItem({ icon: Icon, text, color, delay, lang }: { icon: typeof Database; text: string; color: string; delay: number; lang: Lang }) {
   const [visible, setVisible] = useState(false)
 
   useEffect(() => {
@@ -1415,7 +1421,7 @@ function SyncFeedItem({ icon: Icon, text, color, delay }: { icon: typeof Databas
     >
       <Icon className={cn('h-3 w-3 shrink-0 mt-0.5', color)} />
       <span className="text-foreground/80 leading-relaxed">{text}</span>
-      <span className="ml-auto text-[6px] text-muted-foreground/50 shrink-0 mt-0.5">just now</span>
+      <span className="ml-auto text-[6px] text-muted-foreground/50 shrink-0 mt-0.5">{t(lang, 'ftJustNow')}</span>
     </motion.div>
   )
 }
@@ -1423,12 +1429,36 @@ function SyncFeedItem({ icon: Icon, text, color, delay }: { icon: typeof Databas
 // ─── Feature Tabs Section ───────────────────────────────────
 
 export function FeaturesTabs() {
+  const { lang } = useLang()
   const [activeTab, setActiveTab] = useState<FeatureTab>('planning')
-  const currentTab = TABS.find((t) => t.key === activeTab)!
+  const tabs = getTabs(lang)
+  const currentTab = tabs.find((tb) => tb.key === activeTab)!
 
   return (
-    <section id="features" className="py-20 sm:py-28 pb-8 sm:pb-12 bg-background">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section
+      id="features"
+      className="section-dark relative py-20 sm:py-28 pb-8 sm:pb-12 overflow-hidden"
+      style={{ background: 'linear-gradient(180deg, #1A2E1F 0%, #162618 50%, #1A2E1F 100%)' }}
+    >
+      {/* Background effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Soft radial glow */}
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'radial-gradient(ellipse 60% 50% at 50% 30%, rgba(74,116,89,0.15) 0%, transparent 70%)',
+          }}
+        />
+        {/* Dot grid */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)',
+            backgroundSize: '28px 28px',
+          }}
+        />
+      </div>
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section header */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1436,26 +1466,26 @@ export function FeaturesTabs() {
           viewport={{ once: true }}
           className="text-center mb-12"
         >
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4">
-            Big Ideas.{' '}
-            <span className="text-primary">TinyBaguette.</span>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-4 text-white/95">
+            {t(lang, 'ftBigIdeas')}{' '}
+            <span style={{ color: '#8BAF8A' }}>TinyBaguette.</span>
           </h2>
-          <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto">
-            Plan your project in minutes.
+          <p className="text-white/50 text-lg sm:text-xl max-w-2xl mx-auto">
+            {t(lang, 'ftPlanInMinutes')}
           </p>
         </motion.div>
 
         {/* Tab buttons */}
         <div className="flex justify-center gap-2 mb-4">
-          {TABS.map((tab) => (
+          {tabs.map((tab) => (
             <button
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={cn(
                 'flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200',
                 activeTab === tab.key
-                  ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20'
-                  : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                  ? 'bg-[#4A7459] text-white shadow-lg shadow-[#4A7459]/30'
+                  : 'bg-white/[0.06] text-white/50 hover:bg-white/[0.1] hover:text-white/70 border border-white/[0.06]'
               )}
             >
               <tab.icon className="h-4 w-4" />
@@ -1472,14 +1502,14 @@ export function FeaturesTabs() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.2 }}
-            className="text-center text-base text-muted-foreground mb-8 max-w-lg mx-auto"
+            className="text-center text-base text-white/40 mb-8 max-w-lg mx-auto"
           >
             {currentTab.description}
           </motion.p>
         </AnimatePresence>
 
         {/* Demo area */}
-        <div className="max-w-[56%] mx-auto rounded-2xl border border-[#8BAF8A]/30 bg-white shadow-xl shadow-black/5 p-6 sm:p-8">
+        <div className="max-w-[56%] mx-auto rounded-2xl border border-white/[0.08] bg-[#0f1a12]/80 shadow-2xl shadow-black/30 p-6 sm:p-8 backdrop-blur-sm">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
@@ -1488,10 +1518,10 @@ export function FeaturesTabs() {
               exit={{ opacity: 0, y: -16, scale: 0.98 }}
               transition={{ duration: 0.35 }}
             >
-              {activeTab === 'planning' && <PlanningDemo />}
-              {activeTab === 'design' && <PagesDemo />}
-              {activeTab === 'agents' && <AgentsDemo />}
-              {activeTab === 'integrations' && <IntegrationsDemo />}
+              {activeTab === 'planning' && <PlanningDemo lang={lang} />}
+              {activeTab === 'design' && <PagesDemo lang={lang} />}
+              {activeTab === 'agents' && <AgentsDemo lang={lang} />}
+              {activeTab === 'integrations' && <IntegrationsDemo lang={lang} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -1505,9 +1535,9 @@ export function FeaturesTabs() {
         >
           <a
             href="#planning-playground"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#5a8a6a] transition-all shadow-lg shadow-[#4A7459]/30"
           >
-            Try It Free
+            {t(lang, 'ftTryItFree')}
             <ArrowRight className="h-4 w-4" />
           </a>
 

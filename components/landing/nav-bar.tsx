@@ -5,11 +5,13 @@ import Link from 'next/link'
 import { Menu, X, ArrowRight, Loader2, Check } from 'lucide-react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useLang } from '@/lib/landing-lang-context'
+import { t } from '@/lib/landing-i18n'
 
 export function LandingNavBar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [lang, setLang] = useState<'en' | 'fr'>('en')
+  const { lang, toggleLang } = useLang()
   const [showEmailCapture, setShowEmailCapture] = useState(false)
   const [email, setEmail] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -38,7 +40,7 @@ export function LandingNavBar() {
 
   const handleSubmit = async () => {
     if (!email || !email.includes('@')) {
-      setError('Please enter a valid email.')
+      setError(t(lang, 'navEmailError'))
       return
     }
     setError('')
@@ -52,7 +54,7 @@ export function LandingNavBar() {
       if (!res.ok) throw new Error('Failed')
       setSubmitted(true)
     } catch {
-      setError('Something went wrong. Please try again.')
+      setError(t(lang, 'navSomethingWrong'))
     } finally {
       setSubmitting(false)
     }
@@ -76,13 +78,13 @@ export function LandingNavBar() {
           {/* Desktop links */}
           <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              Features
+              {t(lang, 'navFeatures')}
             </a>
             <Link
               href="/login"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
-              Login
+              {t(lang, 'navLogin')}
             </Link>
 
             {/* Get Started + Email Capture Popover */}
@@ -94,7 +96,7 @@ export function LandingNavBar() {
                 }}
                 className="px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 transition-colors"
               >
-                Get Started
+                {t(lang, 'navGetStarted')}
               </button>
 
               <AnimatePresence>
@@ -108,9 +110,9 @@ export function LandingNavBar() {
                   >
                     {!submitted ? (
                       <>
-                        <p className="text-sm font-semibold text-[hsl(103,18%,12%)] mb-1">Coming soon!</p>
+                        <p className="text-sm font-semibold text-[hsl(103,18%,12%)] mb-1">{t(lang, 'navComingSoon')}</p>
                         <p className="text-xs text-[hsl(100,10%,38%)] mb-4">
-                          Leave your email and we&apos;ll notify you when TinyBaguette launches.
+                          {t(lang, 'navEmailPrompt')}
                         </p>
                         <input
                           type="email"
@@ -132,10 +134,10 @@ export function LandingNavBar() {
                           ) : (
                             <ArrowRight className="h-3.5 w-3.5" />
                           )}
-                          {submitting ? 'Joining...' : 'Notify Me'}
+                          {submitting ? t(lang, 'navJoining') : t(lang, 'navNotifyMe')}
                         </button>
                         <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-2 text-center">
-                          No spam, ever.
+                          {t(lang, 'navNoSpam')}
                         </p>
                       </>
                     ) : (
@@ -143,9 +145,9 @@ export function LandingNavBar() {
                         <div className="w-10 h-10 rounded-full bg-[#4A7459]/10 flex items-center justify-center mx-auto mb-3">
                           <Check className="h-5 w-5 text-[#4A7459]" />
                         </div>
-                        <p className="text-sm font-semibold text-[hsl(103,18%,12%)] mb-1">You&apos;re on the list!</p>
+                        <p className="text-sm font-semibold text-[hsl(103,18%,12%)] mb-1">{t(lang, 'navOnList')}</p>
                         <p className="text-xs text-[hsl(100,10%,38%)]">
-                          We&apos;ll let you know when TinyBaguette is ready.
+                          {t(lang, 'navWillNotify')}
                         </p>
                       </div>
                     )}
@@ -155,11 +157,11 @@ export function LandingNavBar() {
             </div>
 
             <button
-              onClick={() => setLang(lang === 'en' ? 'fr' : 'en')}
+              onClick={toggleLang}
               className="ml-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
               title={lang === 'en' ? 'Switch to French' : 'Switch to English'}
             >
-              {lang === 'en' ? 'FR' : 'EN'}
+              {lang === 'en' ? t(lang, 'switchToFr') : t(lang, 'switchToEn')}
             </button>
           </div>
 
@@ -190,19 +192,19 @@ export function LandingNavBar() {
                 onClick={() => setMobileOpen(false)}
                 className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Features
+                {t(lang, 'navFeatures')}
               </a>
               <Link
                 href="/login"
                 className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Login
+                {t(lang, 'navLogin')}
               </Link>
 
               {/* Mobile email capture */}
               {!submitted ? (
                 <div className="space-y-2">
-                  <p className="text-xs text-[hsl(100,10%,38%)]">Coming soon — get notified:</p>
+                  <p className="text-xs text-[hsl(100,10%,38%)]">{t(lang, 'navMobileComingSoon')}</p>
                   <input
                     type="email"
                     placeholder="you@email.com"
@@ -217,21 +219,21 @@ export function LandingNavBar() {
                     disabled={submitting}
                     className="block w-full text-center px-4 py-2 rounded-lg bg-[#4A7459] text-white text-sm font-medium hover:bg-[#3a5e47] disabled:opacity-60 transition-colors"
                   >
-                    {submitting ? 'Joining...' : 'Notify Me'}
+                    {submitting ? t(lang, 'navJoining') : t(lang, 'navNotifyMe')}
                   </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4A7459]/10 text-[#4A7459] text-sm font-medium">
                   <Check className="h-4 w-4" />
-                  You&apos;re on the list!
+                  {t(lang, 'navOnList')}
                 </div>
               )}
 
               <button
-                onClick={() => setLang(lang === 'en' ? 'fr' : 'en')}
+                onClick={toggleLang}
                 className="block w-full text-center px-4 py-2 rounded-lg text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
               >
-                {lang === 'en' ? 'FR' : 'EN'}
+                {lang === 'en' ? t(lang, 'switchToFr') : t(lang, 'switchToEn')}
               </button>
             </div>
           </motion.div>

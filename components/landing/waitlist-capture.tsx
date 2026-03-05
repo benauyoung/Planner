@@ -5,6 +5,8 @@ import { Mail, Check, Loader2 } from 'lucide-react'
 import { addEmailToWaitlist } from '@/services/firestore'
 import { cn } from '@/lib/utils'
 import { track } from '@vercel/analytics'
+import { useLang } from '@/lib/landing-lang-context'
+import { t } from '@/lib/landing-i18n'
 
 interface WaitlistCaptureProps {
   source: 'landing' | 'login'
@@ -12,6 +14,7 @@ interface WaitlistCaptureProps {
 }
 
 export function WaitlistCapture({ source, className }: WaitlistCaptureProps) {
+  const { lang } = useLang()
   const [email, setEmail] = useState('')
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
 
@@ -40,7 +43,7 @@ export function WaitlistCapture({ source, className }: WaitlistCaptureProps) {
     return (
       <div className={cn('mt-4 flex items-center justify-center gap-2 text-sm text-green-600 dark:text-green-400', className)}>
         <Check className="h-4 w-4" />
-        <span>Thanks! We&apos;ll keep you in the loop.</span>
+        <span>{t(lang, 'wcThanks')}</span>
       </div>
     )
   }
@@ -48,7 +51,7 @@ export function WaitlistCapture({ source, className }: WaitlistCaptureProps) {
   return (
     <form onSubmit={handleSubmit} className={cn('mt-4', className)}>
       <p className="text-xs text-muted-foreground mb-2">
-        Want to hear more? Drop your email below.
+        {t(lang, 'wcDropEmail')}
       </p>
       <div className="flex items-center justify-center gap-2 max-w-sm mx-auto">
         <div className="relative flex-1">
@@ -72,12 +75,12 @@ export function WaitlistCapture({ source, className }: WaitlistCaptureProps) {
           {status === 'loading' ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            'Notify Me'
+            t(lang, 'wcNotifyMe')
           )}
         </button>
       </div>
       {status === 'error' && (
-        <p className="text-xs text-red-500 mt-1.5">Please enter a valid email address.</p>
+        <p className="text-xs text-red-500 mt-1.5">{t(lang, 'wcInvalidEmail')}</p>
       )}
     </form>
   )

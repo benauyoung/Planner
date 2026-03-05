@@ -1,23 +1,29 @@
+'use client'
+
 import Link from 'next/link'
 import Image from 'next/image'
-
-const footerLinks = {
-  Product: [
-    { label: 'Features', href: '#features' },
-    { label: 'How It Works', href: '#how-it-works' },
-    { label: 'Templates', href: '#hero-prompt' },
-  ],
-  Company: [
-    { label: 'About', href: '/about' },
-    { label: 'Contact', href: '/contact' },
-  ],
-  Legal: [
-    { label: 'Privacy Policy', href: '/privacy' },
-    { label: 'Terms of Service', href: '/terms' },
-  ],
-}
+import { useLang } from '@/lib/landing-lang-context'
+import { t } from '@/lib/landing-i18n'
 
 export function Footer() {
+  const { lang } = useLang()
+
+  const footerLinks = {
+    [t(lang, 'footerProduct')]: [
+      { label: t(lang, 'footerFeatures'), href: '#features' },
+      { label: t(lang, 'footerHowItWorks'), href: '#how-it-works' },
+      { label: t(lang, 'footerTemplates'), href: '#hero-prompt' },
+    ],
+    [t(lang, 'footerCompany')]: [
+      { label: t(lang, 'footerAbout'), href: '/about' },
+      { label: t(lang, 'footerContact'), href: '/contact' },
+    ],
+    [t(lang, 'footerLegal')]: [
+      { label: t(lang, 'footerPrivacy'), href: '/privacy' },
+      { label: t(lang, 'footerTerms'), href: '/terms' },
+    ],
+  }
+
   return (
     <footer className="border-t bg-muted/20">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -29,7 +35,7 @@ export function Footer() {
               <span className="font-bold text-lg">TinyBaguette</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Transform your project ideas into visual, actionable plans with AI.
+              {t(lang, 'footerTagline')}
             </p>
           </div>
 
@@ -39,7 +45,7 @@ export function Footer() {
               <h4 className="font-semibold text-sm mb-4">{category}</h4>
               <ul className="space-y-2.5">
                 {links.map((link) => (
-                  <li key={link.label}>
+                  <li key={link.href}>
                     <Link
                       href={link.href}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -56,7 +62,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="mt-12 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} TinyBaguette. All rights reserved.
+            {t(lang, 'footerCopyright').replace('{year}', String(new Date().getFullYear()))}
           </p>
           <div className="flex items-center gap-4">
             <a
