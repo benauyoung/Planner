@@ -1,0 +1,11 @@
+# TinyBaguette robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://tinybaguette.com/sitemap.xml
+
+# Block internal app routes from crawlers
+Disallow: /dashboard
+Disallow: /project/
+Disallow: /api/
+Disallow: /login

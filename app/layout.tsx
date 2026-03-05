@@ -9,32 +9,58 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'TinyBaguette - Your Developer Planning Tool',
-  description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
+  title: {
+    default: 'TinyBaguette — Plan to Product in Minutes',
+    template: '%s | TinyBaguette',
+  },
+  description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor, Claude Code, or Windsurf.',
+  keywords: ['project planning', 'AI planning tool', 'PRD generator', 'developer workflow', 'visual planning canvas', 'TinyBaguette', 'AI agent builder', 'website builder'],
+  authors: [{ name: 'TinyBaguette' }],
+  creator: 'TinyBaguette',
   metadataBase: new URL('https://tinybaguette.com'),
+  alternates: {
+    canonical: '/',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   icons: {
-    icon: '/Logo.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/Logo.png', type: 'image/png' },
+    ],
+    apple: '/Logo.png',
   },
   openGraph: {
-    title: 'TinyBaguette - Your Developer Planning Tool',
-    description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
+    title: 'TinyBaguette — Plan to Product in Minutes',
+    description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor or Claude Code.',
     url: 'https://tinybaguette.com',
     siteName: 'TinyBaguette',
+    locale: 'en_US',
     images: [
       {
         url: '/og/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'TinyBaguette - Big Ideas. TinyBaguette.',
+        alt: 'Big Ideas. TinyBaguette. Plan your project in minutes.',
       },
     ],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'TinyBaguette - Your Developer Planning Tool',
-    description: 'Plan your project in minutes. Visual planning canvas with AI-powered node graphs, PRD generation, and seamless developer workflows.',
+    title: 'TinyBaguette — Plan to Product in Minutes',
+    description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, and embed AI agents.',
     images: ['/og/og-image.png'],
+    creator: '@tinybaguette',
   },
 }
 
