@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -155,21 +157,47 @@
 
 /* ─── French editorial parchment theme ───────────────────────────── */
 .french-editorial {
-  --background: 42 28% 91%;
-  --foreground: 103 18% 12%;
-  --primary: 149 23% 37%;
-  --primary-foreground: 42 30% 97%;
-  --card: 42 35% 97%;
-  --card-foreground: 103 18% 12%;
-  --muted: 40 18% 85%;
-  --muted-foreground: 100 10% 38%;
-  --border: 40 20% 80%;
-  --accent: 120 15% 88%;
-  --accent-foreground: 103 18% 18%;
-  --secondary: 40 18% 88%;
-  --secondary-foreground: 103 18% 18%;
-  background-color: #EBE7DC;
-  color: #1C2418;
+  --background: 40 33% 96%;
+  --foreground: 30 10% 15%;
+  --card: 40 30% 98%;
+  --card-foreground: 30 10% 15%;
+  --primary: 150 20% 32%;
+  --primary-foreground: 40 33% 96%;
+  --secondary: 25 60% 58%;
+  --secondary-foreground: 40 33% 96%;
+  --muted: 40 20% 90%;
+  --muted-foreground: 30 10% 45%;
+  --border: 35 20% 85%;
+  --accent: 25 60% 58%;
+  --accent-foreground: 40 33% 96%;
+  --sage: 150 20% 32%;
+  --sage-light: 150 15% 45%;
+  --terracotta: 25 60% 58%;
+  --terracotta-dark: 20 50% 42%;
+  --wheat: 42 60% 72%;
+  --cream: 40 33% 96%;
+  --cream-dark: 38 25% 88%;
+  --forest: 150 25% 18%;
+  background-color: hsl(40 33% 96%);
+  color: hsl(30 10% 15%);
+}
+
+/* Landing typography */
+.french-editorial h1,
+.french-editorial h2,
+.french-editorial h3,
+.french-editorial h4 {
+  font-family: 'DM Serif Display', Georgia, serif;
+}
+
+.french-editorial p,
+.french-editorial span,
+.french-editorial a,
+.french-editorial button,
+.french-editorial input,
+.french-editorial textarea,
+.french-editorial label {
+  font-family: 'DM Sans', 'Inter', sans-serif;
 }
 
 /* Dark forest section inside French editorial (features area) */

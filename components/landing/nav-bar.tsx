@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Menu, X, ArrowRight, Loader2, Check } from 'lucide-react'
-import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLang } from '@/lib/landing-lang-context'
 import { t } from '@/lib/landing-i18n'
@@ -63,112 +62,90 @@ export function LandingNavBar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled
-        ? 'bg-background/80 backdrop-blur-md border-b shadow-sm'
+        ? 'bg-background/80 backdrop-blur-md border-b border-border'
         : 'bg-transparent'
         }`}
     >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-            <Image src="/logo.png" alt="TinyBaguette" width={28} height={28} className="rounded" />
-            <span className="font-bold text-xl">TinyBaguette</span>
+      <div className="container max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
+        {/* Left: Logo */}
+        <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+          <span className="text-2xl">🥖</span>
+          <span className="text-xl text-foreground" style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
+        </Link>
+
+        {/* Center: Nav links (desktop) */}
+        <div className="hidden md:flex items-center gap-8">
+          <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+          <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+          <a href="#cta" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+        </div>
+
+        {/* Right: Login + Get Started (desktop) + Mobile toggle */}
+        <div className="flex items-center gap-3">
+          <Link href="/login" className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors">
+            Login
           </Link>
 
-          {/* Desktop links */}
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-              {t(lang, 'navFeatures')}
-            </a>
-            <Link
-              href="/login"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {t(lang, 'navLogin')}
-            </Link>
-
-            {/* Get Started + Email Capture Popover */}
-            <div className="relative" ref={popoverRef}>
-              <button
-                onClick={() => {
-                  setShowEmailCapture(!showEmailCapture)
-                  setMobileOpen(false)
-                }}
-                className="px-4 py-2 rounded-lg bg-[#4A7459] text-white text-sm font-medium hover:bg-[#3a5e47] transition-colors"
-              >
-                {t(lang, 'navGetStarted')}
-              </button>
-
-              <AnimatePresence>
-                {showEmailCapture && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 8, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-[#8BAF8A]/30 bg-white shadow-2xl shadow-black/10 p-5"
-                  >
-                    {!submitted ? (
-                      <>
-                        <p className="text-sm font-semibold text-[hsl(103,18%,12%)] mb-1">{t(lang, 'navComingSoon')}</p>
-                        <p className="text-xs text-[hsl(100,10%,38%)] mb-4">
-                          {t(lang, 'navEmailPrompt')}
-                        </p>
-                        <input
-                          type="email"
-                          placeholder="you@email.com"
-                          value={email}
-                          onChange={(e) => setEmail(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                          className="w-full px-3 py-2 rounded-lg border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] text-sm text-[hsl(103,18%,12%)] placeholder:text-[hsl(100,10%,38%)]/40 focus:outline-none focus:ring-2 focus:ring-[#4A7459]/30 mb-2"
-                          autoFocus
-                        />
-                        {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
-                        <button
-                          onClick={handleSubmit}
-                          disabled={submitting}
-                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] disabled:opacity-60 transition-colors"
-                        >
-                          {submitting ? (
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                          ) : (
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          )}
-                          {submitting ? t(lang, 'navJoining') : t(lang, 'navNotifyMe')}
-                        </button>
-                        <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-2 text-center">
-                          {t(lang, 'navNoSpam')}
-                        </p>
-                      </>
-                    ) : (
-                      <div className="text-center py-2">
-                        <div className="w-10 h-10 rounded-full bg-[#4A7459]/10 flex items-center justify-center mx-auto mb-3">
-                          <Check className="h-5 w-5 text-[#4A7459]" />
-                        </div>
-                        <p className="text-sm font-semibold text-[hsl(103,18%,12%)] mb-1">{t(lang, 'navOnList')}</p>
-                        <p className="text-xs text-[hsl(100,10%,38%)]">
-                          {t(lang, 'navWillNotify')}
-                        </p>
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
+          {/* Get Started + Email Capture Popover */}
+          <div className="hidden md:block relative" ref={popoverRef}>
             <button
-              onClick={toggleLang}
-              className="ml-1 px-2.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
-              title={lang === 'en' ? 'Switch to French' : 'Switch to English'}
+              onClick={() => { setShowEmailCapture(!showEmailCapture); setMobileOpen(false) }}
+              className="bg-primary text-primary-foreground px-5 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
             >
-              {lang === 'en' ? t(lang, 'switchToFr') : t(lang, 'switchToEn')}
+              Get Started
             </button>
+
+            <AnimatePresence>
+              {showEmailCapture && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.95 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute right-0 top-full mt-2 w-80 rounded-xl border border-border bg-card shadow-2xl shadow-black/10 p-5"
+                >
+                  {!submitted ? (
+                    <>
+                      <p className="text-sm font-semibold text-foreground mb-1">{t(lang, 'navComingSoon')}</p>
+                      <p className="text-xs text-muted-foreground mb-4">{t(lang, 'navEmailPrompt')}</p>
+                      <input
+                        type="email"
+                        placeholder="you@email.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                        className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30 mb-2"
+                        autoFocus
+                      />
+                      {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+                      <button
+                        onClick={handleSubmit}
+                        disabled={submitting}
+                        className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60 transition-all"
+                      >
+                        {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowRight className="h-3.5 w-3.5" />}
+                        {submitting ? t(lang, 'navJoining') : t(lang, 'navNotifyMe')}
+                      </button>
+                      <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">{t(lang, 'navNoSpam')}</p>
+                    </>
+                  ) : (
+                    <div className="text-center py-2">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                        <Check className="h-5 w-5 text-primary" />
+                      </div>
+                      <p className="text-sm font-semibold text-foreground mb-1">{t(lang, 'navOnList')}</p>
+                      <p className="text-xs text-muted-foreground">{t(lang, 'navWillNotify')}</p>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Mobile toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 rounded-md hover:bg-accent transition-colors"
+            className="md:hidden p-2 rounded-md hover:bg-muted transition-colors"
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >
@@ -184,57 +161,41 @@ export function LandingNavBar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-background/95 backdrop-blur-md border-b overflow-hidden"
+            className="md:hidden bg-background/95 backdrop-blur-md border-b border-border overflow-hidden"
           >
-            <div className="px-4 py-4 space-y-3">
-              <a
-                href="#features"
-                onClick={() => setMobileOpen(false)}
-                className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t(lang, 'navFeatures')}
-              </a>
-              <Link
-                href="/login"
-                className="block text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {t(lang, 'navLogin')}
-              </Link>
+            <div className="px-6 py-4 space-y-3">
+              <a href="#features" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
+              <a href="#cta" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <Link href="/login" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Login</Link>
 
               {/* Mobile email capture */}
               {!submitted ? (
-                <div className="space-y-2">
-                  <p className="text-xs text-[hsl(100,10%,38%)]">{t(lang, 'navMobileComingSoon')}</p>
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <p className="text-xs text-muted-foreground">{t(lang, 'navMobileComingSoon')}</p>
                   <input
                     type="email"
                     placeholder="you@email.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                    className="w-full px-3 py-2 rounded-lg border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] text-sm text-[hsl(103,18%,12%)] placeholder:text-[hsl(100,10%,38%)]/40 focus:outline-none focus:ring-2 focus:ring-[#4A7459]/30"
+                    className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:ring-2 focus:ring-primary/30"
                   />
                   {error && <p className="text-xs text-red-500">{error}</p>}
                   <button
                     onClick={handleSubmit}
                     disabled={submitting}
-                    className="block w-full text-center px-4 py-2 rounded-lg bg-[#4A7459] text-white text-sm font-medium hover:bg-[#3a5e47] disabled:opacity-60 transition-colors"
+                    className="block w-full text-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-60 transition-all"
                   >
                     {submitting ? t(lang, 'navJoining') : t(lang, 'navNotifyMe')}
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#4A7459]/10 text-[#4A7459] text-sm font-medium">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary/10 text-primary text-sm font-medium">
                   <Check className="h-4 w-4" />
                   {t(lang, 'navOnList')}
                 </div>
               )}
-
-              <button
-                onClick={toggleLang}
-                className="block w-full text-center px-4 py-2 rounded-lg text-xs font-semibold tracking-wide text-muted-foreground hover:text-foreground hover:bg-accent transition-colors border border-border"
-              >
-                {lang === 'en' ? t(lang, 'switchToFr') : t(lang, 'switchToEn')}
-              </button>
             </div>
           </motion.div>
         )}

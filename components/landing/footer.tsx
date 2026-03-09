@@ -31,7 +31,7 @@ export function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <Image src="/logo.png" alt="TinyBaguette" width={24} height={24} className="rounded" />
+              <Image src="/Logo.png" alt="TinyBaguette" width={24} height={24} className="rounded" />
               <span className="font-bold text-lg">TinyBaguette</span>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed">
