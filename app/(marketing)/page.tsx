@@ -1,4 +1,3 @@
-import { HeroLanding } from '@/components/landing/hero-landing'
 import { SocialProofStrip } from '@/components/landing/social-proof-strip'
 import { PlanningPlayground } from '@/components/landing/planning-playground'
 import { InteractiveShowcase } from '@/components/landing/interactive-showcase'
@@ -9,9 +8,8 @@ import { CtaLanding } from '@/components/landing/cta-landing'
 export default function LandingPage() {
   return (
     <div className="french-editorial">
-      <HeroLanding />
-      <SocialProofStrip />
       <PlanningPlayground />
+      <SocialProofStrip />
       <InteractiveShowcase />
       <FeaturesLanding />
       <HowItWorksLanding />

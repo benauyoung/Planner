@@ -25,8 +25,11 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { track } from '@vercel/analytics'
+import Image from 'next/image'
 import { useLang } from '@/lib/landing-lang-context'
 import { t, type Lang } from '@/lib/landing-i18n'
+
+const HEADLINE_WORDS = ['Plan', 'it.', 'Build', 'it.', 'Ship', 'it.']
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -1249,44 +1252,78 @@ export function PlanningPlayground() {
 
     // ─── Render ───────────────────────────────────────────────
 
+    const isHeroPhase = phase === 'input'
+
     return (
         <section
             id="planning-playground"
-            className="relative pt-24 pb-14 sm:pt-28 sm:pb-20 overflow-hidden"
-            style={{ background: 'linear-gradient(180deg, #F5F1E8 0%, #EDE8DA 40%, #E4DFCF 100%)' }}
+            className={cn(
+                'relative overflow-hidden',
+                isHeroPhase
+                    ? 'min-h-screen flex flex-col justify-end pb-20 pt-24'
+                    : 'pt-24 pb-14 sm:pt-28 sm:pb-20'
+            )}
+            style={isHeroPhase ? undefined : { background: 'linear-gradient(180deg, #F5F1E8 0%, #EDE8DA 40%, #E4DFCF 100%)' }}
         >
-            {/* Background effects */}
-            <div className="absolute inset-0 pointer-events-none">
-                {/* Warm green glow top-center */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        backgroundImage:
-                            'radial-gradient(ellipse 70% 45% at 50% 15%, rgba(74,116,89,0.14) 0%, transparent 70%)',
-                    }}
-                />
-                {/* Soft rose accent bottom-right */}
-                <div
-                    className="absolute inset-0"
-                    style={{
-                        backgroundImage:
-                            'radial-gradient(ellipse 50% 40% at 80% 85%, rgba(200,140,130,0.08) 0%, transparent 65%)',
-                    }}
-                />
-                {/* Dot grid */}
-                <div
-                    className="absolute inset-0 opacity-[0.08]"
-                    style={{
-                        backgroundImage:
-                            'radial-gradient(circle, rgba(28,36,24,0.06) 1px, transparent 1px)',
-                        backgroundSize: '32px 32px',
-                    }}
-                />
-            </div>
+            {/* Cinematic hero background (input phase only) */}
+            {isHeroPhase && (
+                <>
+                    <motion.div
+                        initial={{ scale: 1.1 }}
+                        animate={{ scale: 1 }}
+                        transition={{ duration: 1.8, ease: 'easeOut' }}
+                        className="absolute inset-0"
+                    >
+                        <Image
+                            src="/hero-bg.jpg"
+                            alt=""
+                            fill
+                            className="object-cover"
+                            priority
+                        />
+                    </motion.div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-[hsl(30,10%,15%)]/90 via-[hsl(30,10%,15%)]/50 to-[hsl(30,10%,15%)]/20" />
+                    <div
+                        className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none"
+                        style={{
+                            backgroundImage:
+                                'url("data:image/svg+xml,%3Csvg viewBox=\'0 0 256 256\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'noise\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23noise)\'/%3E%3C/svg%3E")',
+                        }}
+                    />
+                </>
+            )}
 
-            <div className="relative w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Warm gradient background (non-input phases) */}
+            {!isHeroPhase && (
+                <div className="absolute inset-0 pointer-events-none">
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(ellipse 70% 45% at 50% 15%, rgba(74,116,89,0.14) 0%, transparent 70%)',
+                        }}
+                    />
+                    <div
+                        className="absolute inset-0"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(ellipse 50% 40% at 80% 85%, rgba(200,140,130,0.08) 0%, transparent 65%)',
+                        }}
+                    />
+                    <div
+                        className="absolute inset-0 opacity-[0.08]"
+                        style={{
+                            backgroundImage:
+                                'radial-gradient(circle, rgba(28,36,24,0.06) 1px, transparent 1px)',
+                            backgroundSize: '32px 32px',
+                        }}
+                    />
+                </div>
+            )}
+
+            <div className="relative w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 z-10">
                 <AnimatePresence mode="wait">
-                    {/* ─── INPUT PHASE ─── */}
+                    {/* ─── INPUT PHASE (HERO) ─── */}
                     {phase === 'input' && (
                         <motion.div
                             key="input"
@@ -1295,64 +1332,88 @@ export function PlanningPlayground() {
                             exit={{ opacity: 0, y: -20, scale: 0.98 }}
                             transition={{ duration: 0.4 }}
                         >
-                            <div className="text-center mb-8">
+                            <div className="text-center mb-10">
+                                {/* Badge */}
                                 <motion.div
-                                    initial={{ opacity: 0, y: 8 }}
+                                    initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: 0.1 }}
-                                    className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#4A7459]/20 bg-[#4A7459]/10 text-xs font-medium text-[#4A7459] mb-5"
+                                    transition={{ duration: 0.5, delay: 0.6 }}
+                                    className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-8"
                                 >
-                                    <Sparkles className="h-3.5 w-3.5" />
-                                    {t(lang, 'ppTryItNow')}
-                                </motion.div>
-                                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight tracking-tight text-[hsl(103,18%,12%)] mb-4">
-                                    {t(lang, 'ppStartPlanning')}{' '}
-                                    <span className="italic" style={{ color: '#4A7459' }}>
-                                        {t(lang, 'ppYourProject')}
+                                    <span className="text-xs font-medium text-[hsl(42,60%,72%)]">
+                                        ✦ Plan first, build with confidence
                                     </span>
-                                </h2>
-                                <p className="text-base sm:text-lg text-[hsl(100,10%,38%)] max-w-xl mx-auto">
-                                    {t(lang, 'ppDescribeIdea')}
-                                </p>
+                                </motion.div>
+
+                                {/* Giant staggered headline */}
+                                <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-6">
+                                    {HEADLINE_WORDS.map((word, i) => (
+                                        <motion.span
+                                            key={i}
+                                            initial={{ opacity: 0, y: 60 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.6, delay: 0.8 + i * 0.1 }}
+                                            className={`text-6xl md:text-8xl lg:text-9xl leading-[1] ${
+                                                i % 2 === 0
+                                                    ? 'text-[hsl(40,33%,96%)]'
+                                                    : 'italic text-[hsl(42,60%,72%)]'
+                                            }`}
+                                        >
+                                            {word}
+                                        </motion.span>
+                                    ))}
+                                </div>
+
+                                {/* Subtitle */}
+                                <motion.p
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5, delay: 1.4 }}
+                                    className="text-lg md:text-xl text-[hsl(40,33%,96%)]/70 max-w-2xl mx-auto"
+                                >
+                                    Every great project starts with a great plan. Describe your idea and
+                                    get a structured roadmap before you write a single line of code.
+                                </motion.p>
                             </div>
 
-                            <div className="max-w-3xl mx-auto">
-                                <div className="relative rounded-2xl border border-[hsl(40,20%,80%)] bg-[hsl(42,35%,97%)] shadow-2xl shadow-black/5 overflow-hidden">
-                                    <div className="absolute inset-0 rounded-2xl ring-1 ring-inset ring-[#4A7459]/10 pointer-events-none" />
-
-                                    <div className="p-5 sm:p-7">
-                                        <textarea
-                                            ref={textareaRef}
-                                            value={prompt}
-                                            onChange={(e) => setPrompt(e.target.value)}
-                                            onKeyDown={handleKeyDown}
-                                            placeholder={placeholderIdeas[placeholderIdx]}
-                                            rows={4}
-                                            className="w-full bg-transparent text-base sm:text-lg resize-none focus:outline-none placeholder:text-[hsl(100,10%,38%)]/40 text-[hsl(103,18%,12%)] leading-relaxed"
-                                        />
-
-                                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-[hsl(40,20%,80%)]">
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                                {exampleChips.map((chip) => (
-                                                    <button
-                                                        key={chip}
-                                                        onClick={() => handleChipClick(chip)}
-                                                        className="px-3 py-1 rounded-full text-xs font-medium bg-[hsl(40,18%,85%)]/60 text-[hsl(100,10%,38%)] hover:bg-[hsl(40,18%,85%)] hover:text-[hsl(103,18%,12%)] transition-colors"
-                                                    >
-                                                        {chip}
-                                                    </button>
-                                                ))}
-                                            </div>
-
-                                            <button
-                                                onClick={handleBuild}
-                                                disabled={!prompt.trim()}
-                                                className="shrink-0 ml-3 inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#4A7459] text-white text-sm font-semibold hover:bg-[#3a5e47] disabled:opacity-30 disabled:cursor-not-allowed transition-all shadow-lg shadow-[#4A7459]/20"
-                                            >
-                                                {t(lang, 'ppPlan')}
-                                                <ArrowRight className="h-4 w-4" />
-                                            </button>
+                            <motion.div
+                                initial={{ opacity: 0, y: 30 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.6, delay: 1.6 }}
+                                className="max-w-3xl mx-auto"
+                            >
+                                <div className="bg-[hsl(40,30%,98%)]/95 backdrop-blur-md rounded-2xl shadow-2xl border border-[hsl(35,20%,85%)]/50 p-5">
+                                    <textarea
+                                        ref={textareaRef}
+                                        value={prompt}
+                                        onChange={(e) => setPrompt(e.target.value)}
+                                        onKeyDown={handleKeyDown}
+                                        placeholder={placeholderIdeas[placeholderIdx]}
+                                        rows={3}
+                                        className="w-full bg-transparent resize-none border-none outline-none text-[hsl(30,10%,15%)] placeholder:text-[hsl(30,10%,45%)]/60 min-h-[80px] text-sm"
+                                    />
+                                    <div className="flex items-center justify-between mt-2 pt-3 border-t border-[hsl(35,20%,85%)]">
+                                        <div className="flex flex-wrap gap-2">
+                                            {exampleChips.map((chip, i) => (
+                                                <motion.button
+                                                    key={chip}
+                                                    initial={{ opacity: 0, scale: 0.9 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    transition={{ duration: 0.3, delay: 1.7 + i * 0.05 }}
+                                                    onClick={() => handleChipClick(chip)}
+                                                    className="text-xs bg-[hsl(40,20%,90%)] hover:bg-[hsl(38,25%,88%)] text-[hsl(30,10%,45%)] rounded-full px-3 py-1 transition-colors"
+                                                >
+                                                    {chip}
+                                                </motion.button>
+                                            ))}
                                         </div>
+                                        <button
+                                            onClick={handleBuild}
+                                            disabled={!prompt.trim()}
+                                            className="bg-[hsl(150,20%,32%)] text-[hsl(40,33%,96%)] rounded-lg px-5 py-2 text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0 ml-3 disabled:opacity-30"
+                                        >
+                                            {t(lang, 'ppPlan')} <ArrowRight className="h-3.5 w-3.5" />
+                                        </button>
                                     </div>
                                 </div>
 
@@ -1360,17 +1421,16 @@ export function PlanningPlayground() {
                                     <p className="text-center text-sm text-red-400 mt-4">{error}</p>
                                 )}
 
-                                <p className="text-center text-xs text-[hsl(100,10%,38%)]/50 mt-4">
-                                    <kbd className="px-1.5 py-0.5 rounded border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-[10px] font-mono text-[hsl(100,10%,38%)]">
-                                        Enter
-                                    </kbd>{' '}
-                                    {t(lang, 'ppPressEnterToPlan')} ·{' '}
-                                    <kbd className="px-1.5 py-0.5 rounded border border-[hsl(40,20%,80%)] bg-[hsl(40,18%,85%)]/40 text-[10px] font-mono text-[hsl(100,10%,38%)]">
-                                        Shift+Enter
-                                    </kbd>{' '}
-                                    {t(lang, 'ppShiftEnterNewLine')}
-                                </p>
-                            </div>
+                                <motion.p
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    transition={{ delay: 2 }}
+                                    className="text-center text-xs text-[hsl(40,33%,96%)]/40 mt-3"
+                                >
+                                    <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px]">Enter</kbd> {t(lang, 'ppPressEnterToPlan')} ·{' '}
+                                    <kbd className="bg-white/10 px-1.5 py-0.5 rounded text-[10px]">Shift+Enter</kbd> {t(lang, 'ppShiftEnterNewLine')}
+                                </motion.p>
+                            </motion.div>
                         </motion.div>
                     )}
 
