@@ -189,6 +189,33 @@ export interface BackendEdge {
   edgeType?: 'uses' | 'returns' | 'stores' | 'middleware' | 'depends_on'
 }
 
+export type ArchitectureCategory =
+  | 'frontend' | 'backend' | 'database' | 'auth'
+  | 'deployment' | 'state_management' | 'api_design'
+  | 'file_structure' | 'testing' | 'third_party' | 'caching' | 'other'
+
+export type ArchitectureStatus = 'proposed' | 'accepted' | 'rejected'
+
+export interface ArchitectureDecision {
+  id: string
+  category: ArchitectureCategory
+  title: string
+  description: string
+  rationale: string
+  alternatives?: string[]
+  status: ArchitectureStatus
+  createdAt: number
+  updatedAt: number
+}
+
+export interface ArchitectureChatMessage {
+  id: string
+  role: 'user' | 'assistant'
+  content: string
+  timestamp: number
+  decisions?: ArchitectureDecision[]
+}
+
 export interface ProjectVersion {
   id: string
   name: string
@@ -227,4 +254,6 @@ export interface Project {
   appFiles?: AppFile[]
   appDesignSummary?: string
   appChatMessages?: AppChatMessage[]
+  architectureDecisions?: ArchitectureDecision[]
+  architectureChatMessages?: ArchitectureChatMessage[]
 }

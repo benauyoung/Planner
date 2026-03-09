@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import type { EdgeType, NodeType, NodeStatus } from '@/types/project'
 
-export type ViewType = 'plan' | 'manage' | 'design' | 'agents'
+export type ViewType = 'plan' | 'architecture' | 'manage' | 'design' | 'agents'
 export type ManageSubView = 'list' | 'table' | 'board' | 'timeline' | 'sprints' | 'backend'
 export type PlanSubView = 'canvas' | 'steps'
 export type LayoutMode = 'dagre' | 'spring'

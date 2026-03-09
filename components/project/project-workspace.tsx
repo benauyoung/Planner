@@ -47,6 +47,10 @@ const AgentsView = dynamic(
   () => import('@/components/views/agents-view').then(m => ({ default: m.AgentsView })),
   { ssr: false, loading: () => <ViewSkeleton /> }
 )
+const ArchitectureView = dynamic(
+  () => import('@/components/views/architecture-view').then(m => ({ default: m.ArchitectureView })),
+  { ssr: false, loading: () => <ViewSkeleton /> }
+)
 const BackendView = dynamic(
   () => import('@/components/views/backend-view').then(m => ({ default: m.BackendView })),
   { ssr: false, loading: () => <ViewSkeleton /> }
@@ -549,6 +553,7 @@ export function ProjectWorkspace({ projectId }: ProjectWorkspaceProps) {
                 </>
               )}
               {currentView === 'design' && <ErrorBoundary compact><DesignView /></ErrorBoundary>}
+              {currentView === 'architecture' && <ErrorBoundary compact><ArchitectureView /></ErrorBoundary>}
               {currentView === 'agents' && <ErrorBoundary compact><AgentsView /></ErrorBoundary>}
             </div>
           </div>

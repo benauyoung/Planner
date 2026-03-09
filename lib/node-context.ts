@@ -204,6 +204,28 @@ export function buildNodeContext(nodeId: string, project: Project): string {
     sections.push(techContext)
   }
 
+  // Architecture decisions (accepted only)
+  const archDecisions = project.architectureDecisions?.filter((d) => d.status === 'accepted')
+  if (archDecisions && archDecisions.length > 0) {
+    const catOrder = ['frontend', 'backend', 'database', 'auth', 'deployment', 'state_management', 'api_design', 'file_structure', 'testing', 'third_party', 'caching', 'other']
+    const grouped = new Map<string, typeof archDecisions>()
+    for (const d of archDecisions) {
+      const list = grouped.get(d.category) || []
+      list.push(d)
+      grouped.set(d.category, list)
+    }
+    const lines: string[] = []
+    for (const cat of catOrder) {
+      const decs = grouped.get(cat)
+      if (!decs) continue
+      for (const d of decs) {
+        lines.push(`- [${d.category}] ${d.title}: ${d.description}`)
+      }
+    }
+    sections.push('## Architecture Decisions')
+    sections.push(lines.join('\n'))
+  }
+
   return sections.join('\n')
 }
 

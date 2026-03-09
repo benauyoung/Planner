@@ -22,6 +22,7 @@ import {
   Server,
   Bot,
   ListOrdered,
+  Blocks,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
@@ -33,6 +34,7 @@ import type { NodeType, NodeStatus } from '@/types/project'
 
 const VIEW_OPTIONS: { value: ViewType; label: string; icon: React.ReactNode }[] = [
   { value: 'plan', label: 'Plan', icon: <LayoutGrid className="h-3.5 w-3.5" /> },
+  { value: 'architecture', label: 'Architecture', icon: <Blocks className="h-3.5 w-3.5" /> },
   { value: 'design', label: 'Design', icon: <AppWindow className="h-3.5 w-3.5" /> },
   { value: 'agents', label: 'Agents', icon: <Bot className="h-3.5 w-3.5" /> },
   { value: 'manage', label: 'Manage', icon: <List className="h-3.5 w-3.5" /> },

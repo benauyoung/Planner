@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge, BackendModule, BackendEdge, AppFile, AppChatMessage } from '@/types/project'
+import type { Project, PlanNode, NodeStatus, NodeType, NodeQuestion, NodePRD, NodePrompt, ProjectEdge, EdgeType, Priority, TeamMember, NodeComment, ActivityEvent, Sprint, SprintStatus, ProjectVersion, DocumentBlock, NodeDocument, ProjectPage, PageEdge, BackendModule, BackendEdge, AppFile, AppChatMessage, ArchitectureDecision, ArchitectureStatus, ArchitectureChatMessage } from '@/types/project'
 import type { Agent, AgentKnowledgeEntry, AgentBehaviorRule, AgentTheme } from '@/types/agent'
 import type { FlowNode, FlowEdge } from '@/types/canvas'
 import type { AIPlanNode } from '@/types/chat'
@@ -106,6 +106,13 @@ interface ProjectState {
   updateAgentTheme: (agentId: string, theme: Partial<AgentTheme>) => void
   toggleAgentPublished: (agentId: string) => void
   mergeFromTerritory: (nodes: PlanNode[], edges: ProjectEdge[]) => void
+  setArchitectureDecisions: (decisions: ArchitectureDecision[]) => void
+  addArchitectureDecision: (decision: ArchitectureDecision) => void
+  updateArchitectureDecision: (id: string, updates: Partial<ArchitectureDecision>) => void
+  setArchitectureDecisionStatus: (id: string, status: ArchitectureStatus) => void
+  removeArchitectureDecision: (id: string) => void
+  addArchitectureChatMessage: (msg: ArchitectureChatMessage) => void
+  clearArchitectureChatMessages: () => void
   undo: () => void
   redo: () => void
 }
@@ -1388,6 +1395,57 @@ export const useProjectStore = create<ProjectState>((set, get) => {
         updatedAt: Date.now(),
       }
       commitProjectUpdate(updatedProject)
+    },
+
+    setArchitectureDecisions: (decisions) => {
+      const p = get().currentProject
+      if (!p) return
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), architectureDecisions: decisions })
+    },
+
+    addArchitectureDecision: (decision) => {
+      const p = get().currentProject
+      if (!p) return
+      const decisions = [...(p.architectureDecisions || []), decision]
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), architectureDecisions: decisions })
+    },
+
+    updateArchitectureDecision: (id, updates) => {
+      const p = get().currentProject
+      if (!p) return
+      const decisions = (p.architectureDecisions || []).map((d) =>
+        d.id === id ? { ...d, ...updates, updatedAt: Date.now() } : d
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), architectureDecisions: decisions })
+    },
+
+    setArchitectureDecisionStatus: (id, status) => {
+      const p = get().currentProject
+      if (!p) return
+      const decisions = (p.architectureDecisions || []).map((d) =>
+        d.id === id ? { ...d, status, updatedAt: Date.now() } : d
+      )
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), architectureDecisions: decisions })
+    },
+
+    removeArchitectureDecision: (id) => {
+      const p = get().currentProject
+      if (!p) return
+      const decisions = (p.architectureDecisions || []).filter((d) => d.id !== id)
+      commitProjectUpdate({ ...p, updatedAt: Date.now(), architectureDecisions: decisions })
+    },
+
+    addArchitectureChatMessage: (msg) => {
+      const p = get().currentProject
+      if (!p) return
+      const messages = [...(p.architectureChatMessages || []), msg]
+      applyWithoutUndo({ ...p, architectureChatMessages: messages })
+    },
+
+    clearArchitectureChatMessages: () => {
+      const p = get().currentProject
+      if (!p) return
+      applyWithoutUndo({ ...p, architectureChatMessages: [] })
     },
 
     undo: () => {

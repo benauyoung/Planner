@@ -45,15 +45,20 @@ export async function POST(req: Request) {
       allPageTitles,
       projectDescription,
       projectNodes,
+      architectureDecisions,
     } = await req.json()
 
     const nodeContext = projectNodes?.length
       ? `\nPROJECT STRUCTURE:\n${projectNodes.map((n: { type: string; title: string; description?: string }) => `- [${n.type}] ${n.title}${n.description ? `: ${n.description}` : ''}`).join('\n')}`
       : ''
 
+    const archContext = architectureDecisions?.length
+      ? `\nARCHITECTURE DECISIONS:\n${architectureDecisions.map((d: { category: string; title: string; description: string }) => `- [${d.category}] ${d.title}: ${d.description}`).join('\n')}`
+      : ''
+
     const context = `PROJECT: ${projectDescription || 'Not provided'}
 DESIGN SYSTEM: ${designSystem || 'Not specified'}
-PAGES IN THIS APP: ${allPageTitles?.length ? allPageTitles.join(', ') : 'Not specified'}${nodeContext}
+PAGES IN THIS APP: ${allPageTitles?.length ? allPageTitles.join(', ') : 'Not specified'}${nodeContext}${archContext}
 
 PAGE BEING EDITED: ${pageTitle}${pageRoute ? ` (${pageRoute})` : ''}
 

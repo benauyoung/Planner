@@ -48,7 +48,7 @@ export const metadata: Metadata = {
     locale: 'en_US',
     images: [
       {
-        url: '/og/og-image.png',
+        url: '/og/og-image.png?v=2',
         width: 1200,
         height: 630,
         alt: 'Big Ideas. TinyBaguette. Plan your project in minutes.',
@@ -60,7 +60,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'TinyBaguette - Your Perfect Planning Tool',
     description: 'Plan your website or app in minutes with an AI-powered visual canvas. Generate PRDs, design live pages, embed AI agents, and export to Cursor, Claude Code, or Windsurf.',
-    images: ['/og/og-image.png'],
+    images: ['/og/og-image.png?v=2'],
     creator: '@tinybaguette',
   },
 }
