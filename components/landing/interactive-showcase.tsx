@@ -111,8 +111,8 @@ function CanvasNode({ node, delay, selected, onClick }: {
   onClick: () => void
 }) {
   const Icon = TYPE_ICONS[node.type] || CheckSquare
-  const w = node.type === 'goal' ? 160 : node.type === 'subgoal' ? 145 : 130
-  const h = 44
+  const w = node.type === 'goal' ? 120 : node.type === 'subgoal' ? 110 : 100
+  const h = 32
 
   return (
     <motion.g
@@ -136,12 +136,12 @@ function CanvasNode({ node, delay, selected, onClick }: {
         }}
         transition={{ duration: 0.2 }}
       />
-      <circle cx={node.x + 16} cy={node.y + h / 2} r={5} fill={STATUS_COLORS[node.status]} />
+      <circle cx={node.x + 12} cy={node.y + h / 2} r={3.5} fill={STATUS_COLORS[node.status]} />
       <text
-        x={node.x + 28}
-        y={node.y + h / 2 - 4}
+        x={node.x + 22}
+        y={node.y + h / 2 - 2}
         fill="hsl(var(--foreground))"
-        fontSize="11"
+        fontSize="9"
         fontWeight="600"
         fontFamily="system-ui, sans-serif"
         style={{ pointerEvents: 'none' }}
@@ -149,10 +149,10 @@ function CanvasNode({ node, delay, selected, onClick }: {
         {node.title}
       </text>
       <text
-        x={node.x + 28}
-        y={node.y + h / 2 + 10}
+        x={node.x + 22}
+        y={node.y + h / 2 + 8}
         fill="hsl(var(--muted-foreground))"
-        fontSize="9"
+        fontSize="7"
         fontFamily="system-ui, sans-serif"
         style={{ pointerEvents: 'none' }}
       >
@@ -167,11 +167,11 @@ function CanvasEdge({ from, to, delay }: {
   to: typeof DEMO_NODES[0]
   delay: number
 }) {
-  const fw = from.type === 'goal' ? 160 : from.type === 'subgoal' ? 145 : 130
+  const fw = from.type === 'goal' ? 120 : from.type === 'subgoal' ? 110 : 100
   const sx = from.x + fw
-  const sy = from.y + 22
+  const sy = from.y + 16
   const ex = to.x
-  const ey = to.y + 22
+  const ey = to.y + 16
   const mx = (sx + ex) / 2
 
   return (

@@ -71,19 +71,18 @@ export function LandingNavBar() {
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <Image src="/Logo.png" alt="TinyBaguette" width={28} height={28} className="rounded" />
-          <span className="text-xl text-foreground" style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
+          <span className={`text-xl transition-colors ${scrolled ? 'text-foreground' : 'text-white'}`} style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
         </Link>
 
         {/* Center: Nav links (desktop) */}
         <div className="hidden md:flex items-center gap-8">
-          <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-          <a href="#how-it-works" className="text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
-          <a href="#cta" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+          <a href="#demo" className={`text-sm transition-colors ${scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-white/70 hover:text-white'}`}>Features</a>
+          <a href="#how-it-works" className={`text-sm transition-colors ${scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-white/70 hover:text-white'}`}>How It Works</a>
         </div>
 
         {/* Right: Login + Get Started (desktop) + Mobile toggle */}
         <div className="flex items-center gap-3">
-          <Link href="/login" className="hidden md:block text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <Link href="/login" className={`hidden md:block text-sm transition-colors ${scrolled ? 'text-muted-foreground hover:text-foreground' : 'text-white/70 hover:text-white'}`}>
             Login
           </Link>
 
@@ -165,9 +164,8 @@ export function LandingNavBar() {
             className="md:hidden bg-background/95 backdrop-blur-md border-b border-border overflow-hidden"
           >
             <div className="px-6 py-4 space-y-3">
-              <a href="#features" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
+              <a href="#demo" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
               <a href="#how-it-works" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
-              <a href="#cta" onClick={() => setMobileOpen(false)} className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
               <Link href="/login" className="block text-sm text-muted-foreground hover:text-foreground transition-colors">Login</Link>
 
               {/* Mobile email capture */}
