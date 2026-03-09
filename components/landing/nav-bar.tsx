@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Menu, X, ArrowRight, Loader2, Check } from 'lucide-react'
-import Image from 'next/image'
+
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLang } from '@/lib/landing-lang-context'
 import { t } from '@/lib/landing-i18n'
@@ -71,7 +71,7 @@ export function LandingNavBar() {
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white shadow-sm">
-            <Image src="/Logo.png" alt="TinyBaguette" width={22} height={22} />
+            <img src="/Logo.png" alt="TinyBaguette" width={22} height={22} />
           </span>
           <span className={`text-xl transition-colors ${scrolled ? 'text-foreground' : 'text-white'}`} style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
         </Link>
