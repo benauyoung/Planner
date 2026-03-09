@@ -70,7 +70,9 @@ export function LandingNavBar() {
       <div className="container max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <Image src="/Logo.png" alt="TinyBaguette" width={28} height={28} className="rounded" />
+          <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white shadow-sm">
+            <Image src="/Logo.png" alt="TinyBaguette" width={22} height={22} />
+          </span>
           <span className={`text-xl transition-colors ${scrolled ? 'text-foreground' : 'text-white'}`} style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
         </Link>
 
