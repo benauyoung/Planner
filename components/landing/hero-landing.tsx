@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { ArrowRight, Loader2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { track } from '@vercel/analytics'
 import Image from 'next/image'
@@ -12,14 +12,13 @@ const HEADLINE_WORDS = ['Plan', 'it.', 'Build', 'it.', 'Ship', 'it.']
 
 export function HeroLanding() {
   const [prompt, setPrompt] = useState('')
-  const [loading, setLoading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  async function handleBuild() {
-    if (!prompt.trim() || loading) return
-    setLoading(true)
+  function handleBuild() {
+    if (!prompt.trim()) return
     track('hero_plan_click', { prompt: prompt.slice(0, 100) })
-    window.location.href = '/login'
+    const el = document.getElementById('demo')
+    if (el) el.scrollIntoView({ behavior: 'smooth' })
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {
@@ -139,16 +138,10 @@ export function HeroLanding() {
                 </div>
                 <button
                   onClick={handleBuild}
-                  disabled={!prompt.trim() || loading}
+                  disabled={!prompt.trim()}
                   className="bg-[hsl(150,20%,32%)] text-[hsl(40,33%,96%)] rounded-lg px-5 py-2 text-sm font-medium hover:opacity-90 transition-opacity flex items-center gap-1.5 shrink-0 ml-3 disabled:opacity-30"
                 >
-                  {loading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <>
-                      Plan <ArrowRight className="h-3.5 w-3.5" />
-                    </>
-                  )}
+                  Plan <ArrowRight className="h-3.5 w-3.5" />
                 </button>
               </div>
             </div>

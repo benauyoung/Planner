@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { Menu, X, ArrowRight, Loader2, Check } from 'lucide-react'
+import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useLang } from '@/lib/landing-lang-context'
 import { t } from '@/lib/landing-i18n'
@@ -69,7 +70,7 @@ export function LandingNavBar() {
       <div className="container max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-          <span className="text-2xl">🥖</span>
+          <Image src="/Logo.png" alt="TinyBaguette" width={28} height={28} className="rounded" />
           <span className="text-xl text-foreground" style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
         </Link>
 
