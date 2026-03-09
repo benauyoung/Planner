@@ -59,7 +59,7 @@ export function HeroLanding() {
       />
 
       <div className="container max-w-7xl mx-auto px-6 relative z-10">
-        <div className="max-w-4xl">
+        <div className="text-center">
           {/* Badge */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -73,7 +73,7 @@ export function HeroLanding() {
           </motion.div>
 
           {/* Giant staggered headline */}
-          <div className="flex flex-wrap gap-x-5 gap-y-1 mb-6">
+          <div className="flex flex-wrap justify-center gap-x-5 gap-y-1 mb-6">
             {HEADLINE_WORDS.map((word, i) => (
               <motion.span
                 key={i}
@@ -96,7 +96,7 @@ export function HeroLanding() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 1.4 }}
-            className="text-lg md:text-xl text-[hsl(40,33%,96%)]/70 max-w-lg mb-10"
+            className="text-lg md:text-xl text-[hsl(40,33%,96%)]/70 max-w-2xl mx-auto mb-10"
           >
             Every great project starts with a great plan. Describe your idea and
             get a structured roadmap before you write a single line of code.
@@ -107,7 +107,7 @@ export function HeroLanding() {
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 1.6 }}
-            className="max-w-2xl"
+            className="max-w-2xl mx-auto"
           >
             <div className="bg-[hsl(40,30%,98%)]/95 backdrop-blur-md rounded-2xl shadow-2xl border border-[hsl(35,20%,85%)]/50 p-5">
               <textarea

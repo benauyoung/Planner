@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Loader2, Check } from 'lucide-react'
 import { track } from '@vercel/analytics'
+import Image from 'next/image'
 
 export function CtaLanding() {
   const [email, setEmail] = useState('')
@@ -81,6 +82,23 @@ export function CtaLanding() {
               <span className="text-sm font-medium">You&apos;re on the list! We&apos;ll be in touch.</span>
             </div>
           )}
+        </motion.div>
+
+        {/* Giant Baguette */}
+        <motion.div
+          initial={{ opacity: 0, y: 40, rotate: -5 }}
+          whileInView={{ opacity: 1, y: 0, rotate: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="mt-16 flex justify-center"
+        >
+          <Image
+            src="/Baguettepng.png"
+            alt="TinyBaguette"
+            width={400}
+            height={400}
+            className="drop-shadow-2xl"
+          />
         </motion.div>
       </div>
     </section>
