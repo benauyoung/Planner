@@ -71,7 +71,7 @@ export function LandingNavBar() {
         {/* Left: Logo */}
         <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
           <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white shadow-sm">
-            <img src="/Logo.png" alt="TinyBaguette" width={22} height={22} />
+            <img src="/logo.png" alt="TinyBaguette" width={22} height={22} />
           </span>
           <span className={`text-xl transition-colors ${scrolled ? 'text-foreground' : 'text-white'}`} style={{ fontFamily: "'DM Serif Display', Georgia, serif" }}>TinyBaguette</span>
         </Link>
