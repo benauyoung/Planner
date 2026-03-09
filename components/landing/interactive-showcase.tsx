@@ -7,7 +7,6 @@ import {
   Flag,
   Puzzle,
   CheckSquare,
-  GanttChart,
   Table2,
   LayoutGrid,
   ChevronRight,
@@ -22,6 +21,9 @@ import {
   ClipboardCheck,
   Workflow,
   Zap,
+  FileText,
+  Copy,
+  Check,
 } from 'lucide-react'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -464,14 +466,207 @@ function GanttDemo() {
   )
 }
 
+// ─── PRD Demo ──────────────────────────────────────────────
+
+const PRD_NODES = [
+  { id: 'f1', title: 'OAuth Login', type: 'feature', color: 'hsl(var(--node-feature))' },
+  { id: 'f2', title: 'User Roles', type: 'feature', color: 'hsl(var(--node-feature))' },
+  { id: 'f3', title: 'Analytics', type: 'feature', color: 'hsl(var(--node-feature))' },
+  { id: 's1', title: 'Auth System', type: 'subgoal', color: 'hsl(var(--node-subgoal))' },
+]
+
+const DEMO_PRD_CONTENT = `# OAuth Login PRD
+
+## Overview
+Implement OAuth 2.0 authentication supporting Google and GitHub providers using NextAuth.js with HttpOnly session cookies.
+
+## Goals & Success Metrics
+- Users can sign in with Google or GitHub in under 3 clicks
+- Session persists across browser restarts
+- Zero plaintext tokens stored client-side
+
+## Functional Requirements
+1. NextAuth configuration with Google + GitHub providers
+2. JWT strategy with HttpOnly secure cookies
+3. Protected API middleware validates session on every request
+4. User profile created on first login (upsert)
+5. Logout clears session and redirects to landing
+
+## Implementation Checklist
+- [ ] Install next-auth and configure providers
+- [ ] Create \`app/api/auth/[...nextauth]/route.ts\`
+- [ ] Add Google OAuth credentials to .env
+- [ ] Add GitHub OAuth credentials to .env
+- [ ] Create user upsert logic in \`lib/auth.ts\`
+- [ ] Add session middleware to protected routes
+- [ ] Build sign-in page with provider buttons
+- [ ] Add sign-out button to navbar
+
+## Run with Ralphy
+Invoke: ralphy --prd oauth-login.md --agent cursor
+Agent: cursor (strong Next.js support)
+Complexity: M
+Boundary: app/api/auth/**, components/auth/**, lib/auth.ts`
+
+function PRDDemo() {
+  const [selectedNode, setSelectedNode] = useState(0)
+  const [generating, setGenerating] = useState(false)
+  const [visibleChars, setVisibleChars] = useState(0)
+  const [copied, setCopied] = useState(false)
+  const [showPrd, setShowPrd] = useState(true)
+
+  // Auto-cycle through nodes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSelectedNode((prev) => (prev + 1) % PRD_NODES.length)
+      setGenerating(true)
+      setVisibleChars(0)
+      setShowPrd(false)
+    }, 12000)
+    return () => clearInterval(interval)
+  }, [])
+
+  // Simulate generation then typewriter
+  useEffect(() => {
+    if (generating) {
+      const timer = setTimeout(() => {
+        setGenerating(false)
+        setShowPrd(true)
+        setVisibleChars(0)
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [generating])
+
+  // Typewriter effect
+  useEffect(() => {
+    if (!showPrd || generating) return
+    if (visibleChars >= DEMO_PRD_CONTENT.length) return
+    const timer = setTimeout(() => {
+      setVisibleChars((prev) => Math.min(prev + 8, DEMO_PRD_CONTENT.length))
+    }, 12)
+    return () => clearTimeout(timer)
+  }, [visibleChars, showPrd, generating])
+
+  const node = PRD_NODES[selectedNode]
+  const Icon = TYPE_ICONS[node.type] || CheckSquare
+
+  return (
+    <div className="w-full rounded-xl border bg-background/50 overflow-hidden shadow-2xl">
+      {/* Toolbar */}
+      <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-muted-foreground">Select node:</span>
+          <div className="flex items-center gap-1.5">
+            {PRD_NODES.map((n, i) => (
+              <button
+                key={n.id}
+                onClick={() => {
+                  setSelectedNode(i)
+                  setGenerating(true)
+                  setVisibleChars(0)
+                  setShowPrd(false)
+                }}
+                className={cn(
+                  'flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all',
+                  selectedNode === i
+                    ? 'bg-primary/15 text-primary ring-1 ring-primary/30'
+                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                )}
+              >
+                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: n.color }} />
+                {n.title}
+              </button>
+            ))}
+          </div>
+        </div>
+        <button
+          onClick={() => {
+            navigator.clipboard.writeText(DEMO_PRD_CONTENT)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
+          }}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-green-500" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? 'Copied!' : 'Copy'}
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="relative min-h-[360px] max-h-[400px] overflow-y-auto">
+        <AnimatePresence mode="wait">
+          {generating ? (
+            <motion.div
+              key="generating"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center py-20 gap-4"
+            >
+              <div className="relative">
+                <motion.div
+                  className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center"
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </motion.div>
+              </div>
+              <div className="text-center">
+                <p className="text-sm font-medium">Generating PRD for {node.title}...</p>
+                <p className="text-xs text-muted-foreground mt-1">Analyzing hierarchy, Q&A decisions, and dependencies</p>
+              </div>
+            </motion.div>
+          ) : showPrd ? (
+            <motion.div
+              key="prd"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="p-5"
+            >
+              {/* Node badge */}
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: node.color + '20', color: node.color }}>
+                  <Icon className="h-3 w-3" />
+                  {node.type}
+                </div>
+                <span className="text-xs text-muted-foreground">→</span>
+                <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-500 text-[10px] font-bold uppercase tracking-wider">
+                  <FileText className="h-3 w-3" />
+                  PRD
+                </div>
+              </div>
+
+              {/* PRD content with typewriter */}
+              <pre className="text-xs text-foreground/80 whitespace-pre-wrap font-mono leading-relaxed">
+                {DEMO_PRD_CONTENT.slice(0, visibleChars)}
+                {visibleChars < DEMO_PRD_CONTENT.length && (
+                  <motion.span
+                    animate={{ opacity: [1, 0] }}
+                    transition={{ duration: 0.5, repeat: Infinity }}
+                    className="text-primary"
+                  >
+                    ▌
+                  </motion.span>
+                )}
+              </pre>
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+    </div>
+  )
+}
+
 // ─── Tabbed Showcase ────────────────────────────────────────
 
-type ShowcaseTab = 'canvas' | 'table' | 'gantt'
+type ShowcaseTab = 'canvas' | 'table' | 'prd'
 
 const TABS: { key: ShowcaseTab; label: string; icon: typeof LayoutGrid; description: string }[] = [
   { key: 'canvas', label: 'Canvas', icon: LayoutGrid, description: 'Interactive DAG with 12 node types. Drag, connect, and organize your project visually.' },
   { key: 'table', label: 'Task Table', icon: Table2, description: 'Sort by priority, status, or name. Assign team members and track estimates.' },
-  { key: 'gantt', label: 'Gantt Chart', icon: GanttChart, description: 'Drag bars to reschedule. Resize edges to adjust durations. Visual timeline of every task.' },
+  { key: 'prd', label: 'Generate PRDs', icon: FileText, description: 'One click generates implementation-ready PRDs with checklists, scoped to each node in your plan.' },
 ]
 
 export function InteractiveShowcase() {
@@ -551,7 +746,7 @@ export function InteractiveShowcase() {
           >
             {activeTab === 'canvas' && <CanvasDemo />}
             {activeTab === 'table' && <TableDemo />}
-            {activeTab === 'gantt' && <GanttDemo />}
+            {activeTab === 'prd' && <PRDDemo />}
           </motion.div>
         </AnimatePresence>
       </div>

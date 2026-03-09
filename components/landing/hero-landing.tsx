@@ -17,7 +17,7 @@ export function HeroLanding() {
   function handleBuild() {
     if (!prompt.trim()) return
     track('hero_plan_click', { prompt: prompt.slice(0, 100) })
-    const el = document.getElementById('demo')
+    const el = document.getElementById('planning-playground')
     if (el) el.scrollIntoView({ behavior: 'smooth' })
   }
 
