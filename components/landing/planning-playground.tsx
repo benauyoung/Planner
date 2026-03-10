@@ -56,7 +56,7 @@ interface LayoutNode extends PlanNode {
 
 // ─── Constants ───────────────────────────────────────────────
 
-const ACTION_LIMIT = 10
+const ACTION_LIMIT = 25
 
 function getPlaceholderIdeas(lang: Lang) {
     return [
@@ -684,11 +684,13 @@ function EmailGateOverlay({
     emailSubmitting,
     appTitle,
     lang,
+    onDismiss,
 }: {
     onSubmitEmail: (email: string) => void
     emailSubmitting: boolean
     appTitle: string
     lang: Lang
+    onDismiss: () => void
 }) {
     const [email, setEmail] = useState('')
 
@@ -743,6 +745,12 @@ function EmailGateOverlay({
                 <p className="text-[10px] text-[hsl(100,10%,38%)]/50 mt-4">
                     {t(lang, 'ppNoCreditCard')}
                 </p>
+                <button
+                    onClick={onDismiss}
+                    className="mt-3 text-xs text-[hsl(100,10%,38%)]/60 hover:text-[hsl(103,18%,12%)] transition-colors"
+                >
+                    Maybe later
+                </button>
             </motion.div>
         </motion.div>
     )
@@ -766,6 +774,7 @@ function InteractiveCanvas({
     gated,
     onSubmitEmail,
     emailSubmitting,
+    onDismissGate,
     appTitle,
     lang,
 }: {
@@ -784,6 +793,7 @@ function InteractiveCanvas({
     gated: boolean
     onSubmitEmail: (email: string) => void
     emailSubmitting: boolean
+    onDismissGate: () => void
     appTitle: string
     lang: Lang
 }) {
@@ -1054,6 +1064,7 @@ function InteractiveCanvas({
                             emailSubmitting={emailSubmitting}
                             appTitle={appTitle}
                             lang={lang}
+                            onDismiss={onDismissGate}
                         />
                     )}
                 </AnimatePresence>
@@ -1109,7 +1120,7 @@ export function PlanningPlayground() {
         setActionCount((prev) => {
             const next = prev + 1
             if (next >= ACTION_LIMIT) {
-                setTimeout(() => setGated(true), 400)
+                setTimeout(() => setGated(true), 3000)
             }
             return next
         })
@@ -1151,6 +1162,11 @@ export function PlanningPlayground() {
         setPlanNodes((prev) =>
             prev.map((n) => (n.id === nodeId ? { ...n, title: newTitle } : n))
         )
+    }, [])
+
+    const handleDismissGate = useCallback(() => {
+        setGated(false)
+        setActionCount((prev) => Math.max(prev - 5, 0))
     }, [])
 
     const handleDeleteNode = useCallback((nodeId: string) => {
@@ -1341,7 +1357,7 @@ export function PlanningPlayground() {
                                     className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-1.5 mb-8"
                                 >
                                     <span className="text-xs font-medium text-[hsl(42,60%,72%)]">
-                                        ✦ Plan first, build with confidence
+                                        ✦ From idea to dev-ready plan in minutes
                                     </span>
                                 </motion.div>
 
@@ -1371,8 +1387,8 @@ export function PlanningPlayground() {
                                     transition={{ duration: 0.5, delay: 1.4 }}
                                     className="text-lg md:text-xl text-[hsl(40,33%,96%)]/70 max-w-2xl mx-auto"
                                 >
-                                    Every great project starts with a great plan. Describe your idea and
-                                    get a structured roadmap before you write a single line of code.
+                                    Describe your app or website idea and get a structured roadmap — goals,
+                                    features, and tasks — before you write a single line of code.
                                 </motion.p>
                             </div>
 
@@ -1496,6 +1512,7 @@ export function PlanningPlayground() {
                                 gated={gated}
                                 onSubmitEmail={handleEmailSubmit}
                                 emailSubmitting={emailSubmitting}
+                                onDismissGate={handleDismissGate}
                                 appTitle={appTitle}
                                 lang={lang}
                             />
@@ -1582,21 +1599,33 @@ export function PlanningPlayground() {
                                             {t(lang, 'ppWellSendAccess')}{' '}
                                             <span className="font-medium text-[hsl(103,18%,12%)]">{appTitle}</span> {t(lang, 'ppWithFullPlanningCanvas')}
                                         </p>
-                                        <button
-                                            onClick={() => {
-                                                setPhase('input')
-                                                setPrompt('')
-                                                setEmailSubmitted(false)
-                                                setPlanNodes([])
-                                                setActionCount(0)
-                                                setAnsweredQuestions({})
-                                                setNodeStatuses({})
-                                                setGated(false)
-                                            }}
-                                            className="text-sm text-[#4A7459] hover:text-[#3a5e47] font-medium transition-colors"
-                                        >
-                                            {t(lang, 'ppPlanAnother')} →
-                                        </button>
+                                        <div className="flex items-center justify-center gap-4">
+                                            <button
+                                                onClick={() => {
+                                                    setGated(false)
+                                                    setPhase('canvas')
+                                                }}
+                                                className="text-sm text-[#4A7459] hover:text-[#3a5e47] font-medium transition-colors"
+                                            >
+                                                ← View your plan
+                                            </button>
+                                            <span className="text-[hsl(100,10%,38%)]/30">·</span>
+                                            <button
+                                                onClick={() => {
+                                                    setPhase('input')
+                                                    setPrompt('')
+                                                    setEmailSubmitted(false)
+                                                    setPlanNodes([])
+                                                    setActionCount(0)
+                                                    setAnsweredQuestions({})
+                                                    setNodeStatuses({})
+                                                    setGated(false)
+                                                }}
+                                                className="text-sm text-[#4A7459] hover:text-[#3a5e47] font-medium transition-colors"
+                                            >
+                                                {t(lang, 'ppPlanAnother')} →
+                                            </button>
+                                        </div>
                                     </motion.div>
                                 )}
                             </div>

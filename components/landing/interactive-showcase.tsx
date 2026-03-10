@@ -188,19 +188,8 @@ function CanvasEdge({ from, to, delay }: {
 }
 
 function CanvasDemo() {
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>('s1')
   const nodeMap = Object.fromEntries(DEMO_NODES.map((n) => [n.id, n]))
-
-  // Auto-cycle through nodes to show interactivity
-  useEffect(() => {
-    const ids = DEMO_NODES.map((n) => n.id)
-    let i = 0
-    const interval = setInterval(() => {
-      setSelectedId(ids[i % ids.length])
-      i++
-    }, 2000)
-    return () => clearInterval(interval)
-  }, [])
 
   return (
     <div className="relative w-full aspect-[16/9] rounded-xl border bg-background/50 overflow-hidden shadow-2xl">
@@ -239,7 +228,7 @@ function CanvasDemo() {
 
 function TableDemo() {
   const [sortBy, setSortBy] = useState<'title' | 'status' | 'priority'>('priority')
-  const [selectedRow, setSelectedRow] = useState<string | null>(null)
+  const [selectedRow, setSelectedRow] = useState<string | null>('f3')
 
   const priorityOrder: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
   const statusOrder: Record<string, number> = { in_progress: 0, not_started: 1, completed: 2, blocked: 3 }
@@ -249,16 +238,6 @@ function TableDemo() {
     if (sortBy === 'status') return (statusOrder[a.status] ?? 9) - (statusOrder[b.status] ?? 9)
     return a.title.localeCompare(b.title)
   })
-
-  // Auto-cycle rows
-  useEffect(() => {
-    let i = 0
-    const interval = setInterval(() => {
-      setSelectedRow(sorted[i % sorted.length].id)
-      i++
-    }, 1800)
-    return () => clearInterval(interval)
-  }, [sorted])
 
   return (
     <div className="w-full rounded-xl border bg-background/50 overflow-hidden shadow-2xl">
@@ -339,17 +318,7 @@ function TableDemo() {
 function GanttDemo() {
   const totalDays = 30
   const colW = 22
-  const [hoveredTask, setHoveredTask] = useState<string | null>(null)
-
-  // Auto-cycle
-  useEffect(() => {
-    let i = 0
-    const interval = setInterval(() => {
-      setHoveredTask(GANTT_TASKS[i % GANTT_TASKS.length].id)
-      i++
-    }, 2200)
-    return () => clearInterval(interval)
-  }, [])
+  const [hoveredTask, setHoveredTask] = useState<string | null>('f3')
 
   const days = Array.from({ length: totalDays }, (_, i) => i + 1)
 
@@ -505,17 +474,6 @@ function PRDDemo() {
   const [copied, setCopied] = useState(false)
   const [showPrd, setShowPrd] = useState(true)
 
-  // Auto-cycle through nodes
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSelectedNode((prev) => (prev + 1) % PRD_NODES.length)
-      setGenerating(true)
-      setVisibleChars(0)
-      setShowPrd(false)
-    }, 12000)
-    return () => clearInterval(interval)
-  }, [])
-
   // Simulate generation then typewriter
   useEffect(() => {
     if (generating) {
@@ -661,17 +619,6 @@ const TABS: { key: ShowcaseTab; label: string; icon: typeof LayoutGrid; descript
 
 export function InteractiveShowcase() {
   const [activeTab, setActiveTab] = useState<ShowcaseTab>('canvas')
-
-  // Auto-rotate tabs
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setActiveTab((prev) => {
-        const idx = TABS.findIndex((t) => t.key === prev)
-        return TABS[(idx + 1) % TABS.length].key
-      })
-    }, 8000)
-    return () => clearInterval(interval)
-  }, [])
 
   const currentTab = TABS.find((t) => t.key === activeTab)!
 
