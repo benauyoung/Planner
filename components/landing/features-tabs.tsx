@@ -95,11 +95,11 @@ interface ChatMsg {
 
 const PLANNING_CHAT: ChatMsg[] = [
   { role: 'user', text: 'I want to build a music festival app', step: 0 },
-  { role: 'ai', text: 'Great idea! I\'ll create a Festival App plan. What are the main areas — lineup, social, or both?', step: 0 },
+  { role: 'ai', text: 'Great idea! I\'ll create a Festival App plan. What are the main areas: lineup, social, or both?', step: 0 },
   { role: 'user', text: 'Both! Live lineup schedules and a social feed for attendees', step: 1 },
   { role: 'ai', text: 'Adding Live Lineup and Social Feed as core pillars. Should users set reminders for sets?', step: 1 },
   { role: 'user', text: 'Yes, and an interactive stage map too', step: 2 },
-  { role: 'ai', text: 'Done — Set Reminders and Stage Map added. Want a photo sharing feature for the social feed?', step: 2 },
+  { role: 'ai', text: 'Done! Set Reminders and Stage Map added. Want a photo sharing feature for the social feed?', step: 2 },
   { role: 'user', text: 'Definitely, plus friend meetup coordination', step: 3 },
   { role: 'ai', text: 'Added Photo Wall and Friend Meetups. I\'ll also add a Live Chat for real-time messaging.', step: 4 },
 ]

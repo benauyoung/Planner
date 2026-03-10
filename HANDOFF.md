@@ -1,6 +1,6 @@
 # TinyBaguette — Full AI Handoff Document
 
-> Complete codebase reference. Updated February 22, 2026.
+> Complete codebase reference. Updated March 10, 2026.
 
 ---
 

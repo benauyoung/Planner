@@ -1,6 +1,6 @@
 # TinyBaguette Roadmap
 
-> Milestone tracking. Updated March 3, 2026 to reflect actual progress.
+> Milestone tracking. Updated March 10, 2026 to reflect actual progress.
 
 ---
 
@@ -323,7 +323,18 @@
 
 ---
 
-### M18: Real-Time Collaboration (Production) 🔴
+### M18: Landing Page Feedback Fixes ✅
+**Status**: Complete
+
+**Delivered** (Mar 10, 2026):
+- **Copy clarity** — Hero subtitle rewritten to clarify software context ("Describe your app or website idea..."), badge updated, em dashes removed from all user-facing copy
+- **Calmer animations** — Removed auto-cycling setInterval from CanvasDemo, TableDemo, GanttDemo, PRDDemo, and tab auto-rotation; all pre-select one item statically
+- **Less aggressive email gate** — ACTION_LIMIT raised 10→25, overlay delay 400ms→3s, "Maybe later" dismiss button gives 5 more actions before re-triggering
+- **Return to plan** — Post-email "You're In!" screen now shows "← View your plan" button so users can review their generated roadmap
+
+---
+
+### M19: Real-Time Collaboration (Production) 🔴
 **Status**: Planned
 
 **Planned**:
@@ -334,7 +345,7 @@
 
 ---
 
-### M19: Production Integrations 🔴
+### M20: Production Integrations 🔴
 **Status**: Planned
 
 **Planned**:
@@ -345,7 +356,7 @@
 
 ---
 
-### M20: Design Tab Deepening 🔴
+### M21: Design Tab Deepening 🔴
 **Status**: Planned
 
 **Planned**:
@@ -358,7 +369,7 @@
 
 ---
 
-### M21: Agent System Expansion 🔴
+### M22: Agent System Expansion 🔴
 **Status**: Planned
 
 **Planned**:
@@ -371,7 +382,7 @@
 
 ---
 
-### M22: Monetization & Scale 🔴
+### M23: Monetization & Scale 🔴
 **Status**: Planned
 
 **Planned**:
@@ -466,11 +477,18 @@
 - Baguette footer with large logo asset
 - SVG zoom fix (fit-to-view)
 
-### v0.9.11 - Smart Onboarding & Quick Questions ✅ (Current)
+### v0.9.11 - Smart Onboarding & Quick Questions ✅
 - Skip button on all onboarding steps except description
 - Dynamic AI-generated onboarding questions (replaces fixed audience/timeline/team/priorities)
 - Quick Questions panel for answering node questions across the project
 - Auto-generate questions for nodes without any
+
+### v0.9.12 - Landing Page Feedback Fixes ✅ (Current)
+- Hero copy clarified for software context, badge updated
+- All showcase auto-cycling animations removed (static pre-selection)
+- Email gate: ACTION_LIMIT 10→25, 3s delay, "Maybe later" dismiss
+- Post-email "View your plan" button for returning to roadmap
+- Em dashes removed from all user-facing landing copy
 
 ### v1.0.0 - Launch (Planned)
 - Legacy code cleanup (remove WebContainer files, unused deps)
@@ -535,3 +553,6 @@
 | 2026-03-02 | M17.5: Landing Page Refinement — playground as hero, parchment theme, English translation, FR/EN toggle, baguette footer, SVG zoom fix |
 | 2026-03-03 | v0.9.10: Documentation update -- ROADMAP, PLAN, session log |
 | 2026-03-03 | M17.6: Smart Onboarding & Quick Questions -- skip button, dynamic AI questions, quick questions panel |
+| 2026-03-10 | v0.9.11: Documentation update |
+| 2026-03-10 | M18: Landing Page Feedback Fixes -- copy clarity, calmer animations, less aggressive email gate, return-to-plan button |
+| 2026-03-10 | v0.9.12: Current version -- landing page feedback fixes |

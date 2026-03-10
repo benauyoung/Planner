@@ -1,6 +1,6 @@
 # TinyBaguette Architecture
 
-> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of February 22, 2026.
+> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of March 10, 2026.
 
 ---
 

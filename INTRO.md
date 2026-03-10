@@ -1,6 +1,6 @@
 # AI Agent Onboarding
 
-> **Read this document FIRST before doing any work on TinyBaguette.** Updated February 23, 2026.
+> **Read this document FIRST before doing any work on TinyBaguette.** Updated March 10, 2026.
 
 ---
 
@@ -59,7 +59,7 @@ These are not separate features — they form a feedback loop. Never treat Desig
 
 ---
 
-## Current State Summary (v0.9.9 ✅)
+## Current State Summary (v0.9.12 ✅)
 
 ### PLAN Pillar
 - **12 node types**, **8 edge types**, AI chat planning, iteration, smart suggestions

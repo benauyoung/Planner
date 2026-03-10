@@ -1,6 +1,6 @@
 # TinyBaguette Implementation Plan
 
-> Living checklist reflecting actual implementation status as of March 3, 2026.
+> Living checklist reflecting actual implementation status as of March 10, 2026.
 
 ---
 
@@ -407,6 +407,32 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 - [x] HelpCircle button with unanswered count badge in `canvas-toolbar.tsx`
 - [x] Panel rendered in `project-workspace.tsx`
 - [x] Extended ICON_MAP with 15+ additional Lucide icons for AI-generated question options
+
+---
+
+## Phase 18: Landing Page Feedback Fixes ✅
+
+### 18.1 Copy Clarity
+- [x] Hero subtitle rewritten: "Describe your app or website idea..." (clarifies software context)
+- [x] Badge updated: "From idea to dev-ready plan in minutes"
+- [x] Removed all em dashes from user-facing landing page copy
+
+### 18.2 Calmer Showcase Animations
+- [x] Removed auto-cycling `setInterval` from `CanvasDemo` (pre-selects one node statically)
+- [x] Removed auto-cycling `setInterval` from `TableDemo` (pre-selects one row statically)
+- [x] Removed auto-cycling `setInterval` from `GanttDemo` (pre-selects one task statically)
+- [x] Removed auto-cycling `setInterval` from `PRDDemo` (typewriter still runs on initial load)
+- [x] Removed tab auto-rotation from `InteractiveShowcase`
+
+### 18.3 Less Aggressive Email Gate
+- [x] `ACTION_LIMIT` increased from 10 → 25 (users get ~25 interactions before gate)
+- [x] Gate overlay delay increased from 400ms → 3000ms
+- [x] Added "Maybe later" dismiss button to `EmailGateOverlay` (gives 5 more actions)
+- [x] Added `onDismiss` / `onDismissGate` prop chain through `InteractiveCanvas`
+
+### 18.4 Return to Plan After Email
+- [x] Post-email "You're In!" screen now shows "← View your plan" button alongside "Plan another →"
+- [x] Clicking "View your plan" returns to canvas phase with plan data intact
 
 ---
 

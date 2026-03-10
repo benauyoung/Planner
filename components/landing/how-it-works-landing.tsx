@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 const STEPS = [
   { number: '01', title: 'Describe your idea', description: 'Type a sentence about what you want to build.' },
   { number: '02', title: 'AI breaks it down', description: 'Goals, features, and tasks generated instantly.' },
-  { number: '03', title: 'Refine & export', description: 'Drag, edit, rearrange — then ship to your tools.' },
+  { number: '03', title: 'Refine & export', description: 'Drag, edit, rearrange, then ship to your tools.' },
 ]
 
 export function HowItWorksLanding() {

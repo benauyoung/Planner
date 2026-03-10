@@ -8,7 +8,7 @@ const FEATURES = [
     icon: Map,
     title: 'Visual Planning',
     description:
-      'Interactive canvas with goals, subgoals, features, and tasks — all connected in a living tree.',
+      'Interactive canvas with goals, subgoals, features, and tasks, all connected in a living tree.',
   },
   {
     icon: Palette,

@@ -1387,8 +1387,8 @@ export function PlanningPlayground() {
                                     transition={{ duration: 0.5, delay: 1.4 }}
                                     className="text-lg md:text-xl text-[hsl(40,33%,96%)]/70 max-w-2xl mx-auto"
                                 >
-                                    Describe your app or website idea and get a structured roadmap — goals,
-                                    features, and tasks — before you write a single line of code.
+                                    Describe your app or website idea and get a structured roadmap with
+                                    goals, features, and tasks before you write a single line of code.
                                 </motion.p>
                             </div>
 

@@ -29,7 +29,7 @@ Plan → Design → Agents form a feedback loop. The DAG informs page generation
 - **12 Node Types** — Goal, Subgoal, Feature, Task, Moodboard, Notes, Connector, Spec, PRD, Schema, Prompt, Reference
 - **4 View Tabs** — Plan (Canvas), Design (AI-generated UI previews), Agents (AI chatbot builder), Manage (List, Table, Board, Timeline, Sprints, Backend)
 - **AI Agent Builder** — Create embeddable AI chatbots with persona, knowledge base, behavior rules, theme customization, live preview, and one-click deploy with embed snippet
-- **Interactive Landing Demos** — 4-tab feature showcase: Planning (AI chat + graph), Design (live page editing), Agents (bot builder + deploy animation), Integrations (Supabase + GitHub connection flow)
+- **Interactive Landing Demos** — 4-tab feature showcase: Planning (AI chat + graph), Design (live page editing), Agents (bot builder + deploy animation), Integrations (Supabase + GitHub connection flow). Static pre-selection (no auto-cycling) for readability
 - **AI Planning** — Gemini decomposes your idea into a structured hierarchy
 - **AI Generation** — One-click PRD and implementation prompt generation
 - **AI Iteration** — Break down, audit, estimate, suggest dependencies — accept/dismiss per suggestion

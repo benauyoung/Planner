@@ -113,7 +113,7 @@ Nodes float freely with organic layout. No forced grids. Projects grow like orga
 
 ---
 
-## Current State (v0.9.9, February 2026)
+## Current State (v0.9.12, March 2026)
 
 ### PLAN Pillar ✅
 - Infinite canvas with 12 node types and 8 typed edge types
@@ -152,6 +152,12 @@ Nodes float freely with organic layout. No forced grids. Projects grow like orga
 - Collaboration infrastructure (presence avatars, live cursors, pluggable provider)
 - Integration settings UI (GitHub, Slack, Linear — OAuth flows pending)
 - Public landing page with interactive showcase
+
+### Landing Page (v0.9.12) ✅
+- Hero copy clarified for software context ("Describe your app or website idea...")
+- Showcase animations calmed (no more auto-cycling, static pre-selection)
+- Email gate less aggressive (25 actions, 3s delay, dismissable)
+- Post-email "View your plan" button for returning to generated roadmap
 
 ### Next Up (v1.0)
 - Legacy WebContainer code cleanup
