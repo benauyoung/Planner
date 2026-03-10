@@ -28,6 +28,7 @@ import { generateId } from '@/lib/id'
 import type { ProjectPage, PageEdge, AppChatMessage } from '@/types/project'
 import type { Agent } from '@/types/agent'
 import { DesignCanvas } from './design-canvas'
+import { injectGeneratedImages, extractImagePlaceholders, POKOPIA_IMAGE_PLACEHOLDER_CSS } from '@/lib/inject-images'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -50,7 +51,10 @@ function wrapHtmlPage(bodyHtml: string): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }</style>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; }
+    ${POKOPIA_IMAGE_PLACEHOLDER_CSS}
+  </style>
 </head>
 <body>${bodyHtml}</body>
 </html>`
@@ -167,7 +171,18 @@ function PageChat({
       )
       addAppChatMessage({ id: aiMsgId, role: 'ai', content: summary, timestamp: Date.now() })
 
-      if (html) onPageUpdated(page.id, html)
+      if (html) {
+        // Show page immediately, then inject generated images progressively
+        onPageUpdated(page.id, html)
+
+        if (extractImagePlaceholders(html).length > 0) {
+          injectGeneratedImages(html, authFetch).then((enrichedHtml) => {
+            if (enrichedHtml !== html) {
+              onPageUpdated(page.id, enrichedHtml)
+            }
+          }).catch(() => { /* images failed, page still works without them */ })
+        }
+      }
     } catch {
       setMessages((prev) =>
         prev.map((m) => m.id === aiMsgId ? { ...m, content: 'Something went wrong. Try again.' } : m)
@@ -517,7 +532,15 @@ export function DesignView() {
 
       const htmlMatch = fullText.match(/\nHTML:\n([\s\S]+)$/)
       const html = htmlMatch?.[1]?.trim() ?? ''
-      if (html) updatePageHtml(pageId, html)
+      if (html) {
+        updatePageHtml(pageId, html)
+        // Inject generated images progressively
+        if (extractImagePlaceholders(html).length > 0) {
+          injectGeneratedImages(html, authFetch).then((enriched) => {
+            if (enriched !== html) updatePageHtml(pageId, enriched)
+          }).catch(() => {})
+        }
+      }
     },
     [pages, currentProject, designSystem, updatePageHtml]
   )

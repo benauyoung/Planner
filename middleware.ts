@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 /** API routes that don't require authentication (e.g. landing page hero prompt) */
-const PUBLIC_API_ROUTES = ['/api/ai/chat', '/api/waitlist']
+const PUBLIC_API_ROUTES = ['/api/ai/chat', '/api/ai/generate-image', '/api/waitlist']
 
 export function middleware(request: NextRequest) {
   // Only protect API routes when Firebase is configured

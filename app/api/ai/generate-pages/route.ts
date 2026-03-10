@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getGeminiClient, pageGenerationSchema } from '@/services/gemini'
 import { PAGE_GENERATION_SYSTEM_PROMPT } from '@/prompts/page-generation'
+import { injectGeneratedImages } from '@/lib/inject-images'
 
 export async function POST(req: Request) {
   try {
@@ -31,6 +32,25 @@ Analyze this project and generate full-fidelity HTML page previews for every use
     const result = await model.generateContent(context)
     const responseText = result.response.text()
     const parsed = JSON.parse(responseText)
+
+    // Post-process: generate images for any data-generate placeholders
+    if (parsed.pages?.length) {
+      const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || ''
+
+      const imagePromises = parsed.pages.map(async (page: { html: string }) => {
+        try {
+          page.html = await injectGeneratedImages(
+            page.html,
+            (url: string, opts?: RequestInit) => fetch(url, opts),
+            origin || undefined,
+          )
+        } catch (err) {
+          console.warn('Image injection failed for page, continuing without images:', err)
+        }
+      })
+
+      await Promise.allSettled(imagePromises)
+    }
 
     return NextResponse.json(parsed)
   } catch (error) {

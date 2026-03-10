@@ -79,7 +79,9 @@
       "mcp__claude_ai_Vercel__get_project",
       "Bash(git stash:*)",
       "Bash(cp:*)",
-      "WebFetch(domain:tinybaguette.com)"
+      "WebFetch(domain:tinybaguette.com)",
+      "WebSearch",
+      "WebFetch(domain:ai.google.dev)"
     ]
   }
 }
