@@ -28,7 +28,7 @@ import { generateId } from '@/lib/id'
 import type { ProjectPage, PageEdge, AppChatMessage } from '@/types/project'
 import type { Agent } from '@/types/agent'
 import { DesignCanvas } from './design-canvas'
-import { injectGeneratedImages, extractImagePlaceholders, POKOPIA_IMAGE_PLACEHOLDER_CSS } from '@/lib/inject-images'
+import { injectGeneratedImages, extractImagePlaceholders, sanitizeImageSrcs, POKOPIA_IMAGE_PLACEHOLDER_CSS } from '@/lib/inject-images'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -172,12 +172,13 @@ function PageChat({
       addAppChatMessage({ id: aiMsgId, role: 'ai', content: summary, timestamp: Date.now() })
 
       if (html) {
-        // Show page immediately, then inject generated images progressively
-        onPageUpdated(page.id, html)
+        // Sanitize external image URLs, then inject generated images progressively
+        const sanitized = sanitizeImageSrcs(html)
+        onPageUpdated(page.id, sanitized)
 
-        if (extractImagePlaceholders(html).length > 0) {
-          injectGeneratedImages(html, authFetch).then((enrichedHtml) => {
-            if (enrichedHtml !== html) {
+        if (extractImagePlaceholders(sanitized).length > 0) {
+          injectGeneratedImages(sanitized, authFetch).then((enrichedHtml) => {
+            if (enrichedHtml !== sanitized) {
               onPageUpdated(page.id, enrichedHtml)
             }
           }).catch(() => { /* images failed, page still works without them */ })
@@ -533,11 +534,11 @@ export function DesignView() {
       const htmlMatch = fullText.match(/\nHTML:\n([\s\S]+)$/)
       const html = htmlMatch?.[1]?.trim() ?? ''
       if (html) {
-        updatePageHtml(pageId, html)
-        // Inject generated images progressively
-        if (extractImagePlaceholders(html).length > 0) {
-          injectGeneratedImages(html, authFetch).then((enriched) => {
-            if (enriched !== html) updatePageHtml(pageId, enriched)
+        const sanitized = sanitizeImageSrcs(html)
+        updatePageHtml(pageId, sanitized)
+        if (extractImagePlaceholders(sanitized).length > 0) {
+          injectGeneratedImages(sanitized, authFetch).then((enriched) => {
+            if (enriched !== sanitized) updatePageHtml(pageId, enriched)
           }).catch(() => {})
         }
       }

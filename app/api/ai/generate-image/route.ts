@@ -28,7 +28,7 @@ export async function POST(req: Request) {
       model: 'gpt-image-1',
       prompt,
       n: 1,
-      size: size || '1536x1024',
+      size: size || '1024x1024',
       quality: 'low',
     })
 
@@ -42,7 +42,6 @@ export async function POST(req: Request) {
     }
 
     if (imageData?.url) {
-      // Fetch the image and convert to base64
       const imgRes = await fetch(imageData.url)
       const buffer = await imgRes.arrayBuffer()
       const base64 = Buffer.from(buffer).toString('base64')

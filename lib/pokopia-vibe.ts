@@ -47,17 +47,15 @@ DECORATIVE TOUCHES:
 - Gentle hover animations: hover:scale-105 transition-transform, hover:-translate-y-0.5
 - Section dividers: wavy SVG paths or soft gradient fades — never hard lines
 
-IMAGES:
-- When a page needs a visual (hero illustration, feature graphic, avatar, product screenshot,
-  decorative image, or empty-state art), include an <img> tag with:
-  - src="/api/placeholder" (temporary — will be replaced by generated images)
-  - data-generate="[vivid description: style, subject, colors, mood — in Pokopia kawaii aesthetic]"
-  - Appropriate alt text, width, height, and Tailwind classes (rounded-2xl, shadow-lg, etc.)
+IMAGES (MANDATORY — follow exactly):
+- NEVER use external URLs, filenames, or image services (no unsplash, pexels, placeholder.com, no .jpg/.png/.webp filenames)
+- For EVERY image, use EXACTLY: <img src="/api/placeholder" data-generate="[description]" alt="..." class="..." />
+- The data-generate attribute is REQUIRED — it triggers our AI image generator to create the visual
 - Aim for 2-4 images per page (hero visual + feature illustrations)
 - Image descriptions should specify: "kawaii illustration style, soft pastel colors, rounded shapes,
   warm lighting, cozy mood" plus the specific subject
 - For avatars: "cute minimalist avatar, pastel background, friendly expression, round frame"
-- Do NOT use placeholder.com or any external image URLs
+- Example: <img src="/api/placeholder" data-generate="kawaii illustration of a cozy workspace with a laptop and coffee, soft pastel colors, warm lighting" alt="Cozy workspace" class="rounded-2xl shadow-lg w-full" />
 
 OVERALL FEEL:
 - Think "Pokopia meets Notion" — cute but functional, playful but organized

@@ -8,7 +8,7 @@
 
 const MAX_CONCURRENT = 3
 const MAX_IMAGES_PER_PAGE = 5
-const TIMEOUT_MS = 15_000
+const TIMEOUT_MS = 60_000
 
 export interface ImagePlaceholder {
   fullMatch: string
@@ -123,6 +123,26 @@ export async function injectGeneratedImages(
   }
 
   return result
+}
+
+/**
+ * Sanitize HTML: replace external/broken image URLs with data-generate placeholders.
+ * Catches cases where the AI ignores instructions and uses real filenames or URLs.
+ */
+export function sanitizeImageSrcs(html: string): string {
+  return html.replace(
+    /<img\s([^>]*?)src="(?!\/api\/placeholder|data:)([^"]*)"([^>]*?)>/gi,
+    (_match, before: string, src: string, after: string) => {
+      const attrs = before + after
+      if (/data-generate=/i.test(attrs)) {
+        return `<img ${before}src="/api/placeholder"${after}>`
+      }
+      const altMatch = attrs.match(/alt="([^"]*)"/)
+      const alt = altMatch?.[1] || src.replace(/.*\//, '').replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ')
+      const description = `kawaii illustration of ${alt}, soft pastel colors, rounded shapes, warm cozy mood`
+      return `<img ${before}src="/api/placeholder" data-generate="${description}"${after}>`
+    }
+  )
 }
 
 /**

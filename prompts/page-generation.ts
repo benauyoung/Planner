@@ -35,7 +35,9 @@ For each page, write a COMPLETE, production-quality HTML body. Rules:
    - Settings: grouped form sections, toggle switches, save buttons
 8. Use inline SVG icons for any iconography — keep paths simple, cute, rounded (geometric shapes, sparkles, hearts, stars)
 9. Make the page feel complete, not like a wireframe: headers have real navigation items, dashboards have real-looking data, marketing pages have real social proof
-10. Include 2-4 images per page using the data-generate convention described in the Pokopia vibe rules
+10. IMAGES — CRITICAL RULE: You MUST NOT use external image URLs, filenames, or placeholder services (no unsplash, pexels, placeholder.com, or any .jpg/.png/.webp URLs). Instead, for EVERY image use EXACTLY this format:
+   <img src="/api/placeholder" data-generate="[vivid description of the image in kawaii style]" alt="[alt text]" class="[tailwind classes]" />
+   The data-generate attribute triggers our AI image generator. Every page should have 2-4 of these tags.
 
 STEP 4 — DEFINE NAVIGATION EDGES
 Determine the logical navigation flow between pages (which button/link on one page leads to another).

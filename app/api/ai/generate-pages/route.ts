@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getGeminiClient, pageGenerationSchema } from '@/services/gemini'
 import { PAGE_GENERATION_SYSTEM_PROMPT } from '@/prompts/page-generation'
-import { injectGeneratedImages } from '@/lib/inject-images'
+import { injectGeneratedImages, sanitizeImageSrcs } from '@/lib/inject-images'
 
 export async function POST(req: Request) {
   try {
@@ -33,8 +33,13 @@ Analyze this project and generate full-fidelity HTML page previews for every use
     const responseText = result.response.text()
     const parsed = JSON.parse(responseText)
 
-    // Post-process: generate images for any data-generate placeholders
+    // Post-process: sanitize external image URLs, then generate images
     if (parsed.pages?.length) {
+      // First pass: convert any external image URLs to data-generate placeholders
+      for (const page of parsed.pages as { html: string }[]) {
+        page.html = sanitizeImageSrcs(page.html)
+      }
+
       const origin = req.headers.get('origin') || req.headers.get('referer')?.replace(/\/$/, '') || ''
 
       const imagePromises = parsed.pages.map(async (page: { html: string }) => {
