@@ -1,6 +1,6 @@
 # TinyBaguette Architecture
 
-> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of March 10, 2026.
+> Source of truth for how TinyBaguette is built. Reflects the **actual implemented codebase** as of March 11, 2026.
 
 ---
 
@@ -54,10 +54,11 @@ TinyBaguette is a **plan-to-product platform**, not just a planning tool. Three 
 │              API Routes: /api/ai/generate-followups           │
 │              API Routes: /api/agent/generate                  │
 │              API Routes: /api/agent/[agentId]/chat            │
+│              API Routes: /api/ai/generate-image              │
 │              API Routes: /api/waitlist                        │
 ├──────────────────────────────────────────────────────────────┤
 │         Firebase (Optional, guarded, runtime failover)        │
-│              Auth + Firestore → localStorage fallback         │
+│              Auth + Firestore → IndexedDB fallback            │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -74,6 +75,7 @@ TinyBaguette is a **plan-to-product platform**, not just a planning tool. Three 
 | Layout | dagre | 0.8.5 | Hierarchical auto-layout |
 | State | Zustand | 5.0.2 | Client-side reactive state |
 | AI | @google/generative-ai | 0.21.0 | Gemini 2.0 Flash |
+| AI Images | openai | latest | OpenAI gpt-image-1 for image generation |
 | Database | Firebase Firestore | 12.9.0 | Optional persistence (guarded) |
 | Styling | Tailwind CSS | 3.4.1 | Utility-first CSS |
 | Icons | Lucide React | 0.462.0 | Icon library |
@@ -632,14 +634,14 @@ All Firebase usage is null-guarded so the app works without credentials:
 - `services/firestore.ts` — Returns early if `db` is null
 - `services/auth.ts` — Returns early if `auth` is null
 - `services/persistence.ts` — Persistence abstraction with runtime failover
-- `services/local-storage.ts` — localStorage fallback for offline persistence
+- `services/local-storage.ts` — IndexedDB-backed fallback for offline persistence (migrated from localStorage to handle large base64 images)
 
 **Three persistence scenarios:**
-1. Firebase not configured (no env vars) → uses localStorage from the start
+1. Firebase not configured (no env vars) → uses IndexedDB from the start
 2. Firebase configured and working → uses Firestore
-3. Firebase configured but unavailable (e.g. database not provisioned) → tries Firestore, catches error, permanently falls back to localStorage
+3. Firebase configured but unavailable (e.g. database not provisioned) → tries Firestore, catches error, permanently falls back to IndexedDB
 
-The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automatically. Without Firebase or localStorage, Zustand state resets on refresh.
+The `withFallback()` wrapper in `persistence.ts` handles scenario 3 automatically. Legacy localStorage data is auto-migrated to IndexedDB on first load.
 
 ---
 

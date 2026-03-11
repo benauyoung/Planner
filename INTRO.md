@@ -1,6 +1,6 @@
 # AI Agent Onboarding
 
-> **Read this document FIRST before doing any work on TinyBaguette.** Updated March 10, 2026.
+> **Read this document FIRST before doing any work on TinyBaguette.** Updated March 11, 2026.
 
 ---
 
@@ -59,7 +59,7 @@ These are not separate features — they form a feedback loop. Never treat Desig
 
 ---
 
-## Current State Summary (v0.9.12 ✅)
+## Current State Summary (v0.9.13 ✅)
 
 ### PLAN Pillar
 - **12 node types**, **8 edge types**, AI chat planning, iteration, smart suggestions
@@ -85,7 +85,7 @@ These are not separate features — they form a feedback loop. Never treat Desig
 
 ### Infrastructure
 - 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views
-- Firebase Firestore with runtime failover to localStorage
+- Firebase Firestore with runtime failover to IndexedDB (migrated from localStorage)
 - Collaboration infrastructure (presence, cursors, pluggable provider)
 - Integration settings UI (GitHub, Slack, Linear — OAuth pending)
 - Public landing page with interactive showcase

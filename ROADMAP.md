@@ -334,6 +334,21 @@
 
 ---
 
+### M18.5: Pokopia Vibe + AI Image Generation ✅
+**Status**: Complete
+
+**Delivered** (Mar 11, 2026):
+- **Pokopia kawaii design style** -- soft pastels, rounded-3xl, colored shadows, sticker-style cards, pill buttons; applied to page-generation and edit-page prompts; easily removable (delete `lib/pokopia-vibe.ts` + strip 2 imports)
+- **AI image generation** -- OpenAI `gpt-image-1` model via `/api/ai/generate-image`; `<img data-generate="...">` convention for AI-generated visuals
+- **Image injection pipeline** -- `lib/inject-images.ts` scans HTML for data-generate placeholders, generates images concurrently (max 3, max 5/page, 60s timeout), replaces with base64 data URLs; server-side in generate-pages, client-side progressive in design-view
+- **Image URL sanitizer** -- `sanitizeImageSrcs()` catches external URLs Gemini outputs and converts them to data-generate placeholders
+- **Base64 stripping** -- `stripBase64Images()` removes base64 data from HTML before sending to AI (prevents token overflow on edit-page)
+- **IndexedDB storage** -- Replaced localStorage fallback with IndexedDB for project persistence (handles large base64 images, no 5MB quota); auto-migrates legacy localStorage data
+- **Middleware fix** -- `/api/ai/generate-image` added to public routes (was returning 401 on server-side self-calls)
+- **Shimmer placeholders** -- Pokopia-style pastel gradient animation on images still loading
+
+---
+
 ### M19: Real-Time Collaboration (Production) 🔴
 **Status**: Planned
 
@@ -483,12 +498,20 @@
 - Quick Questions panel for answering node questions across the project
 - Auto-generate questions for nodes without any
 
-### v0.9.12 - Landing Page Feedback Fixes ✅ (Current)
+### v0.9.12 - Landing Page Feedback Fixes ✅
 - Hero copy clarified for software context, badge updated
 - All showcase auto-cycling animations removed (static pre-selection)
 - Email gate: ACTION_LIMIT 10→25, 3s delay, "Maybe later" dismiss
 - Post-email "View your plan" button for returning to roadmap
 - Em dashes removed from all user-facing landing copy
+
+### v0.9.13 - Pokopia Vibe + AI Image Generation ✅ (Current)
+- Pokopia kawaii design style wrapper for page generation
+- AI image generation via OpenAI gpt-image-1
+- Image injection pipeline (server-side + client-side progressive)
+- Image URL sanitizer + base64 stripping for AI calls
+- IndexedDB storage fallback (replaces localStorage)
+- Shimmer placeholder CSS for loading images
 
 ### v1.0.0 - Launch (Planned)
 - Legacy code cleanup (remove WebContainer files, unused deps)
@@ -555,4 +578,6 @@
 | 2026-03-03 | M17.6: Smart Onboarding & Quick Questions -- skip button, dynamic AI questions, quick questions panel |
 | 2026-03-10 | v0.9.11: Documentation update |
 | 2026-03-10 | M18: Landing Page Feedback Fixes -- copy clarity, calmer animations, less aggressive email gate, return-to-plan button |
-| 2026-03-10 | v0.9.12: Current version -- landing page feedback fixes |
+| 2026-03-10 | v0.9.12: Landing page feedback fixes |
+| 2026-03-11 | M18.5: Pokopia Vibe + AI Image Generation -- kawaii design style, OpenAI gpt-image-1, image injection pipeline, IndexedDB storage |
+| 2026-03-11 | v0.9.13: Current version -- Pokopia vibe + image generation |

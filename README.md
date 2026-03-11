@@ -75,6 +75,7 @@ Plan → Design → Agents form a feedback loop. The DAG informs page generation
 - Node.js 18+
 - npm
 - Gemini API key ([get one here](https://aistudio.google.com/apikey))
+- OpenAI API key ([get one here](https://platform.openai.com/api-keys))
 
 ### Installation
 
@@ -89,8 +90,9 @@ npm install
 # Copy environment variables
 cp .env.example .env.local
 
-# Add your Gemini API key to .env.local
-# NEXT_PUBLIC_GEMINI_API_KEY=your_key_here
+# Add your API keys to .env.local
+# NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_key_here
+# NEXT_PUBLIC_OPENAI_API_KEY=your_openai_key_here
 
 # Start development server
 npm run dev
@@ -105,7 +107,7 @@ Open [http://localhost:3000](http://localhost:3000) to start planning.
 ```
 Planner/
 ├── app/                          # Next.js App Router pages
-│   ├── api/ai/                   # AI routes (chat, iterate, analyze, generate-prd, generate-pages, generate-backend, refine, etc.)
+│   ├── api/ai/                   # AI routes (chat, iterate, analyze, generate-prd, generate-pages, generate-image, etc.)
 │   ├── api/agent/                # Agent routes (generate config, chat)
 │   ├── (marketing)/              # Public landing page route group
 │   ├── (app)/                    # Authenticated app route group
@@ -140,7 +142,7 @@ Planner/
 ├── services/
 │   ├── firebase.ts / firestore.ts / auth.ts  # Firebase (null-guarded)
 │   ├── gemini.ts                 # Gemini client + schemas (chat, PRD, iteration, suggestion, pages)
-│   ├── persistence.ts            # Firestore → localStorage failover
+│   ├── persistence.ts            # Firestore → IndexedDB failover
 │   └── collaboration.ts          # Pluggable collaboration provider
 ├── hooks/                        # AI chat, AI iterate, AI suggestions, agent chat, auto-layout
 ├── prompts/                      # AI system prompts (planning, PRD, iteration, suggestion, pages)
@@ -192,7 +194,8 @@ Every node can have:
 | Canvas | @xyflow/react | 12.3.2 |
 | Layout | dagre | 0.8.5 |
 | State | Zustand | 5.0.2 |
-| AI | @google/generative-ai (Gemini) | 0.21.0 |
+| AI (Planning) | @google/generative-ai (Gemini) | 0.21.0 |
+| AI (Images) | openai (gpt-image-1) | latest |
 | Database | Firebase Firestore (optional) | 12.9.0 |
 | Styling | Tailwind CSS | 3.4.1 |
 | Animation | Framer Motion | 11.x |
@@ -210,7 +213,7 @@ Every node can have:
 
 1. Push to GitHub
 2. Import repo at [vercel.com](https://vercel.com)
-3. Add `NEXT_PUBLIC_GEMINI_API_KEY` env var
+3. Add `NEXT_PUBLIC_GEMINI_API_KEY` and `NEXT_PUBLIC_OPENAI_API_KEY` env vars
 4. Deploy — auto-deploys on every push to `main`
 
 ### Environment Variables
@@ -218,6 +221,7 @@ Every node can have:
 ```env
 # Required
 NEXT_PUBLIC_GEMINI_API_KEY=<your-gemini-key>
+NEXT_PUBLIC_OPENAI_API_KEY=<your-openai-key>
 
 # Optional (Firebase — app works without these)
 NEXT_PUBLIC_FIREBASE_API_KEY=<key>

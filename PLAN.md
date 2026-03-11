@@ -1,6 +1,6 @@
 # TinyBaguette Implementation Plan
 
-> Living checklist reflecting actual implementation status as of March 10, 2026.
+> Living checklist reflecting actual implementation status as of March 11, 2026.
 
 ---
 
@@ -433,6 +433,35 @@ Ralphy is an autonomous AI coding loop — it takes a PRD (markdown checklist or
 ### 18.4 Return to Plan After Email
 - [x] Post-email "You're In!" screen now shows "← View your plan" button alongside "Plan another →"
 - [x] Clicking "View your plan" returns to canvas phase with plan data intact
+
+---
+
+## Phase 19: Pokopia Vibe + AI Image Generation ✅
+
+### 19.1 Pokopia Design Style
+- [x] `lib/pokopia-vibe.ts` -- POKOPIA_VIBE constant with palette, shapes, typography, components, image rules
+- [x] `prompts/page-generation.ts` -- Pokopia vibe injected into system prompt with explicit image format rules
+- [x] `app/api/ai/edit-page/route.ts` -- Pokopia vibe + image instructions in edit prompt
+
+### 19.2 AI Image Generation
+- [x] `app/api/ai/generate-image/route.ts` -- OpenAI `gpt-image-1` model, returns base64 data URL
+- [x] `openai` npm package installed
+- [x] `NEXT_PUBLIC_OPENAI_API_KEY` env var for image generation
+- [x] `middleware.ts` -- `/api/ai/generate-image` added to public routes (server-side self-calls)
+
+### 19.3 Image Injection Pipeline
+- [x] `lib/inject-images.ts` -- extractImagePlaceholders(), injectGeneratedImages(), sanitizeImageSrcs(), stripBase64Images()
+- [x] Server-side injection in `generate-pages/route.ts` after Gemini returns
+- [x] Client-side progressive injection in `design-view.tsx` after edit-page streaming
+- [x] `sanitizeImageSrcs()` catches external URLs and converts to data-generate placeholders
+- [x] `stripBase64Images()` removes base64 from HTML before sending to AI (prevents token overflow)
+- [x] Shimmer placeholder CSS (pastel gradient animation) injected into iframe via `wrapHtmlPage()`
+- [x] Max 3 concurrent, max 5/page, 60s timeout
+
+### 19.4 IndexedDB Storage
+- [x] `services/local-storage.ts` rewritten to use IndexedDB (no 5MB localStorage quota)
+- [x] Auto-migrates legacy localStorage data on first load
+- [x] `openDB()`, `tx()`, `idbGet()`, `idbGetAll()` helpers
 
 ---
 

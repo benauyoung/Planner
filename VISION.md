@@ -113,7 +113,7 @@ Nodes float freely with organic layout. No forced grids. Projects grow like orga
 
 ---
 
-## Current State (v0.9.12, March 2026)
+## Current State (v0.9.13, March 2026)
 
 ### PLAN Pillar ✅
 - Infinite canvas with 12 node types and 8 typed edge types
@@ -148,10 +148,16 @@ Nodes float freely with organic layout. No forced grids. Projects grow like orga
 
 ### Infrastructure ✅
 - 4 view tabs (Plan, Design, Agents, Manage) with 6 Manage sub-views
-- Firebase persistence with runtime failover to localStorage
+- Firebase persistence with runtime failover to IndexedDB
 - Collaboration infrastructure (presence avatars, live cursors, pluggable provider)
 - Integration settings UI (GitHub, Slack, Linear — OAuth flows pending)
 - Public landing page with interactive showcase
+
+### Pokopia Vibe + AI Image Generation (v0.9.13) ✅
+- Pokopia kawaii design style for page generation (soft pastels, rounded shapes, cozy mood)
+- AI image generation via OpenAI gpt-image-1 (data-generate convention)
+- Image injection pipeline: server-side + client-side progressive loading with shimmer placeholders
+- IndexedDB storage for large base64 image data (no localStorage quota issues)
 
 ### Landing Page (v0.9.12) ✅
 - Hero copy clarified for software context ("Describe your app or website idea...")

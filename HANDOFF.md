@@ -1,6 +1,6 @@
 # TinyBaguette — Full AI Handoff Document
 
-> Complete codebase reference. Updated March 10, 2026.
+> Complete codebase reference. Updated March 11, 2026.
 
 ---
 
@@ -97,7 +97,8 @@ Every part of this flow matters equally. When discussing features, priorities, o
 | Canvas | @xyflow/react (React Flow) | 12.3.2 |
 | Layout | dagre | 0.8.5 |
 | State | Zustand | 5.0.2 |
-| AI | @google/generative-ai (Gemini) | 0.21.0 |
+| AI (Planning) | @google/generative-ai (Gemini) | 0.21.0 |
+| AI (Images) | openai (OpenAI gpt-image-1) | latest |
 | Database | Firebase Firestore | 12.9.0 |
 | Auth | Firebase Auth | 12.9.0 |
 | Rich Text | @tiptap/react + starter-kit | 3.19.0 |
@@ -120,6 +121,7 @@ Every part of this flow matters equally. When discussing features, priorities, o
 ```env
 # Required
 NEXT_PUBLIC_GEMINI_API_KEY=<Gemini API key>
+NEXT_PUBLIC_OPENAI_API_KEY=<OpenAI API key — used for AI image generation>
 
 # Optional (Firebase — app works without these, all guarded with null checks)
 NEXT_PUBLIC_FIREBASE_API_KEY=<key>
@@ -130,7 +132,7 @@ NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=<sender-id>
 NEXT_PUBLIC_FIREBASE_APP_ID=<app-id>
 ```
 
-**Note:** Firebase is fully optional. All Firebase services (`firebase.ts`, `firestore.ts`, `auth.ts`) are null-guarded — the app runs entirely with localStorage fallback when Firebase is not configured. Additionally, the persistence layer (`services/persistence.ts`) has a **runtime failover**: if Firestore is configured but unavailable at runtime (e.g. database not provisioned), all calls automatically fall back to localStorage after the first failure.
+**Note:** Firebase is fully optional. All Firebase services (`firebase.ts`, `firestore.ts`, `auth.ts`) are null-guarded — the app runs entirely with IndexedDB fallback when Firebase is not configured. Additionally, the persistence layer (`services/persistence.ts`) has a **runtime failover**: if Firestore is configured but unavailable at runtime (e.g. database not provisioned), all calls automatically fall back to IndexedDB after the first failure.
 
 ---
 
@@ -169,6 +171,7 @@ app/
 │   ├── generate-questions/route.ts     # POST — AI question generation for nodes
 │   ├── generate-pages/route.ts         # POST — AI page preview generation from project plan
 │   ├── edit-page/route.ts              # POST — AI page HTML editing from user instruction
+│   ├── generate-image/route.ts         # POST — AI image generation via OpenAI gpt-image-1 (returns base64 data URL)
 │   ├── generate-app/route.ts           # POST — AI generates multi-file React+Tailwind app from project context
 │   ├── edit-app/route.ts               # POST — AI edits existing app files from user instruction
 │   ├── generate-followups/route.ts     # POST — AI generates follow-up questions based on previous Q&A
@@ -239,6 +242,7 @@ Planner/
 │   │   ├── analyze/route.ts            # POST — AI smart suggestions analysis
 │   │   ├── generate-pages/route.ts     # POST — AI page preview generation
 │   │   ├── edit-page/route.ts          # POST — AI page HTML editing
+│   │   ├── generate-image/route.ts    # POST — AI image generation (OpenAI gpt-image-1)
 │   │   ├── refine/route.ts             # POST — AI plan refinement
 │   │   ├── generate-backend/route.ts   # POST — AI backend module generation
 │   │   └── edit-backend/route.ts       # POST — AI backend module editing
@@ -360,8 +364,8 @@ Planner/
 │   ├── auth.ts                        # Auth functions (null-guarded)
 │   ├── gemini.ts                      # Gemini client + response schemas (chat, PRD, prompt, iteration, suggestion, pages, agent, app generation, app edit, follow-up questions)
 │   ├── webcontainer.ts                # Singleton WebContainer boot, file ops (ensureDir), dev server, event emitter
-│   ├── persistence.ts                 # Persistence abstraction: Firestore → localStorage failover
-│   ├── local-storage.ts              # localStorage backend for offline persistence
+│   ├── persistence.ts                 # Persistence abstraction: Firestore → IndexedDB failover
+│   ├── local-storage.ts              # IndexedDB backend for offline persistence (migrated from localStorage; handles large base64 images)
 │   └── collaboration.ts               # Collaboration provider abstraction (pluggable, local mock)
 ├── prompts/
 │   ├── planning-system.ts             # Main AI system prompt
@@ -371,8 +375,8 @@ Planner/
 │   ├── iteration-system.ts            # AI iteration actions system prompt
 │   ├── suggestion-system.ts           # Ambient AI analysis system prompt
 │   ├── page-generation.ts             # AI page preview generation system prompt
-│   ├── app-generation.ts              # AI multi-file React+Tailwind app generation system prompt
-│   ├── app-edit.ts                    # AI app editing system prompt (receives file tree + instruction)
+│   ├── app-generation.ts              # AI multi-file React+Tailwind app generation system prompt (legacy)
+│   ├── app-edit.ts                    # AI app editing system prompt (legacy)
 │   ├── follow-up-generation.ts        # AI follow-up question generation system prompt
 │   ├── agent-generation.ts            # Agent config generation system prompt
 │   └── refinement-system.ts           # Refinement prompt (unused)
@@ -403,6 +407,9 @@ Planner/
 │   ├── onboarding-config.ts           # Onboarding step definitions
 │   ├── onboarding-message.ts          # Formats answers into AI prompt
 │   ├── auth-fetch.ts                  # Sends Firebase ID token in Authorization header for /api/* requests
+│   ├── pokopia-vibe.ts                # Pokopia kawaii design style prompt (soft pastels, rounded-3xl, colored shadows, sticker-style cards)
+│   ├── inject-images.ts               # Image injection pipeline: extractImagePlaceholders(), injectGeneratedImages(), sanitizeImageSrcs(), stripBase64Images()
+│   ├── canvas-physics-animated.ts     # Animated spring simulation with rAF loop, pin/unpin
 │   ├── id.ts                          # generateId() — crypto.randomUUID
 │   └── utils.ts                       # cn() — clsx + tailwind-merge
 ├── types/
@@ -696,13 +703,16 @@ The nearest valid parent is found by Euclidean distance between flow positions.
 services/persistence.ts (abstraction layer)
   ├── Try: services/firestore.ts (Firebase Firestore)
   │         └── Uses: services/firebase.ts (init, null-guarded)
-  └── Fallback: services/local-storage.ts (browser localStorage)
+  └── Fallback: services/local-storage.ts (IndexedDB)
+              └── Auto-migrates legacy localStorage data on module load
 ```
 
 The `withFallback()` wrapper in `persistence.ts` handles three scenarios:
-1. **Firebase not configured** (no env vars) → uses localStorage from the start
+1. **Firebase not configured** (no env vars) → uses IndexedDB from the start
 2. **Firebase configured and working** → uses Firestore
-3. **Firebase configured but unavailable** (e.g. database not provisioned) → tries Firestore on first call, catches error, logs one warning, permanently falls back to localStorage for all subsequent calls
+3. **Firebase configured but unavailable** (e.g. database not provisioned) → tries Firestore on first call, catches error, logs one warning, permanently falls back to IndexedDB for all subsequent calls
+
+**IndexedDB** (`services/local-storage.ts`): Uses `indexedDB.open('tinybaguette', 1)` with a 'projects' object store. Replaced localStorage to handle large base64 image data without hitting the 5MB quota limit. Auto-migrates existing data from the legacy `tinybaguette_projects` localStorage key on module load.
 
 Auto-save runs via `use-project.ts` with a 2-second debounce. It now saves all project fields (not just title/description/phase/nodes/edges).
 
@@ -801,7 +811,7 @@ npm run type-check  # Alias for tsc --noEmit
 ### Vercel (Primary)
 - **URL**: https://planner-ruby-seven.vercel.app/
 - Auto-deploys from `main` branch on GitHub push
-- Required env var: `NEXT_PUBLIC_GEMINI_API_KEY`
+- Required env vars: `NEXT_PUBLIC_GEMINI_API_KEY`, `NEXT_PUBLIC_OPENAI_API_KEY`
 - Optional env vars: All `NEXT_PUBLIC_FIREBASE_*` keys (app works without them)
 
 ### Netlify (Optional)
@@ -843,9 +853,29 @@ npm run type-check  # Alias for tsc --noEmit
 ### Next Big Features (Post v1.0)
 - **Production WebSocket backend** — Deploy PartyKit/Liveblocks for real-time multi-user collaboration
 - **OAuth integration flows** — Server-side GitHub/Slack/Linear OAuth for production integration use
-- **Email infrastructure** — Set up email receiving at `hello@tinybaguette.com`
 
-### Recent Changes (Feb 20-22, 2026 — Sessions 4-6)
+### Recent Changes (March 11, 2026 — Session 7)
+
+**Pokopia Vibe + AI Image Generation (v0.9.13):**
+- **Pokopia kawaii design style** (`lib/pokopia-vibe.ts`) — Wraps page generation and edit-page prompts with a Pokopia aesthetic: soft pastels, rounded-3xl, colored shadows, sticker-style cards, pill buttons, warm cozy mood. Easily removable (delete the file + strip 2 imports from `prompts/page-generation.ts` and `app/api/ai/edit-page/route.ts`).
+- **AI image generation** (`app/api/ai/generate-image/route.ts`) — Uses OpenAI `gpt-image-1` model (1024x1024, quality: 'low'). Returns base64 PNG data URL. Auth not required (public route for server-side self-calls).
+- **Image injection pipeline** (`lib/inject-images.ts`):
+  - `extractImagePlaceholders(html)` — Finds all `<img data-generate="...">` tags
+  - `injectGeneratedImages(html, baseUrl)` — Replaces placeholders with base64 data URLs (concurrent, max 3, max 5/page, 60s timeout)
+  - `sanitizeImageSrcs(html)` — Catches external image URLs that AI outputs and converts to data-generate placeholders
+  - `stripBase64Images(html)` — Removes base64 data before sending HTML to AI (prevents token overflow)
+  - `POKOPIA_IMAGE_PLACEHOLDER_CSS` — Shimmer animation for loading placeholders
+- **Server-side injection**: `generate-pages` route runs `sanitizeImageSrcs()` then `injectGeneratedImages()` after Gemini returns
+- **Client-side progressive injection**: `design-view.tsx` runs `sanitizeImageSrcs()` and `injectGeneratedImages()` after edit-page streaming completes, with shimmer placeholders shown during loading
+- **Image convention**: AI outputs `<img src="/api/placeholder" data-generate="[vivid description]">` tags; pipeline replaces with base64 data URLs
+
+**IndexedDB Storage Migration:**
+- `services/local-storage.ts` rewritten from localStorage to IndexedDB (`indexedDB.open('tinybaguette', 1)`)
+- Solves localStorage 5MB quota exceeded errors caused by large base64 images (multiple pages x 2-4 images x 500KB-2MB each)
+- Auto-migrates existing data from legacy `tinybaguette_projects` localStorage key on module load
+- All CRUD operations use IndexedDB transactions
+
+### Earlier Changes (Feb 20-22, 2026 — Sessions 4-6)
 
 **Design Tab Complete Rewrite (replaced WebContainer with srcdoc iframes):**
 - **Why**: WebContainer required SharedArrayBuffer + COOP/COEP headers that fail on most deployed hosts (Vercel, Netlify). The new approach uses `/api/ai/generate-pages` to generate standalone HTML with Tailwind CSS, rendered via `srcdoc` iframes — works everywhere.
