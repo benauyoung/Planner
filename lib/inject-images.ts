@@ -146,6 +146,17 @@ export function sanitizeImageSrcs(html: string): string {
 }
 
 /**
+ * Strip base64 data URLs from HTML to reduce payload size before sending to AI.
+ * Replaces base64 src with a marker so the AI preserves the img tag structure.
+ */
+export function stripBase64Images(html: string): string {
+  return html.replace(
+    /src="data:[^"]+"/gi,
+    'src="/api/placeholder" data-has-image="true"'
+  )
+}
+
+/**
  * CSS for the Pokopia-style shimmer placeholder on images still loading.
  * Inject this into the iframe <head> for progressive image loading.
  */

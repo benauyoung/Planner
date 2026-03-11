@@ -32,11 +32,12 @@ HTML QUALITY BAR (Pokopia edition):
 - Spacing: generous whitespace (py-16 to py-24 between sections), consistent gap-* rhythm
 - Depth: colored shadows (shadow-violet-200/50), semi-transparent overlays, pastel borders
 
-IMAGE GENERATION:
-- You may add <img data-generate="[vivid kawaii-style description]"> tags for new visuals
-- Use src="/api/placeholder" as temporary src — images will be generated after
-- Preserve existing <img> tags with base64 src — do not regenerate existing images
+IMAGE GENERATION (CRITICAL):
+- NEVER use external image URLs, filenames, or placeholder services (no unsplash, pexels, .jpg/.png URLs)
+- For NEW images, use EXACTLY: <img src="/api/placeholder" data-generate="[vivid kawaii-style description]" alt="..." class="..." />
+- Preserve existing <img> tags that have data-has-image="true" — keep them exactly as-is (their images will be restored)
 - Describe images in Pokopia style: "kawaii illustration, soft pastels, rounded shapes, cozy mood" + subject
+- Example: <img src="/api/placeholder" data-generate="kawaii illustration of a music player interface, soft lavender and mint colors" alt="Player" class="rounded-2xl shadow-lg w-full" />
 
 CONTEXT USAGE:
 - Honour the established design system — colours, type scale, component style

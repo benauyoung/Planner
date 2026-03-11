@@ -28,7 +28,7 @@ import { generateId } from '@/lib/id'
 import type { ProjectPage, PageEdge, AppChatMessage } from '@/types/project'
 import type { Agent } from '@/types/agent'
 import { DesignCanvas } from './design-canvas'
-import { injectGeneratedImages, extractImagePlaceholders, sanitizeImageSrcs, POKOPIA_IMAGE_PLACEHOLDER_CSS } from '@/lib/inject-images'
+import { injectGeneratedImages, extractImagePlaceholders, sanitizeImageSrcs, stripBase64Images, POKOPIA_IMAGE_PLACEHOLDER_CSS } from '@/lib/inject-images'
 
 // ─── Types ───────────────────────────────────────────────────
 
@@ -128,7 +128,7 @@ function PageChat({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentHtml: page.html,
+          currentHtml: stripBase64Images(page.html),
           instruction: text,
           pageTitle: page.title,
           pageRoute: page.route,
@@ -507,7 +507,7 @@ export function DesignView() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          currentHtml: page.html,
+          currentHtml: stripBase64Images(page.html),
           instruction,
           pageTitle: page.title,
           pageRoute: page.route,

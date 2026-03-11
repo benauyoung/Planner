@@ -1,25 +1,52 @@
 import type { Project } from '@/types/project'
 
-const STORAGE_KEY = 'tinybaguette_projects'
-const QUOTA_WARNING_BYTES = 4 * 1024 * 1024 // 4 MB
+const DB_NAME = 'tinybaguette'
+const DB_VERSION = 1
+const STORE_NAME = 'projects'
 
-function readAll(): Record<string, Project> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
+// Legacy localStorage key (for migration)
+const LEGACY_STORAGE_KEY = 'tinybaguette_projects'
+
+function openDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION)
+    request.onupgradeneeded = () => {
+      const db = request.result
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' })
+      }
+    }
+    request.onsuccess = () => resolve(request.result)
+    request.onerror = () => reject(request.error)
+  })
 }
 
-function writeAll(data: Record<string, Project>) {
-  const json = JSON.stringify(data)
-  if (json.length > QUOTA_WARNING_BYTES) {
-    console.warn(
-      `[local-storage] Data size (${(json.length / 1024 / 1024).toFixed(1)} MB) is approaching the ~5 MB localStorage limit.`
-    )
-  }
-  localStorage.setItem(STORAGE_KEY, json)
+function tx(mode: IDBTransactionMode): Promise<{ store: IDBObjectStore; done: Promise<void> }> {
+  return openDB().then((db) => {
+    const transaction = db.transaction(STORE_NAME, mode)
+    const store = transaction.objectStore(STORE_NAME)
+    const done = new Promise<void>((resolve, reject) => {
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+    })
+    return { store, done }
+  })
+}
+
+function idbGet<T>(store: IDBObjectStore, key: string): Promise<T | undefined> {
+  return new Promise((resolve, reject) => {
+    const req = store.get(key)
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
+}
+
+function idbGetAll<T>(store: IDBObjectStore): Promise<T[]> {
+  return new Promise((resolve, reject) => {
+    const req = store.getAll()
+    req.onsuccess = () => resolve(req.result)
+    req.onerror = () => reject(req.error)
+  })
 }
 
 function normalizeProject(p: Project): Project {
@@ -35,38 +62,67 @@ function normalizeProject(p: Project): Project {
   }
 }
 
+/**
+ * Migrate legacy localStorage data to IndexedDB (runs once).
+ */
+async function migrateLegacyData(): Promise<void> {
+  try {
+    const raw = localStorage.getItem(LEGACY_STORAGE_KEY)
+    if (!raw) return
+
+    const projects: Record<string, Project> = JSON.parse(raw)
+    const { store, done } = await tx('readwrite')
+
+    for (const project of Object.values(projects)) {
+      store.put(project)
+    }
+
+    await done
+    localStorage.removeItem(LEGACY_STORAGE_KEY)
+    console.info('[storage] Migrated localStorage data to IndexedDB')
+  } catch (err) {
+    console.warn('[storage] Legacy migration failed:', err)
+  }
+}
+
+// Run migration on module load (client-side only)
+if (typeof window !== 'undefined') {
+  migrateLegacyData()
+}
+
 export async function getProjects(userId: string): Promise<Project[]> {
-  const all = readAll()
-  return Object.values(all)
+  const { store } = await tx('readonly')
+  const all = await idbGetAll<Project>(store)
+  return all
     .filter((p) => p.userId === userId)
     .sort((a, b) => b.updatedAt - a.updatedAt)
 }
 
 export async function getProject(id: string): Promise<Project | null> {
-  const all = readAll()
-  const p = all[id]
+  const { store } = await tx('readonly')
+  const p = await idbGet<Project>(store, id)
   return p ? normalizeProject(p) : null
 }
 
 export async function createProject(project: Project): Promise<void> {
-  const all = readAll()
-  all[project.id] = project
-  writeAll(all)
+  const { store, done } = await tx('readwrite')
+  store.put(project)
+  await done
 }
 
 export async function updateProject(
   id: string,
   data: Partial<Omit<Project, 'id'>>
 ): Promise<void> {
-  const all = readAll()
-  const existing = all[id]
+  const { store, done } = await tx('readwrite')
+  const existing = await idbGet<Project>(store, id)
   if (!existing) return
-  all[id] = { ...existing, ...data, updatedAt: Date.now() }
-  writeAll(all)
+  store.put({ ...existing, ...data, updatedAt: Date.now() })
+  await done
 }
 
 export async function deleteProject(id: string): Promise<void> {
-  const all = readAll()
-  delete all[id]
-  writeAll(all)
+  const { store, done } = await tx('readwrite')
+  store.delete(id)
+  await done
 }
